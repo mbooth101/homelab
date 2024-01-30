@@ -43,6 +43,15 @@
     - { path: '/var/log/nginx', group: 'root', owner: 'root', mode: '0711' }
     - { path: '/srv/www', group: 'root', owner: 'root', mode: '0755' }
 
+- name: Configure SELinux To Allow Nginx Proxy Connections
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+
+- name: Restore SELinux Contexts On Nginx Directories
+  ansible.builtin.shell: "restorecon -v /srv/www"
+
 - name: Install Nginx Main Configuration
   ansible.builtin.template:
     src: nginx.conf.j2
