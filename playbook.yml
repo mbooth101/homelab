@@ -1,0 +1,20 @@
+---
+- hosts: all
+
+  roles:
+    - role: ssh
+      tags: [ initial ]
+    - proxy
+    - home
+    - virt
+    - containers
+    - cockpit
+
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  vars:
+    domain: "matbooth.co.uk"
+    subdomain: "{{ role_name }}.{{ domain }}"
+    www_root: "/srv/www/{{ role_name }}"

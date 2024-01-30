@@ -1,0 +1,83 @@
+- name: Ensure Site Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    group: "{{ item.group }}"
+    owner: "{{ item.owner }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { path: '/var/log/nginx/{{ role_name }}', group: 'root', owner: 'root', mode: '0711' }
+    - { path: '/etc/nginx/includes.d/{{ role_name }}', group: 'root', owner: 'root', mode: '0755' }
+    - { path: '{{ www_root }}', group: 'root', owner: 'root', mode: '0755' }
+
+# This section installs a pre-generated self-signed certificate if Certbot
+# has not yet requested one from LetsEncrypt
+
+- name: Ensure Site TLS Certificate Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0710'
+  with_items:
+    - "/etc/letsencrypt/archive/{{ subdomain }}"
+    - "/etc/letsencrypt/live/{{ subdomain }}"
+
+- name: Checking For Installed TLS Certificate
+  stat:
+    path: "/etc/letsencrypt/live/{{ subdomain }}/fullchain.pem"
+  register: tls_cert
+
+- name: Installing Self-Signed TLS Certificate
+  copy:
+    src: "../../proxy/files/cert.pem"
+    dest: "/etc/letsencrypt/live/{{ subdomain }}/fullchain.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when:
+    - not tls_cert.stat.exists
+
+- name: Checking For Installed TLS Certificate Key
+  stat:
+    path: "/etc/letsencrypt/live/{{ subdomain }}/privkey.pem"
+  register: tls_key
+
+- name: Installing Self-Signed TLS Certificate key
+  copy:
+    src: "../../proxy/files/key.pem"
+    dest: "/etc/letsencrypt/live/{{ subdomain }}/privkey.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when:
+    - not tls_key.stat.exists
+
+# This file configures a vhost for the calling role, including all necessary TLS
+# moving parts
+
+- name: Install Site Virtual Host
+  ansible.builtin.template:
+    src: ../../proxy/templates/nginx.vhost.conf.j2
+    dest: "/etc/nginx/vhosts.d/{{ role_name }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload Nginx
+
+# All files supplied by the calling role named like "*.nginx.conf.j2" will be
+# included by the above vhost configuration
+
+- name: Install Site Custom Config
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/nginx/includes.d/{{ role_name }}/{{ item | basename | regex_replace('\\.nginx\\.conf\\.j2$', '.conf') }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_fileglob:
+    - "{{ role_path }}/templates/*.nginx.conf.j2"
+  notify:
+    - Reload Nginx

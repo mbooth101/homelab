@@ -1,0 +1,55 @@
+- name: Install Nginx And Certbot
+  ansible.builtin.dnf:
+    name:
+      - nginx
+      - certbot
+    state: latest
+
+- name: Enable/Start Nginx
+  ansible.builtin.systemd_service:
+    name: nginx.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Start Certbot Renewal Timer
+  ansible.builtin.systemd_service:
+    name: certbot-renew.timer
+    enabled: true
+    masked: no
+    state: started
+
+- name: Open Firewall for HTTP/HTTPS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  with_items:
+    - http
+    - https
+  notify:
+    - Reload Firewall
+
+- name: Create Nginx Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    group: "{{ item.group }}"
+    owner: "{{ item.owner }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { path: '/etc/nginx/vhosts.d', group: 'root', owner: 'root', mode: '0755' }
+    - { path: '/etc/nginx/includes.d', group: 'root', owner: 'root', mode: '0755' }
+    - { path: '/var/log/nginx', group: 'root', owner: 'root', mode: '0711' }
+    - { path: '/srv/www', group: 'root', owner: 'root', mode: '0755' }
+
+- name: Install Nginx Main Configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/nginx.conf"
+    group: root
+    owner: root
+    mode: '0644'
+  notify:
+    - Reload Nginx
+

@@ -1,0 +1,50 @@
+- name: Add Ansible Group
+  ansible.builtin.group:
+    name: ansible-maint
+    state: present
+
+- name: Add Ansible User
+  ansible.builtin.user:
+    name: ansible-maint
+    comment: Ansible Maintenance
+    state: present
+    system: true
+    append: true
+    home: /
+    create_home: false
+    group: ansible-maint
+    groups: wheel
+    password: '!'
+    password_lock: true
+
+- name: Ensure Authorized Keys Directory
+  ansible.builtin.file:
+    path: /etc/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install SSH Public Key for Ansible
+  ansible.posix.authorized_key:
+    user: ansible-maint
+    state: present
+    path: /etc/ssh/authorized_keys/ansible-maint
+    manage_dir: false
+    key: "{{ lookup('file', '~/.ssh/id_home.pub') }}"
+
+- name: Install Sudoers Configuration for Ansible
+  ansible.builtin.copy:
+    src: sudoers
+    dest: "/etc/sudoers.d/ansible-maint"
+    owner: root
+    group: root
+    mode: '0440'
+
+- name: Install SSH Server Configuration
+  ansible.builtin.copy:
+    src: sshd.conf
+    dest: "/etc/ssh/sshd_config.d/99-{{ domain }}.conf"
+    mode: '0600'
+  notify:
+    - Restart SSH Server
