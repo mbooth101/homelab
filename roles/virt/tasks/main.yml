@@ -3,7 +3,7 @@
     name:
       - libvirt-daemon
       - qemu-kvm-core
-    state: latest
+    state: present
 
 - name: Enable/Start LibVirt
   ansible.builtin.systemd_service:

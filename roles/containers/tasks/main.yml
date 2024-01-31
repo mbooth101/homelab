@@ -2,7 +2,7 @@
   ansible.builtin.dnf:
     name:
       - podman
-    state: latest
+    state: present
 
 - name: Enable/Start Podman
   ansible.builtin.systemd_service:

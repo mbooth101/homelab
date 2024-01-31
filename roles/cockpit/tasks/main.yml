@@ -10,7 +10,7 @@
       - cockpit-pcp
       - cockpit-podman
       - cockpit-selinux
-    state: latest
+    state: present
 
 - name: Install Cockpit Configuration
   ansible.builtin.template:

@@ -3,7 +3,7 @@
     name:
       - nginx
       - certbot
-    state: latest
+    state: present
 
 - name: Enable/Start Nginx
   ansible.builtin.systemd_service:
