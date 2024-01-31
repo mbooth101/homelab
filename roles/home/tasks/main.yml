@@ -4,12 +4,12 @@
 
 - name: Download Homer Dashboard
   ansible.builtin.get_url:
-    url: https://github.com/bastienwirtz/homer/releases/download/v23.10.1/homer.zip
-    dest: /srv/homer-v23.10.1.zip
+    url: "https://github.com/bastienwirtz/homer/releases/download/v{{ version }}/homer.zip"
+    dest: "/srv/homer-v{{ version }}.zip"
 
 - name: Install Homer Dashboard
   ansible.builtin.unarchive:
-    src: /srv/homer-v23.10.1.zip
+    src: "/srv/homer-v{{ version }}.zip"
     dest: "{{ www_root }}"
     remote_src: yes
 

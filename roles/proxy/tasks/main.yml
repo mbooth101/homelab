@@ -12,7 +12,7 @@
     masked: no
     state: started
 
-- name: Start Certbot Renewal Timer
+- name: Enable/Start Nginx TLS Certificate Renewal Timer
   ansible.builtin.systemd_service:
     name: certbot-renew.timer
     enabled: true
