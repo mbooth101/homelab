@@ -2,6 +2,7 @@
   ansible.builtin.group:
     name: ansible-maint
     state: present
+    system: true
 
 - name: Add Ansible User
   ansible.builtin.user:
