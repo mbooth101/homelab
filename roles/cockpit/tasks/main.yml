@@ -25,6 +25,16 @@
   notify:
     - Restart Cockpit
 
+- name: Close Firewall for Direct Access to Cockpit
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: disabled
+  with_items:
+    - cockpit
+  notify:
+    - Reload Firewall
+
 - name: Enable/Start Cockpit
   ansible.builtin.systemd_service:
     name: cockpit.socket
