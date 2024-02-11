@@ -1,0 +1,47 @@
+- name: Configure Nginx for Pi-hole
+  ansible.builtin.include_tasks:
+    file: ../../proxy/tasks/configure-site.yml
+
+- name: Enable Pi-hole Repository
+  community.general.copr:
+    state: enabled
+    name: mbooth/Pi-hole
+
+- name: Install Pi-hole
+  ansible.builtin.dnf:
+    name:
+      - pihole
+    state: present
+
+- name: Install Pi-hole Configuration
+  ansible.builtin.template:
+    src: pihole.toml.j2
+    dest: "/etc/pihole/pihole.toml"
+    owner: pihole
+    group: pihole
+    mode: '0644'
+  notify:
+    - Restart Pi-hole
+
+# Stub listener needs to be disabled to avoid a port conflict of
+# services listening for DNS requests
+- name: Disable the systemd-resolved Stub Listener
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: 'DNSStubListener=yes'
+    line: 'DNSStubListener=no'
+
+# This has to be done before Pi-hole starts up, so we do it here
+# instead of relying on a handler
+- name: Restart systemd-resolved
+  ansible.builtin.systemd_service:
+    name: systemd-resolved
+    state: restarted
+
+- name: Enable/Start Pi-hole
+  ansible.builtin.systemd_service:
+    name: pihole-FTL.service
+    enabled: true
+    masked: no
+    state: started
+

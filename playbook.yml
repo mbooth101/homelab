@@ -5,10 +5,11 @@
     - role: ssh
       tags: [ initial ]
     - proxy
-    - home
+    - pihole
     - virt
     - containers
     - cockpit
+    - home
 
   become: yes
   become_user: root
