@@ -18,6 +18,8 @@
   loop: "{{ ansible_interfaces }}"
   when: "item.startswith('en')"
 
+# Bit overkill, but I couldn't figure out how to bring up the
+# connection without interrupting Ansible's SSH connection
 - name: Reboot Machine
   ansible.builtin.reboot:
     msg: "Rebooting to bring up bonded network connection"
@@ -73,3 +75,12 @@
     mode: '0600'
   notify:
     - Reload SSHd
+
+- name: Reset Ownership of Temporary Directory
+  ansible.builtin.file:
+    path: /tmp/.ansible
+    state: directory
+    recurse: yes
+    owner: ansible-maint
+    group: ansible-maint
+
