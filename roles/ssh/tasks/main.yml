@@ -1,3 +1,27 @@
+- name: Create Bonded Network Connection
+  community.general.nmcli:
+    type: bond
+    conn_name: bond0
+    autoconnect: true
+    method4: auto
+    method6: auto
+    mode: balance-alb
+    state: present
+
+- name: Add Wired NICs to Bonded Network Connection
+  community.general.nmcli:
+    type: bond-slave
+    ifname: "{{ item }}"
+    conn_name: "{{ item }}"
+    master: bond0
+    state: present
+  loop: "{{ ansible_interfaces }}"
+  when: "item.startswith('en')"
+
+- name: Reboot Machine
+  ansible.builtin.reboot:
+    msg: "Rebooting to bring up bonded network connection"
+
 - name: Add Ansible Group
   ansible.builtin.group:
     name: ansible-maint
@@ -42,10 +66,10 @@
     group: root
     mode: '0440'
 
-- name: Install SSH Server Configuration
+- name: Install SSHd Configuration
   ansible.builtin.copy:
     src: sshd.conf
     dest: "/etc/ssh/sshd_config.d/99-{{ domain }}.conf"
     mode: '0600'
   notify:
-    - Restart SSH Server
+    - Reload SSHd

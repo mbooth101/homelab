@@ -1,6 +1,6 @@
 ---
-- name: Restart SSH Server
+- name: Reload SSHd
   service:
-    name: sshd
-    state: restarted
+    name: sshd.service
+    state: reloaded
 
