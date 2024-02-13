@@ -1,0 +1,5 @@
+[Socket]
+# Empty directive is intentional: An empty value in a drop-in file resets
+# the list and thus disables the default port from the original unit
+ListenStream=
+ListenStream=[::1]:{{ http_port }}

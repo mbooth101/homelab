@@ -1,5 +1,12 @@
 ---
+- name: Restart Cockpit Socket
+  ansible.builtin.systemd_service:
+    name: cockpit.socket
+    daemon_reload: true
+    state: restarted
+
 - name: Restart Cockpit
   ansible.builtin.systemd_service:
     name: cockpit.service
+    daemon_reload: true
     state: restarted

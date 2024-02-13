@@ -4,8 +4,15 @@
   roles:
     - role: ssh
       tags: [ initial ]
-    - pihole
-    - cockpit
+    - role: cockpit
+      vars:
+        http_port: 9000
+    - role: pihole
+      vars:
+        http_port: 9001
+    - role: jenkins
+      vars:
+        http_port: 9002
     - home
 
   become: yes

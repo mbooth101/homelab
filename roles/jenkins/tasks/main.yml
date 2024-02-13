@@ -1,0 +1,47 @@
+- name: Configure Nginx for Jenkins
+  ansible.builtin.include_tasks:
+    file: ../../proxy/tasks/configure-site.yml
+
+- name: Enable Jenkins Repository
+  ansible.builtin.get_url:
+    url: https://pkg.jenkins.io/redhat/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+    mode: '0644'
+
+- name: Import GPG Key for Jenkins Repository
+  ansible.builtin.rpm_key:
+    key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+    state: present
+
+- name: Install Jenkins
+  ansible.builtin.dnf:
+    name:
+      - java-21-openjdk-headless
+      - jenkins
+    state: present
+
+- name: Ensure Jenkins Service Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/systemd/system/jenkins.service.d
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install Jenkins Service Overrides
+  ansible.builtin.template:
+    src: jenkins.override.j2
+    dest: "/etc/systemd/system/jenkins.service.d/override.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart Jenkins
+
+- name: Enable/Start Jenkins
+  ansible.builtin.systemd_service:
+    name: jenkins.service
+    enabled: true
+    masked: no
+    state: started
+

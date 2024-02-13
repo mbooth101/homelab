@@ -1,0 +1,6 @@
+---
+- name: Restart Jenkins
+  ansible.builtin.systemd_service:
+    name: jenkins.service
+    daemon_reload: true
+    state: restarted
