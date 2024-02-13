@@ -1,7 +1,7 @@
-# Pi-hole configuration file (vDev-04cf2e83)
+# Pi-hole configuration file (vDev-9e3ccd91)
 # Encoding: UTF-8
 # This file is managed by pihole-FTL
-# Last updated on 2024-02-11 10:40:29
+# Last updated on 2024-02-13 14:38:48
 
 [dns]
   # Array of upstream DNS servers used by Pi-hole
@@ -139,7 +139,7 @@
   bogusPriv = true
 
   # Validate DNS replies using DNSSEC?
-  dnssec = true
+  dnssec = true ### CHANGED, default = false
 
   # Interface to use for DNS (see also dnsmasq.listening.mode) and DHCP (if enabled)
   #
@@ -201,6 +201,31 @@
 
   # Port used by the DNS server
   port = 53
+
+  # Reverse server (former also called "conditional forwarding") feature
+  # Array of reverse servers each one in one of the following forms:
+  # "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>],<domain>"
+  #
+  # Individual components:
+  #
+  # <enabled>: either "true" or "false"
+  #
+  # <ip-address>[/<prefix-len>]: Address range for the reverse server feature in CIDR
+  # notation. If the prefix length is omitted, either 32 (IPv4) or 128 (IPv6) are
+  # substituted (exact address match). This is almost certainly not what you want here.
+  # Example: "192.168.0.0/24" for the range 192.168.0.1 - 192.168.0.255
+  #
+  # <server>[#<port>]: Target server to be used for the reverse server feature
+  # Example: "192.168.0.1#53"
+  #
+  # <domain>: Domain used for the reverse server feature (e.g., "fritz.box")
+  # Example: "fritz.box"
+  #
+  # Possible values are:
+  #     array of reverse servers each one in one of the following forms:
+  #     "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>],<domain>", e.g.,
+  #     "true,192.168.0.0/24,192.168.0.1,fritz.box"
+  revServers = []
 
   [dns.cache]
     # Cache size of the DNS server. Note that expiring cache entries naturally make room
@@ -347,31 +372,6 @@
 
     # ... in the set interval before rate-limiting?
     interval = 60
-
-  [dns.revServer]
-    # Is the reverse server (former also called "conditional forwarding") feature enabled?
-    active = false
-
-    # Address range for the reverse server feature in CIDR notation. If the prefix length
-    # is omitted, either 32 (IPv4) or 128 (IPv6) are substitutet (exact address match).
-    # This is almost certainly not what you want here.
-    #
-    # Possible values are:
-    #     <ip-address>[/<prefix-len>], e.g., "192.168.0.0/24" for the range 192.168.0.1 -
-    #     192.168.0.255
-    cidr = ""
-
-    # Target server tp be used for the reverse server feature
-    #
-    # Possible values are:
-    #     <server>[#<port>], e.g., "192.168.0.1"
-    target = ""
-
-    # Domain used for the reverse server feature (e.g., "fritz.box")
-    #
-    # Possible values are:
-    #     <valid domain>
-    domain = ""
 
 [dhcp]
   # Is the embedded DHCP server enabled?
@@ -920,8 +920,12 @@
   # Controls if FTLDNS should print extended details about regex matching into FTL.log.
   regex = false
 
-  # Print extra debugging information during telnet API calls. Currently only used to
-  # send extra information when getting all queries.
+  # Print extra debugging information concerning API calls. This includes the request,
+  # the request parameters, and the internal details about how the algorithms decide
+  # which data to present and in what form. This very verbose output should only be used
+  # when debugging specific API issues and can be helpful, e.g., when a client cannot
+  # connect due to an obscure API error. Furthermore, this setting enables logging of
+  # all API requests (auth log) and details about user authentication attempts.
   api = false
 
   # Print extra debugging information about TLS connections. This includes the TLS
