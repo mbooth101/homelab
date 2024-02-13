@@ -25,6 +25,16 @@
   notify:
     - Restart Cockpit
 
+- name: Set SELinux Context for Configured Cockpit Port
+  community.general.seport:
+    ports: "{{ http_port }}"
+    proto: "{{ item }}"
+    setype: websm_port_t
+    state: present
+  loop:
+    - tcp
+    - udp
+
 - name: Ensure Cockpit Socket Overrides Directory
   ansible.builtin.file:
     state: directory
