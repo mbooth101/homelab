@@ -1,5 +1,5 @@
-location /admin {
-	proxy_pass http://[::1]:{{ http_port }}/admin;
+location / {
+	proxy_pass http://[::1]:{{ http_port }}/;
 
 	# Required to proxy the connection
 	proxy_set_header Host $host;
@@ -10,8 +10,4 @@ location /admin {
 	proxy_buffering off;
 	proxy_set_header Upgrade $http_upgrade;
 	proxy_set_header Connection "upgrade";
-}
-
-location = / {
-	return 307 /admin/;
 }
