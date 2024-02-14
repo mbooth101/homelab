@@ -13,3 +13,27 @@
     dest: "{{ www_root }}"
     remote_src: yes
 
+- name: Ensure Homer Assets Directory
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: "{{ item.state }}"
+    mode: '0755'
+  loop:
+    - { path: /srv/www/home/assets/tools, state: absent }
+    - { path: /srv/www/home/assets/services, state: directory }
+
+- name: Copy Homer Assets
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/srv/www/home/assets/services"
+    mode: '0644'
+  with_fileglob:
+    - "*.png"
+  notify:
+    - Reload Nginx
+
+- name: Install Homer Configuration
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "/srv/www/home/assets/config.yml"
+    mode: '0644'

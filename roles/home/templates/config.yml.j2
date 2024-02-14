@@ -1,0 +1,43 @@
+---
+# Homepage configuration
+# See https://fontawesome.com/v5/search for icons options
+
+title: "Dashboard"
+subtitle: "{{ domain }}"
+logo: "logo.png"
+
+header: true
+footer: false
+
+# Optional navbar
+# links: [] # Allows for navbar (dark mode, layout, and search) without any links
+links: []
+
+# Services
+# First level array represent a group.
+# Leave only a "items" key if not using group (group name, icon & tagstyle are optional, section separation will not be displayed).
+services:
+  - name: "Internal Services"
+    icon: "fas fa-tools"
+    items:
+      - name: "Cockpit"
+        logo: "assets/services/cockpit.png"
+        url: "https://cockpit.matbooth.co.uk/"
+      - name: "Pi-hole"
+        logo: "assets/services/pihole.png"
+        url: "https://pihole.matbooth.co.uk/"
+      - name: "Jenkins"
+        logo: "assets/services/jenkins.png"
+        url: "https://jenkins.matbooth.co.uk/"
+  - name: "External Services"
+    icon: "fas fa-cloud"
+    items:
+      - name: "Website & Blog"
+        logo: "assets/services/website.png"
+        url: "https://matbooth.co.uk/"
+      - name: "Github"
+        logo: "assets/services/github.png"
+        url: "https://github.com/mbooth101"
+      - name: "Copr"
+        logo: "assets/services/copr.png"
+        url: "https://copr.fedorainfracloud.org/coprs/mbooth/"
