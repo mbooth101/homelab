@@ -1,10 +1,11 @@
-- name: Create Bonded Network Connection
+- name: Create Bonded Network Connection with Static IP
   community.general.nmcli:
     type: bond
     conn_name: bond0
     autoconnect: true
-    method4: auto
-    method6: auto
+    ip4: 192.168.1.100/24
+    gw4: 192.168.1.1
+    dns4: 192.168.1.1
     mode: balance-alb
     state: present
 
@@ -17,6 +18,16 @@
     state: present
   loop: "{{ ansible_interfaces }}"
   when: "item.startswith('en')"
+
+- name: Set Host Name
+  ansible.builtin.hostname:
+    name: "{{ node }}"
+    use: systemd
+
+- name: Update Hosts File
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "192.168.1.100 {{ node }}.{{ domain }} {{ node }}"
 
 # Bit overkill, but I couldn't figure out how to bring up the
 # connection without interrupting Ansible's SSH connection

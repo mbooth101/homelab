@@ -20,6 +20,7 @@
   become_method: sudo
 
   vars:
+    node: "major-clanger"
     domain: "matbooth.co.uk"
     subdomain: "{{ role_name }}.{{ domain }}"
     www_root: "/srv/www/{{ role_name }}"
