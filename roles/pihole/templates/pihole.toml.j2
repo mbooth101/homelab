@@ -1,7 +1,7 @@
 # Pi-hole configuration file (vDev-9e3ccd91)
 # Encoding: UTF-8
 # This file is managed by pihole-FTL
-# Last updated on 2024-02-13 14:38:48
+# Last updated on 2024-02-16 16:13:13
 
 [dns]
   # Array of upstream DNS servers used by Pi-hole
@@ -71,7 +71,7 @@
   #       hostname.
   #   - "PI.HOLE"
   #       Respond with "pi.hole".
-  piholePTR = "PI.HOLE"
+  piholePTR = "HOSTNAMEFQDN" ### CHANGED, default = "PI.HOLE"
 
   # How should FTL handle queries when the gravity database is not available?
   #
@@ -131,7 +131,7 @@
   #
   # Possible values are:
   #     <any valid domain>
-  domain = "matbooth.co.uk" ### CHANGED, default = "lan"
+  domain = "{{ domain }}" ### CHANGED, default = "lan"
 
   # Should all reverse lookups for private IP ranges (i.e., 192.168.x.y, etc) which are
   # not found in /etc/hosts or the DHCP leases file be answered with "no such domain"
@@ -507,7 +507,7 @@
   #
   # Possible values are:
   #     <valid domain>
-  domain = "pi.hole"
+  domain = "{{ subdomain }}" ### CHANGED, default = "pi.hole"
 
   # Webserver access control list (ACL) allowing for restrictions to be put on the list
   # of IP addresses which have access to the web server. The ACL is a comma separated
@@ -578,7 +578,7 @@
     # proxy to provide TLS encryption, e.g., by using Traefik (docker). If you are using a
     # reverse proxy, you can alternatively set webserver.tls.cert to the path of the TLS
     # certificate file and let Pi-hole handle true end-to-end encryption.
-    rev_proxy = false
+    rev_proxy = true ### CHANGED, default = false
 
     # Path to the TLS (SSL) certificate file. This option is only required when at least
     # one of webserver.port is TLS. The file must be in PEM format, and it must have both,
