@@ -1,0 +1,34 @@
+# When including these tasks into a role, the following variables
+# must be defined:
+#  - db_name
+#  - db_user
+#  - db_password
+
+- name: Create New Database
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+  register: db_creation
+
+- name: Create Database User
+  community.postgresql.postgresql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+
+- name: Grant Database Privileges to User
+  community.postgresql.postgresql_privs:
+    database: "{{ db_name }}"
+    type: database
+    privs: ALL
+    grant_option: false
+    roles: "{{ db_user }}"
+    state: present
+
+- name: Grant Public Schema Privileges to User
+  community.postgresql.postgresql_privs:
+    database: "{{ db_name }}"
+    type: schema
+    privs: ALL
+    objs: public
+    grant_option: false
+    roles: "{{ db_user }}"
+    state: present
