@@ -2,7 +2,7 @@ server {
 	listen 80;
 	listen [::]:80;
 
-	server_name {{ subdomain }};
+	server_name {{ srv_fqdn }};
 	root {{ www_root }};
 
 	access_log /var/log/nginx/{{ role_name }}/access.log main;
@@ -24,14 +24,14 @@ server {
 	listen 443 ssl http2;
 	listen [::]:443 ssl http2;
 
-	server_name {{ subdomain }};
+	server_name {{ srv_fqdn }};
 	root {{ www_root }};
 
 	access_log /var/log/nginx/{{ role_name }}/access.log main;
 	error_log /var/log/nginx/{{ role_name }}/error.log;
 
-	ssl_certificate /etc/letsencrypt/live/{{ subdomain }}/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/{{ subdomain }}/privkey.pem;
+	ssl_certificate /etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem;
 
 	ssl_session_cache shared:le_nginx_SSL:10m;
 	ssl_session_timeout 1440m;

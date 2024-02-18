@@ -21,18 +21,18 @@
     group: root
     mode: '0710'
   with_items:
-    - "/etc/letsencrypt/archive/{{ subdomain }}"
-    - "/etc/letsencrypt/live/{{ subdomain }}"
+    - "/etc/letsencrypt/archive/{{ srv_fqdn }}"
+    - "/etc/letsencrypt/live/{{ srv_fqdn }}"
 
 - name: Checking For Installed TLS Certificate
   stat:
-    path: "/etc/letsencrypt/live/{{ subdomain }}/fullchain.pem"
+    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
   register: tls_cert
 
 - name: Installing Self-Signed TLS Certificate
   copy:
     src: "../../proxy/files/cert.pem"
-    dest: "/etc/letsencrypt/live/{{ subdomain }}/fullchain.pem"
+    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
     owner: root
     group: root
     mode: '0640'
@@ -41,13 +41,13 @@
 
 - name: Checking For Installed TLS Certificate Key
   stat:
-    path: "/etc/letsencrypt/live/{{ subdomain }}/privkey.pem"
+    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
   register: tls_key
 
 - name: Installing Self-Signed TLS Certificate key
   copy:
     src: "../../proxy/files/key.pem"
-    dest: "/etc/letsencrypt/live/{{ subdomain }}/privkey.pem"
+    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
     owner: root
     group: root
     mode: '0640'

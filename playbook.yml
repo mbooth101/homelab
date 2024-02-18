@@ -2,7 +2,7 @@
 - hosts: all
 
   roles:
-    - role: ssh
+    - role: initial_setup
       tags: [ initial ]
     - role: cockpit
       vars:
@@ -13,14 +13,16 @@
     - role: jenkins
       vars:
         http_port: 9002
-    - home
+    - role: home
 
   become: yes
   become_user: root
   become_method: sudo
 
   vars:
-    node: "major-clanger"
     domain: "matbooth.co.uk"
-    subdomain: "{{ role_name }}.{{ domain }}"
+    host_name: "{{ inventory_hostname_short }}"
+    host_fqdn: "{{ host_name }}.{{ domain }}"
+    srv_name: "{{ role_name }}"
+    srv_fqdn: "{{ srv_name }}.{{ domain }}"
     www_root: "/srv/www/{{ role_name }}"

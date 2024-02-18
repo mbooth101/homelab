@@ -3,9 +3,9 @@
     type: bond
     conn_name: bond0
     autoconnect: true
-    ip4: 192.168.1.100/24
-    gw4: 192.168.1.1
-    dns4: 192.168.1.1
+    ip4: "{{ host_ip }}/24"
+    gw4: "{{ host_gw }}"
+    dns4: "{{ host_dns }}"
     mode: balance-alb
     state: present
 
@@ -21,13 +21,13 @@
 
 - name: Set Host Name
   ansible.builtin.hostname:
-    name: "{{ node }}"
+    name: "{{ host_name }}"
     use: systemd
 
 - name: Update Hosts File
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "192.168.1.100 {{ node }}.{{ domain }} {{ node }}"
+    line: "{{ host_ip }} {{ host_fqdn }} {{ host_name }}"
 
 # Bit overkill, but I couldn't figure out how to bring up the
 # connection without interrupting Ansible's SSH connection
@@ -75,8 +75,6 @@
   ansible.builtin.copy:
     src: sudoers
     dest: "/etc/sudoers.d/ansible-maint"
-    owner: root
-    group: root
     mode: '0440'
 
 - name: Install SSHd Configuration
