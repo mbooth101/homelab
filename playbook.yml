@@ -4,6 +4,11 @@
   roles:
     - role: initial_setup
       tags: [ initial ]
+    - role: dhcp
+      vars:
+        db_name: kea_dhcp
+        db_user: kea
+        db_password: password
     - role: cockpit
       vars:
         http_port: 9000

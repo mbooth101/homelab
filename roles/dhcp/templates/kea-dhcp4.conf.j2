@@ -396,6 +396,17 @@
         }
     ],
 
+    // DDNS information (how the DHCPv4 component can reach a DDNS daemon)
+    "dhcp-ddns": {
+        "enable-updates": true,
+        "server-ip": "::1",
+        "server-port": 53001,
+        "sender-ip": "::1",
+        "sender-port": 0,
+        "max-queue-size": 1024
+    },
+    "ddns-send-updates": false,
+
     "loggers": [
     {
         // This specifies the logging for DHCPv4 daemon.
