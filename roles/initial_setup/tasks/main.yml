@@ -85,6 +85,14 @@
   notify:
     - Reload SSHd
 
+- name: Switch Default Editor
+  ansible.builtin.dnf:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop:
+    - { name: nano-default-editor, state: absent }
+    - { name: vim-default-editor, state: present }
+
 - name: Reset Ownership of Temporary Directory
   ansible.builtin.file:
     path: /tmp/.ansible
