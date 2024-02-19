@@ -90,7 +90,7 @@
     name: "{{ item.name }}"
     state: "{{ item.state }}"
   loop:
-    - { name: nano-default-editor, state: absent }
+    - { name: [ nano-default-editor, nano ], state: absent }
     - { name: vim-default-editor, state: present }
 
 - name: Reset Ownership of Temporary Directory
