@@ -39,16 +39,12 @@
   ansible.builtin.file:
     state: directory
     path: /etc/systemd/system/cockpit.socket.d
-    owner: root
-    group: root
     mode: '0755'
 
-- name: Install Cockpit Service Overrides
+- name: Install Cockpit Socket Overrides
   ansible.builtin.template:
     src: cockpit.override.j2
     dest: "/etc/systemd/system/cockpit.socket.d/override.conf"
-    owner: root
-    group: root
     mode: '0644'
   notify:
     - Restart Cockpit Socket

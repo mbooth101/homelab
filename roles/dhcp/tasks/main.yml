@@ -1,0 +1,77 @@
+- name: Configure PostgreSQL for Kea DHCP
+  ansible.builtin.include_tasks:
+    file: ../../postgres/tasks/configure-db.yml
+
+- name: Install Kea DHCP
+  ansible.builtin.dnf:
+    name:
+      - kea
+    state: present
+
+- name: Initialise the Kea DHCP Database
+  ansible.builtin.command:
+    cmd: "/usr/sbin/kea-admin db-init pgsql -u {{ db_user }} -p {{ db_password }} -n {{ db_name}}"
+  when: db_creation.changed
+
+- name: Install Kea DHCP4 Configuration
+  ansible.builtin.template:
+    src: kea-dhcp4.conf.j2
+    dest: "/etc/kea/kea-dhcp4.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart Kea DHCP4
+
+- name: Install Kea DHCP6 Configuration
+  ansible.builtin.template:
+    src: kea-dhcp6.conf.j2
+    dest: "/etc/kea/kea-dhcp6.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart Kea DHCP6
+
+- name: Ensure Kea DHCP Service Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/systemd/system/{{ item }}.service.d"
+    mode: '0755'
+  loop:
+    - kea-dhcp4
+    - kea-dhcp6
+
+- name: Install Kea DHCP Service Overrides
+  ansible.builtin.template:
+    src: "{{ item }}.override.j2"
+    dest: "/etc/systemd/system/{{ item }}.service.d/override.conf"
+    mode: '0644'
+  loop:
+    - kea-dhcp4
+    - kea-dhcp6
+  notify:
+    - Restart Kea DHCP4
+    - Restart Kea DHCP6
+
+- name: Enable/Start Kea DHCP
+  ansible.builtin.systemd_service:
+    name: "{{ item }}.service"
+    enabled: true
+    masked: no
+    state: started
+  loop:
+    - kea-dhcp4
+    - kea-dhcp6
+
+- name: Open Firewall for DHCP
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  with_items:
+    - dhcp
+    - dhcpv6
+  notify:
+    - Reload Firewall
+

@@ -1,0 +1,5 @@
+[Unit]
+# It's possible for this service to be up before the database is up,
+# so we specify a hard requirement here to avoid DHCP failure
+Requires=postgresql.service
+After=postgresql.service

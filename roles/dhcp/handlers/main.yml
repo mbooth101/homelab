@@ -1,0 +1,12 @@
+---
+- name: Restart Kea DHCP4
+  ansible.builtin.systemd_service:
+    name: kea-dhcp4.service
+    daemon_reload: true
+    state: restarted
+
+- name: Restart Kea DHCP6
+  ansible.builtin.systemd_service:
+    name: kea-dhcp6.service
+    daemon_reload: true
+    state: restarted
