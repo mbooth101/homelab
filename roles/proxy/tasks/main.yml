@@ -40,7 +40,6 @@
   with_items:
     - { path: '/etc/nginx/vhosts.d', group: 'root', owner: 'root', mode: '0755' }
     - { path: '/etc/nginx/includes.d', group: 'root', owner: 'root', mode: '0755' }
-    - { path: '/var/log/nginx', group: 'root', owner: 'root', mode: '0711' }
     - { path: '/srv/www', group: 'root', owner: 'root', mode: '0755' }
 
 - name: Configure SELinux To Allow Nginx Proxy Connections
