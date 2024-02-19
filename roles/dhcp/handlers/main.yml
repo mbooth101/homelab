@@ -10,3 +10,9 @@
     name: kea-dhcp6.service
     daemon_reload: true
     state: restarted
+
+- name: Restart Kea DHCP DDNS
+  ansible.builtin.systemd_service:
+    name: kea-dhcp-ddns.service
+    daemon_reload: true
+    state: restarted
