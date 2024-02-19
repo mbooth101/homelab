@@ -1,0 +1,13 @@
+- name: Install Firewall
+  ansible.builtin.dnf:
+    name:
+      - firewalld
+      - python3-firewall
+    state: present
+
+- name: Enable/Start Firewall
+  ansible.builtin.systemd_service:
+    name: firewalld.service
+    enabled: true
+    masked: no
+    state: started
