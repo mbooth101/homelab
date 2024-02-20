@@ -1,30 +1,8 @@
-// This is a basic configuration for the Kea DHCPv6 server. Subnet declarations
-// are mostly commented out and no interfaces are listed. Therefore, the servers
-// will not listen or respond to any queries.
-// The basic configuration must be extended to specify interfaces on which
-// the servers should listen. There are a number of example options defined.
-// These probably don't make any sense in your network. Make sure you at least
-// update the following, before running this example in your network:
-// - change the network interface names
-// - change the subnets to match your actual network
-// - change the option values to match your network
-//
-// This is just a very basic configuration. Kea comes with large suite (over 30)
-// of configuration examples and extensive Kea User's Guide. Please refer to
-// those materials to get better understanding of what this software is able to
-// do. Comments in this configuration file sometimes refer to sections for more
-// details. These are section numbers in Kea User's Guide. The version matching
-// your software should come with your Kea package, but it is also available
-// in ISC's Knowledgebase (https://kea.readthedocs.io; the direct link for
-// the stable version is https://kea.readthedocs.io/).
-//
 // This configuration file contains only DHCPv6 server's configuration.
 // If configurations for other Kea services are also included in this file they
 // are ignored by the DHCPv6 server.
 {
 
-// DHCPv6 configuration starts here. This section will be read by DHCPv6 server
-// and will be ignored by other components.
 "Dhcp6": {
     "interfaces-config": {
         "interfaces": [ "bond0" ]
@@ -169,178 +147,36 @@
     //     }
     // ],
 
-    // Another thing possible here are hooks. Kea supports a powerful mechanism
-    // that allows loading external libraries that can extract information and
-    // even influence how the server processes packets. Those libraries include
-    // additional forensic logging capabilities, ability to reserve hosts in
-    // more flexible ways, and even add extra commands. For a list of available
-    // hook libraries, see https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
-    // "hooks-libraries": [
-    //   {
-    //       // Forensic Logging library generates forensic type of audit trail
-    //       // of all devices serviced by Kea, including their identifiers
-    //       // (like MAC address), their location in the network, times
-    //       // when they were active etc.
-    //       "library": "/usr/lib64/kea/hooks/libdhcp_legal_log.so",
-    //       "parameters": {
-    //           "path": "/var/lib/kea",
-    //           "base-name": "kea-forensic6"
-    //       }
-    //   },
-    //   {
-    //       // Flexible identifier (flex-id). Kea software provides a way to
-    //       // handle host reservations that include addresses, prefixes,
-    //       // options, client classes and other features. The reservation can
-    //       // be based on hardware address, DUID, circuit-id or client-id in
-    //       // DHCPv4 and using hardware address or DUID in DHCPv6. However,
-    //       // there are sometimes scenario where the reservation is more
-    //       // complex, e.g. uses other options that mentioned above, uses part
-    //       // of specific options or perhaps even a combination of several
-    //       // options and fields to uniquely identify a client. Those scenarios
-    //       // are addressed by the Flexible Identifiers hook application.
-    //       "library": "/usr/lib64/kea/hooks/libdhcp_flex_id.so",
-    //       "parameters": {
-    //           "identifier-expression": "relay6[0].option[37].hex"
-    //       }
-    //   }
-    // ],
-
-    // Below an example of a simple IPv6 subnet declaration. Uncomment to enable
-    // it. This is a list, denoted with [ ], of structures, each denoted with
-    // { }. Each structure describes a single subnet and may have several
-    // parameters. One of those parameters is "pools" that is also a list of
-    // structures.
     "subnet6": [
         {
-            // This defines the whole subnet. Kea will use this information to
-            // determine where the clients are connected. This is the whole
-            // subnet in your network.
-
-            // Subnet identifier should be unique for each subnet.
             "id": 1,
-
-            // This is mandatory parameter for each subnet.
-            "subnet": "2001:db8:1::/64",
-
-            // Pools define the actual part of your subnet that is governed
-            // by Kea. Technically this is optional parameter, but it's
-            // almost always needed for DHCP to do its job. If you omit it,
-            // clients won't be able to get addresses, unless there are
-            // host reservations defined for them.
-            "pools": [ { "pool": "2001:db8:1::/80" } ],
-
+            "subnet": "2001:8b0:a722:6d0e::/64",
+            "pools": [
+                { "pool": "2001:8b0:a722:6d0e:1::/96" }
+            ],
             // Kea supports prefix delegation (PD). This mechanism delegates
             // whole prefixes, instead of single addresses. You need to specify
             // a prefix and then size of the delegated prefixes that it will
             // be split into. This example below tells Kea to use
             // 2001:db8:1::/56 prefix as pool and split it into /64 prefixes.
             // This will give you 256 (2^(64-56)) prefixes.
-            "pd-pools": [
-                {
-                    "prefix": "2001:db8:8::",
-                    "prefix-len": 56,
-                    "delegated-len": 64
-
-                    // Kea also supports excluded prefixes. This advanced option
-                    // is explained in Section 9.2.9. Please make sure your
-                    // excluded prefix matches the pool it is defined in.
-                    // "excluded-prefix": "2001:db8:8:0:80::",
-                    // "excluded-prefix-len": 72
-                }
-            ],
-            "option-data": [
-                // You can specify additional options here that are subnet
-                // specific. Also, you can override global options here.
-                {
-                    "name": "dns-servers",
-                    "data": "2001:db8:2::dead:beef, 2001:db8:2::cafe:babe"
-                }
-            ],
-
-            // Host reservations can be defined for each subnet.
-            //
-            // Note that reservations are subnet-specific in Kea. This is
-            // different than ISC DHCP. Keep that in mind when migrating
-            // your configurations.
+            //"pd-pools": [
+            //    {
+            //        "prefix": "2001:db8:8::",
+            //        "prefix-len": 56,
+            //        "delegated-len": 64
+            //    }
+            //],
+            //"option-data": [
+            //    {
+            //        "name": "dns-servers",
+            //        "data": "2001:db8:2::dead:beef, 2001:db8:2::cafe:babe"
+            //    }
+            //],
             "reservations": [
-                // This is a simple host reservation. The host with DUID matching
-                // the specified value will get an address of 2001:db8:1::100.
-                {
-                    "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
-                    "ip-addresses": [ "2001:db8:1::100" ]
-                },
-
-                // This is similar to the previous one, but this time the
-                // reservation is done based on hardware/MAC address. The server
-                // will do its best to extract the hardware/MAC address from
-                // received packets (see 'mac-sources' directive for
-                // details). This particular reservation also specifies two
-                // extra options to be available for this client. If there are
-                // options with the same code specified in a global, subnet or
-                // class scope, the values defined at host level take
-                // precedence.
-                {
-                    "hw-address": "00:01:02:03:04:05",
-                    "ip-addresses": [ "2001:db8:1::101" ],
-                    "option-data": [
-                        {
-                            "name": "dns-servers",
-                            "data": "3000:1::234"
-                        },
-                        {
-                            "name": "nis-servers",
-                            "data": "3000:1::234"
-                        }],
-
-                    // This client will be automatically added to certain
-                    // classes.
-                    "client-classes": [ "special_snowflake", "office" ]
-                },
-
-                // This is a bit more advanced reservation. The client with the
-                // specified DUID will get a reserved address, a reserved prefix
-                // and a hostname.  This reservation is for an address that it
-                // not within the dynamic pool.  Finally, this reservation
-                // features vendor specific options for CableLabs, which happen
-                // to use enterprise-id 4491. Those particular values will be
-                // returned only to the client that has a DUID matching this
-                // reservation.
-                {
-                    "duid": "01:02:03:04:05:06:07:08:09:0A",
-                    "ip-addresses": [ "2001:db8:1:0:cafe::1" ],
-                    "prefixes": [ "2001:db8:2:abcd::/64" ],
-                    "hostname": "foo.example.com",
-                    "option-data": [
-                        {
-                            "name": "vendor-opts",
-                            "data": "4491"
-                        },
-                        {
-                            "name": "tftp-servers",
-                            "space": "vendor-4491",
-                            "data": "3000:1::234"
-                        }
-                    ]
-                }
             ]
         }
-        // More subnets can be defined here.
-        //      {
-        //          "subnet": "2001:db8:2::/64",
-        //          "pools": [ { "pool": "2001:db8:2::/80" } ]
-        //      },
-        //      {
-        //          "subnet": "2001:db8:3::/64",
-        //          "pools": [ { "pool": "2001:db8:3::/80" } ]
-        //      },
-        //      {
-        //          "subnet": "2001:db8:4::/64",
-        //          "pools": [ { "pool": "2001:db8:4::/80" } ]
-        //      }
     ],
-
-    // Client-classes can be defined here. See "client-classes" in Dhcp4 for
-    // an example.
 
     // DDNS information (how the DHCPv6 component can reach a DDNS daemon)
     "dhcp-ddns": {
@@ -354,28 +190,28 @@
     "ddns-send-updates": false,
 
     "loggers": [
-    {
-        // This specifies the logging for DHCPv6 daemon.
-        "name": "kea-dhcp6",
-        "output_options": [
-            {
-                // Logs written to stdout will be captured by systemd
-                "output": "stdout",
+        {
+            // This specifies the logging for DHCPv6 daemon.
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    // Logs written to stdout will be captured by systemd
+                    "output": "stdout",
 
-                // Shorter log pattern suitable for use with systemd,
-                // avoids redundant information
-                "pattern": "%-5p [%c] %m\n"
-            }
-        ],
-        // This specifies the severity of log messages to keep. Supported values
-        // are: FATAL, ERROR, WARN, INFO, DEBUG
-        "severity": "INFO",
+                    // Shorter log pattern suitable for use with systemd,
+                    // avoids redundant information
+                    "pattern": "%-5p [%c] %m\n"
+                }
+            ],
+            // This specifies the severity of log messages to keep. Supported values
+            // are: FATAL, ERROR, WARN, INFO, DEBUG
+            "severity": "INFO",
 
-        // If DEBUG level is specified, this value is used. 0 is least verbose,
-        // 99 is most verbose. Be cautious, Kea can generate lots and lots
-        // of logs if told to do so.
-        "debuglevel": 0
-    }
-  ]
+            // If DEBUG level is specified, this value is used. 0 is least verbose,
+            // 99 is most verbose. Be cautious, Kea can generate lots and lots
+            // of logs if told to do so.
+            "debuglevel": 0
+        }
+    ]
 }
 }
