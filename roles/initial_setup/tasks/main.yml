@@ -24,11 +24,6 @@
     name: "{{ host_name }}"
     use: systemd
 
-- name: Update Hosts File
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    line: "{{ host_ip }} {{ host_fqdn }} {{ host_name }}"
-
 # Bit overkill, but I couldn't figure out how to bring up the
 # connection without interrupting Ansible's SSH connection
 - name: Reboot Machine

@@ -25,23 +25,6 @@
   notify:
     - Restart Pi-hole
 
-# Stub listener needs to be disabled to avoid a port conflict of
-# services listening for DNS requests
-- name: Disable the systemd-resolved Stub Listener
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/resolved.conf
-    regexp: 'DNSStubListener=yes'
-    line: 'DNSStubListener=no'
-  register: resolved_config
-
-# This has to be done before Pi-hole starts up, so we do it here
-# instead of relying on a handler
-- name: Restart systemd-resolved
-  ansible.builtin.systemd_service:
-    name: systemd-resolved
-    state: restarted
-  when: resolved_config.changed
-
 - name: Enable/Start Pi-hole
   ansible.builtin.systemd_service:
     name: pihole-FTL.service
