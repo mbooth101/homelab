@@ -1,0 +1,93 @@
+- name: Install BIND
+  ansible.builtin.dnf:
+    name:
+      - bind
+      - bind-utils
+    state: present
+
+# This ensures the FQDN is correctly set and "hostname -f" gives the right
+# answer
+- name: Update Hosts File
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ host.addr4 }} {{ host.fqdn }} {{ host.name }}"
+
+# Ensure the host name is set correctly based on the inventory host on which
+# we're being run
+- name: Set Host Name
+  ansible.builtin.hostname:
+    name: "{{ host.name }}"
+    use: systemd
+
+- name: Install Main DNS Configuration
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/{{ item }}"
+    owner: root
+    group: named
+    mode: '0640'
+  loop:
+    - named.conf
+    - named.domain.zones
+  notify:
+    - Reload BIND DNS
+
+- name: Install DNS Zone Configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/var/named/{{ item.dest }}"
+    owner: root
+    group: named
+    mode: '0640'
+  loop:
+    - { src: "forward.zone", dest: "{{ domain }}.zone" }
+    - { src: "reverse.zone", dest: "122.168.192.in-addr.arpa.zone" }
+  notify:
+    - Reload BIND DNS
+
+# Disable the systemd stub listener in favour of BIND providing a
+# local caching DNS resolver
+- name: Disable DNS Stub Listener
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: 'DNSStubListener=yes'
+    line: 'DNSStubListener=no'
+  notify:
+    - Restart Local Resolver
+
+- name: Update Network Connection Settings
+  community.general.nmcli:
+    type: bond
+    conn_name: bond0
+    autoconnect: true
+    ip4: "{{ host.cidr4 }}"
+    gw4: "{{ host.gate4 }}"
+    dns4: "127.0.0.1"
+    dns4_search: "{{ domain }}"
+    dns6: "::1"
+    dns6_search: "{{ domain }}"
+    mode: balance-alb
+    state: present
+  register: net_config
+
+# This causes systemd to rewrite the /etc/resolv.conf file to contain
+# the updated DNS resolver details
+- name: Reapply Network Connection Settings
+  ansible.builtin.command:
+    cmd: nmcli device reapply bond0
+  when: net_config.changed
+
+- name: Enable/Start BIND DNS
+  ansible.builtin.systemd_service:
+    name: named.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Open Firewall for DNS
+  ansible.posix.firewalld:
+    service: dns
+    permanent: true
+    state: enabled
+  notify:
+    - Reload Firewall

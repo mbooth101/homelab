@@ -5,9 +5,9 @@
   community.general.nmcli:
     type: bond
     conn_name: bond0
-    ip4: "{{ host_ip }}/24"
-    gw4: "{{ host_gw }}"
-    dns4: "{{ host_dns }}"
+    ip4: "{{ host.cidr4 }}"
+    gw4: "{{ host.gate4 }}"
+    dns4: "{{ host.gate4 }}"
     autoconnect: true
     mode: balance-alb
     state: present

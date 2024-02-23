@@ -1,0 +1,13 @@
+$ORIGIN 122.168.192.in-addr.arpa.
+$TTL 5m
+
+;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
+@	IN	SOA	{{ host.fqdn }}.  webmaster.{{ domain }}. ( 2024022001 1h 30m 24h 5m )
+	IN	NS	{{ host.fqdn }}.
+
+; This host
+10	IN	PTR	{{ host.fqdn }}.
+
+; Router and switch
+1	IN	PTR	router.{{ domain }}.
+2	IN	PTR	switch.{{ domain }}.

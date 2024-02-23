@@ -1,1 +1,1 @@
-tiny-clanger.matbooth.co.uk host_ip=192.168.122.10 host_gw=192.168.122.1 host_dns=192.168.122.1
+tiny-clanger.matbooth.co.uk inventory_host4=192.168.122.10/24

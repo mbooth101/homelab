@@ -1,0 +1,10 @@
+---
+- name: Restart Local Resolver
+  ansible.builtin.systemd_service:
+    name: systemd-resolved.service
+    state: restarted
+
+- name: Reload BIND DNS
+  ansible.builtin.systemd_service:
+    name: named.service
+    state: reloaded

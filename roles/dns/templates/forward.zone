@@ -1,0 +1,13 @@
+$ORIGIN {{ domain }}.
+$TTL 5m
+
+;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
+@		IN	SOA	{{ host.fqdn }}. webmaster.{{ domain }}. ( 2024022001 1h 30m 24h 5m )
+		IN	NS	{{ host.fqdn }}.
+
+; This host
+{{ host.name }}	IN	A	{{ host.addr4 }}
+
+; Router and switch
+router		IN	A	{{ host.gate4 }}
+switch		IN	A	{{ host.gate4 | ansible.utils.ipmath(1) }}
