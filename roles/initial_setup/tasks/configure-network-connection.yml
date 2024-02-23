@@ -1,0 +1,35 @@
+# This initial configuration is temporary until we get the DHCP and
+# DNS services up, so only perform if there is no bonded connection
+# yet at all
+- name: Create Bonded Connection with Static IP
+  community.general.nmcli:
+    type: bond
+    conn_name: bond0
+    ip4: "{{ host_ip }}/24"
+    gw4: "{{ host_gw }}"
+    dns4: "{{ host_dns }}"
+    autoconnect: true
+    mode: balance-alb
+    state: present
+  when: "'bond0' not in ansible_facts"
+
+- name: Add Wired NICs to Bonded Connection
+  community.general.nmcli:
+    type: bond-slave
+    ifname: "{{ item }}"
+    conn_name: "{{ item }}"
+    master: bond0
+    state: present
+  loop: "{{ ansible_interfaces }}"
+  when: item.startswith('en')
+
+# Bit overkill, but I couldn't figure out how to bring up the bonded
+# connection without interrupting Ansible's SSH connection
+- name: Reboot Machine
+  ansible.builtin.reboot:
+    msg: "Rebooting to bring up bonded network connection"
+  when: "'bond0' not in ansible_facts"
+
+- name: Recollect Facts After Bonded Connection Creation
+  ansible.builtin.setup:
+  when: "'bond0' not in ansible_facts"

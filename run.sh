@@ -42,13 +42,11 @@ if [ -n "$INITIAL" ] ; then
 		ssh-keyscan -H $host >> ~/.ssh/known_hosts
 	done <$HOSTS
 
-	# Initial run must prompt for passwords to set up public key authentication
-	ANSIBLE_SSH_COMMON_ARGS="-o PubkeyAuthentication=no" ansible-playbook -u $USER -k -K \
-		-i $HOSTS --tags initial "$@" playbook.yml
+	# Initial run must prompt for passwords in order to set up public key authentication
+	ANSIBLE_SSH_COMMON_ARGS="-o PubkeyAuthentication=no" \
+	ansible-playbook -u $USER -k -K -i $HOSTS "$@" playbook.yml
 	echo "$HOSTS" >> .initialised
 else
-	# Subsequent runs as the ansible user using public key authentication
-	# and skips the initial setup roles
-	ansible-playbook -u ansible-maint \
-		-i $HOSTS --skip-tags initial "$@" playbook.yml
+	# In subsequent runs we connect as the ansible user using public key authentication
+	ansible-playbook -i $HOSTS "$@" playbook.yml
 fi

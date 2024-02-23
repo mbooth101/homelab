@@ -4,6 +4,7 @@
   roles:
     - role: initial_setup
       tags: [ initial ]
+    - role: dns
     - role: dhcp
       vars:
         db_name: kea_dhcp

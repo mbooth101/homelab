@@ -3,4 +3,3 @@
   service:
     name: sshd.service
     state: reloaded
-
