@@ -18,8 +18,8 @@
     group: postgres
     mode: '0600'
   loop:
-    - { src: postgresql.conf.j2 , dest: "/var/lib/pgsql/data/postgresql.conf" }
-    - { src: pg_hba.conf.j2 , dest: "/var/lib/pgsql/data/pg_hba.conf" }
+    - { src: postgresql.conf , dest: "/var/lib/pgsql/data/postgresql.conf" }
+    - { src: pg_hba.conf , dest: "/var/lib/pgsql/data/pg_hba.conf" }
   notify:
     - Restart PostgreSQL
 
