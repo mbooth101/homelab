@@ -4,9 +4,9 @@ zone "{{ domain }}" IN {
         allow-update { none; };
 };
 
-zone "122.168.192.in-addr.arpa" IN {
+zone "{{ reverse_ptr4 }}" IN {
         type master;
-        file "122.168.192.in-addr.arpa.zone";
+        file "{{ reverse_ptr4 }}.zone";
         allow-update { none; };
 };
 

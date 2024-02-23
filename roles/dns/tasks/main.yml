@@ -5,12 +5,18 @@
       - bind-utils
     state: present
 
+- name: Compute Reverse Pointer DNS Record Names
+  ansible.builtin.set_fact:
+    reverse_ptr4: "{{ host.netw4.split('.')[:3] | reverse | join('.') }}.in-addr.arpa"
+
 # This ensures the FQDN is correctly set and "hostname -f" gives the right
 # answer
 - name: Update Hosts File
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "{{ host.addr4 }} {{ host.fqdn }} {{ host.name }}"
+    line: "{{ item }}"
+  loop:
+    - "{{ host.addr4 }} {{ host.fqdn }} {{ host.name }}"
 
 # Ensure the host name is set correctly based on the inventory host on which
 # we're being run
@@ -41,7 +47,7 @@
     mode: '0640'
   loop:
     - { src: "forward.zone", dest: "{{ domain }}.zone" }
-    - { src: "reverse.zone", dest: "122.168.192.in-addr.arpa.zone" }
+    - { src: "reverse.zone", dest: "{{ reverse_ptr4 }}.zone" }
   notify:
     - Reload BIND DNS
 

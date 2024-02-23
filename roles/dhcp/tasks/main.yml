@@ -59,9 +59,12 @@
 
 - name: Open Firewall for DHCP
   ansible.posix.firewalld:
-    service: dhcp
+    service: "{{ item }}"
     permanent: true
     state: enabled
+  loop:
+    - dhcp
+    - dhcpv6
   notify:
     - Reload Firewall
 

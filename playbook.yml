@@ -21,10 +21,6 @@
           #    - role: home
   become: yes
 
-  tasks:
-    - name: host
-      ansible.builtin.debug:
-        msg: "{{ host }}"
   vars:
     domain: "matbooth.co.uk"
     host:

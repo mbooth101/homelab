@@ -1,4 +1,4 @@
-$ORIGIN 122.168.192.in-addr.arpa.
+$ORIGIN {{ reverse_ptr4 }}.
 $TTL 5m
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
