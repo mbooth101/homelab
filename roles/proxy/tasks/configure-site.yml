@@ -5,7 +5,7 @@
     group: "{{ item.group }}"
     owner: "{{ item.owner }}"
     mode: "{{ item.mode }}"
-  with_items:
+  loop:
     - { path: '/var/log/nginx/{{ role_name }}', group: 'root', owner: 'root', mode: '0711' }
     - { path: '/etc/nginx/includes.d/{{ role_name }}', group: 'root', owner: 'root', mode: '0755' }
     - { path: '{{ www_root }}', group: 'root', owner: 'root', mode: '0755' }
@@ -17,8 +17,6 @@
   ansible.builtin.file:
     state: directory
     path: "{{ item }}"
-    owner: root
-    group: root
     mode: '0710'
   with_items:
     - "/etc/letsencrypt/archive/{{ srv_fqdn }}"
@@ -59,25 +57,23 @@
 
 - name: Install Site Virtual Host
   ansible.builtin.template:
-    src: ../../proxy/templates/nginx.vhost.conf.j2
+    src: ../../proxy/templates/nginx.vhost.conf
     dest: "/etc/nginx/vhosts.d/{{ role_name }}.conf"
-    owner: root
-    group: root
     mode: '0644'
   notify:
     - Reload Nginx
 
-# All files supplied by the calling role named like "*.nginx.conf.j2" will be
+# All files supplied by the calling role named like "*.nginx.conf" will be
 # included by the above vhost configuration
 
 - name: Install Site Custom Config
   ansible.builtin.template:
     src: "{{ item }}"
-    dest: "/etc/nginx/includes.d/{{ role_name }}/{{ item | basename | regex_replace('\\.nginx\\.conf\\.j2$', '.conf') }}"
+    dest: "/etc/nginx/includes.d/{{ role_name }}/{{ item | basename | regex_replace('\\.nginx\\.conf$', '.conf') }}"
     owner: root
     group: root
     mode: '0644'
   with_fileglob:
-    - "{{ role_path }}/templates/*.nginx.conf.j2"
+    - "{{ role_path }}/templates/*.nginx.conf"
   notify:
     - Reload Nginx

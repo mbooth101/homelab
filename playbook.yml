@@ -18,7 +18,7 @@
           #    - role: jenkins
           #      vars:
           #        http_port: 9002
-          #    - role: home
+    - role: home
   become: yes
 
   vars:
