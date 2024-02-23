@@ -17,7 +17,7 @@
 
 - name: Install Pi-hole Configuration
   ansible.builtin.template:
-    src: pihole.toml.j2
+    src: pihole.toml
     dest: "/etc/pihole/pihole.toml"
     owner: pihole
     group: pihole

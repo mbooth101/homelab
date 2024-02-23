@@ -34,6 +34,6 @@
 
 - name: Install Homer Configuration
   ansible.builtin.template:
-    src: config.yml.j2
+    src: config.yml
     dest: "/srv/www/home/assets/config.yml"
     mode: '0644'

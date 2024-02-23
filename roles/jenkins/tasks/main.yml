@@ -28,7 +28,7 @@
 
 - name: Install Jenkins Service Overrides
   ansible.builtin.template:
-    src: jenkins.override.j2
+    src: jenkins.override.conf
     dest: "/etc/systemd/system/jenkins.service.d/override.conf"
     mode: '0644'
   notify:

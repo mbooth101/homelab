@@ -19,9 +19,9 @@
     owner: cockpit-ws
     group: cockpit-ws
     mode: '0600'
-  with_items:
-    - { src: cockpit.conf.j2 , dest: "/etc/cockpit/cockpit.conf" }
-    - { src: disallowed-users.j2 , dest: "/etc/cockpit/disallowed-users" }
+  loop:
+    - { src: cockpit.conf , dest: "/etc/cockpit/cockpit.conf" }
+    - { src: disallowed-users , dest: "/etc/cockpit/disallowed-users" }
   notify:
     - Restart Cockpit
 
@@ -43,7 +43,7 @@
 
 - name: Install Cockpit Socket Overrides
   ansible.builtin.template:
-    src: cockpit.override.j2
+    src: cockpit.override.conf
     dest: "/etc/systemd/system/cockpit.socket.d/override.conf"
     mode: '0644'
   notify:
@@ -51,11 +51,9 @@
 
 - name: Close Firewall for Direct Access to Cockpit
   ansible.posix.firewalld:
-    service: "{{ item }}"
+    service: cockpit
     permanent: true
     state: disabled
-  with_items:
-    - cockpit
   notify:
     - Reload Firewall
 
