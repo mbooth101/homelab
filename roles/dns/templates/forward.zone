@@ -11,3 +11,5 @@ $TTL 5m
 ; Router and switch
 router		IN	A	{{ host.gate4 }}
 switch		IN	A	{{ host.gate4 | ansible.utils.ipmath(1) }}
+
+; Service CNAMES

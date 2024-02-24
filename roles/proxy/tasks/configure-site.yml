@@ -8,7 +8,14 @@
   loop:
     - { path: '/var/log/nginx/{{ role_name }}', group: 'root', owner: 'root', mode: '0711' }
     - { path: '/etc/nginx/includes.d/{{ role_name }}', group: 'root', owner: 'root', mode: '0755' }
-    - { path: '{{ www_root }}', group: 'root', owner: 'root', mode: '0755' }
+
+- name: Add CNAME Record Into the DNS
+  ansible.builtin.lineinfile:
+    path: "/var/named/{{ domain }}.zone"
+    regexp: "^{{ role_name }}"
+    line: "{{ role_name }}\tIN\tCNAME\t{{ host.fqdn }}."
+  notify:
+    - Reload BIND DNS
 
 # This section installs a pre-generated self-signed certificate if Certbot
 # has not yet requested one from LetsEncrypt
@@ -42,7 +49,7 @@
     path: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
   register: tls_key
 
-- name: Installing Self-Signed TLS Certificate key
+- name: Installing Self-Signed TLS Certificate Key
   copy:
     src: "../../proxy/files/key.pem"
     dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"

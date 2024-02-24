@@ -9,15 +9,15 @@
         db_name: kea_dhcp
         db_user: kea
         db_password: password
-          #    - role: cockpit
-          #      vars:
-          #        http_port: 9000
+    - role: cockpit
+      vars:
+        http_port: 9000
           #    - role: pihole
           #      vars:
           #        http_port: 9001
-          #    - role: jenkins
-          #      vars:
-          #        http_port: 9002
+    - role: jenkins
+      vars:
+        http_port: 9002
     - role: home
   become: yes
 
@@ -32,6 +32,5 @@
       netw4: "{{ inventory_host4 | ansible.utils.ipaddr('network') }}"
       gate4: "{{ inventory_host4 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
 
-    srv_name: "{{ role_name }}"
-    srv_fqdn: "{{ srv_name }}.{{ domain }}"
+    srv_fqdn: "{{ role_name }}.{{ domain }}"
     www_root: "/srv/www/{{ role_name }}"
