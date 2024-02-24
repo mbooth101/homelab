@@ -38,6 +38,13 @@
   notify:
     - Reload BIND DNS
 
+# Other roles may add records to the DNS zones, so we only need to install
+# if not already present, instead of overwriting when different
+- name: Checking For Installed DNS Zone Files
+  stat:
+    path: "/var/named/{{ domain }}.zone"
+  register: zone_config
+
 - name: Install DNS Zone Configuration
   ansible.builtin.template:
     src: "{{ item.src }}"
@@ -48,6 +55,8 @@
   loop:
     - { src: "forward.zone", dest: "{{ domain }}.zone" }
     - { src: "reverse.zone", dest: "{{ reverse_ptr4 }}.zone" }
+  when:
+    - not zone_config.stat.exists
   notify:
     - Reload BIND DNS
 
