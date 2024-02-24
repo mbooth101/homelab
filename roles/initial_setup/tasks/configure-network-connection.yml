@@ -1,13 +1,11 @@
 # This initial configuration is temporary until we get the DHCP and
 # DNS services up, so only perform if there is no bonded connection
-# yet at all
-- name: Create Bonded Connection with Static IP
+# or virtual bridge yet at all
+
+- name: Create Bonded Connection
   community.general.nmcli:
     type: bond
     conn_name: bond0
-    ip4: "{{ host.cidr4 }}"
-    gw4: "{{ host.gate4 }}"
-    dns4: "{{ host.gate4 }}"
     autoconnect: true
     mode: balance-alb
     state: present
@@ -23,13 +21,35 @@
   loop: "{{ ansible_interfaces }}"
   when: item.startswith('en')
 
+- name: Create Virtual Network Bridge
+  community.general.nmcli:
+    type: bridge
+    conn_name: bridge0
+    autoconnect: true
+    ip4: "{{ host.cidr4 }}"
+    gw4: "{{ host.gate4 }}"
+    dns4: "{{ host.gate4 }}"
+    stp: true
+    state: present
+  when: "'bridge0' not in ansible_facts"
+
+- name: Add Bonded Connection as a Port on the Virtual Network Bridge
+  community.general.nmcli:
+    type: bridge-slave
+    ifname: bond0
+    conn_name: bond0
+    master: bridge0
+    hairpin: true
+    state: present
+
 # Bit overkill, but I couldn't figure out how to bring up the bonded
-# connection without interrupting Ansible's SSH connection
+# connection/virtual bridge without killing Ansible's SSH connection
+
 - name: Reboot Machine
   ansible.builtin.reboot:
     msg: "Rebooting to bring up bonded network connection"
-  when: "'bond0' not in ansible_facts"
+  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"
 
-- name: Recollect Facts After Bonded Connection Creation
+- name: Regather Facts About the New Network Connections
   ansible.builtin.setup:
-  when: "'bond0' not in ansible_facts"
+  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"

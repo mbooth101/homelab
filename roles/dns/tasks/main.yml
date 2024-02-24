@@ -72,8 +72,7 @@
 
 - name: Update Network Connection Settings
   community.general.nmcli:
-    type: bond
-    conn_name: bond0
+    conn_name: bridge0
     autoconnect: true
     ip4: "{{ host.cidr4 }}"
     gw4: "{{ host.gate4 }}"
@@ -81,7 +80,6 @@
     dns4_search: "{{ domain }}"
     dns6: "::1"
     dns6_search: "{{ domain }}"
-    mode: balance-alb
     state: present
   register: net_config
 
@@ -89,7 +87,7 @@
 # the updated DNS resolver details
 - name: Reapply Network Connection Settings
   ansible.builtin.command:
-    cmd: nmcli device reapply bond0
+    cmd: nmcli device reapply bridge0
   when: net_config.changed
 
 - name: Enable/Start BIND DNS
