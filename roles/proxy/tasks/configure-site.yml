@@ -14,7 +14,7 @@
 
 - name: Add CNAME Record to the DNS Zone
   ansible.builtin.lineinfile:
-    path: "/var/named/{{ domain }}.zone"
+    path: "/srv/db/dns/{{ domain }}.zone"
     regexp: "^{{ role_name }}"
     line: "{{ role_name }}\tIN\tCNAME\t{{ host.fqdn }}."
   register: cname_zone
@@ -23,7 +23,7 @@
 
 - name: Bump the Timestamp in the SOA DNS Record
   ansible.builtin.lineinfile:
-    path: "/var/named/{{ domain }}.zone"
+    path: "/srv/db/dns/{{ domain }}.zone"
     regexp: "(.*)SOA(.*)[0-9]{10,10}(.*)"
     line: "\\1SOA\\g<2>{{ now(utc=true,fmt='%y%m%d%H%M') }}\\3"
     backrefs: true
