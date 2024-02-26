@@ -16,7 +16,7 @@
 - name: Install Jenkins
   ansible.builtin.dnf:
     name:
-      - java-21-openjdk-headless
+      - java-17-openjdk-headless
       - jenkins
     state: present
 
