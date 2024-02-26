@@ -30,4 +30,3 @@
     - virtsecretd
     - virtqemud
     - virtproxyd
-  notify: Delete Default LibVirt Network
