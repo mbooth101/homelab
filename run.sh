@@ -44,9 +44,11 @@ if [ -n "$INITIAL" ] ; then
 
 	# Initial run must prompt for passwords in order to set up public key authentication
 	ANSIBLE_SSH_COMMON_ARGS="-o PubkeyAuthentication=no" \
-	ansible-playbook -u $USER -k -K -i $HOSTS "$@" playbook.yml
+	ansible-playbook -u $USER -k -K \
+		--ask-vault-pass -i $HOSTS "$@" playbook.yml
 	echo "$HOSTS" >> .initialised
 else
 	# In subsequent runs we connect as the ansible user using public key authentication
-	ansible-playbook -i $HOSTS "$@" playbook.yml
+	ansible-playbook \
+		--ask-vault-pass -i $HOSTS "$@" playbook.yml
 fi
