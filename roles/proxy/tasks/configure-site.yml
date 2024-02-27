@@ -9,26 +9,6 @@
     - { path: '/var/log/nginx/{{ role_name }}', group: 'root', owner: 'root', mode: '0711' }
     - { path: '/etc/nginx/includes.d/{{ role_name }}', group: 'root', owner: 'root', mode: '0755' }
 
-# This section adds a DNS alias so that the site is addressable and the
-# name-based vhosts function properly
-
-- name: Add CNAME Record to the DNS Zone
-  ansible.builtin.lineinfile:
-    path: "/srv/db/dns/{{ domain }}.zone"
-    regexp: "^{{ role_name }}"
-    line: "{{ role_name }}\tIN\tCNAME\t{{ host.fqdn }}."
-  register: cname_zone
-  notify:
-    - Reload BIND DNS
-
-- name: Bump the Timestamp in the SOA DNS Record
-  ansible.builtin.lineinfile:
-    path: "/srv/db/dns/{{ domain }}.zone"
-    regexp: "(.*)SOA(.*)[0-9]{10,10}(.*)"
-    line: "\\1SOA\\g<2>{{ now(utc=true,fmt='%y%m%d%H%M') }}\\3"
-    backrefs: true
-  when: cname_zone.changed
-
 # This section installs a pre-generated self-signed certificate if Certbot
 # has not yet requested one from LetsEncrypt
 
@@ -96,3 +76,10 @@
     - "{{ role_path }}/templates/*.nginx.conf"
   notify:
     - Reload Nginx
+
+# Adds a DNS alias so that the site is addressable and the name-based
+# vhosts function properly
+
+- name: Configure DNS CNAME
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-cname.yml

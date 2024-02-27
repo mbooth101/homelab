@@ -36,5 +36,5 @@
       gate4: "{{ inventory_host4 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
 
     srv_fqdn: "{{ role_name }}.{{ domain }}"
-    db_root: "/srv/db/{{ role_name }}"
+    data_dir: "/srv/data/{{ role_name }}"
     www_root: "/srv/www/{{ role_name }}"
