@@ -23,6 +23,16 @@
   notify:
     - Restart Kea DHCP4
 
+- name: Install Kea DHCP6 Configuration
+  ansible.builtin.template:
+    src: kea-dhcp6.conf
+    dest: "/etc/kea/kea-dhcp6.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart Kea DHCP6
+
 - name: Install Kea DHCP DDNS Configuration
   ansible.builtin.template:
     src: kea-dhcp-ddns.conf
@@ -36,16 +46,23 @@
 - name: Ensure Kea DHCP Service Overrides Directory
   ansible.builtin.file:
     state: directory
-    path: "/etc/systemd/system/kea-dhcp4.service.d"
+    path: "/etc/systemd/system/{{ item }}.service.d"
     mode: '0755'
+  loop:
+    - kea-dhcp4
+    - kea-dhcp6
 
 - name: Install Kea DHCP Service Overrides
   ansible.builtin.template:
-    src: kea-dhcp4.override.conf
-    dest: "/etc/systemd/system/kea-dhcp4.service.d/override.conf"
+    src: "{{ item }}.override.conf"
+    dest: "/etc/systemd/system/{{ item }}.service.d/override.conf"
     mode: '0644'
+  loop:
+    - kea-dhcp4
+    - kea-dhcp6
   notify:
     - Restart Kea DHCP4
+    - Restart Kea DHCP6
 
 - name: Enable/Start Kea DHCP
   ansible.builtin.systemd_service:
@@ -55,6 +72,7 @@
     state: started
   loop:
     - kea-dhcp4
+    - kea-dhcp6
     - kea-dhcp-ddns
 
 - name: Open Firewall for DHCP
@@ -67,4 +85,3 @@
     - dhcpv6
   notify:
     - Reload Firewall
-
