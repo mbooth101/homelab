@@ -1,0 +1,6 @@
+[openHAB-Stable]
+name=openHAB Stable
+baseurl=https://openhab.jfrog.io/artifactory/openhab-linuxpkg-rpm/stable
+gpgcheck=1
+gpgkey="https://openhab.jfrog.io/artifactory/api/gpg/key/public"
+enabled=1

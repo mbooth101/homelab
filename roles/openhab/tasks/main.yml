@@ -1,0 +1,43 @@
+- name: Configure Nginx for OpenHAB
+  ansible.builtin.include_tasks:
+    file: ../../proxy/tasks/configure-site.yml
+
+- name: Enable OpenHAB Repository
+  ansible.builtin.copy:
+    src: openhab.repo
+    dest: /etc/yum.repos.d/openhab.repo
+    mode: '0644'
+
+- name: Import GPG Key for OpenHAB Repository
+  ansible.builtin.rpm_key:
+    key: https://openhab.jfrog.io/artifactory/api/gpg/key/public
+    state: present
+
+- name: Install OpenHAB
+  ansible.builtin.dnf:
+    name:
+      - java-17-openjdk-headless
+      - openhab
+    state: present
+
+- name: Ensure OpenHAB Service Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/systemd/system/openhab.service.d
+    mode: '0755'
+
+- name: Install OpenHAB Service Overrides
+  ansible.builtin.template:
+    src: openhab.override.conf
+    dest: "/etc/systemd/system/openhab.service.d/override.conf"
+    mode: '0644'
+  notify:
+    - Restart OpenHAB
+
+- name: Enable/Start OpenHAB
+  ansible.builtin.systemd_service:
+    name: openhab.service
+    enabled: true
+    masked: no
+    state: started
+

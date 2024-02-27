@@ -1,0 +1,6 @@
+---
+- name: Restart OpenHAB
+  ansible.builtin.systemd_service:
+    name: openhab.service
+    daemon_reload: true
+    state: restarted
