@@ -29,6 +29,9 @@
     ip4: "{{ host.cidr4 }}"
     gw4: "{{ host.gate4 }}"
     dns4: "{{ host.gate4 }}"
+    ip6: "{{ host.cidr6 }}"
+    gw6: "{{ host.gate6 }}"
+    dns6: "{{ host.gate6 }}"
     stp: true
     state: present
   when: "'bridge0' not in ansible_facts"

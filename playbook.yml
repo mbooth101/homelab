@@ -40,6 +40,11 @@
       subn4: "{{ inventory_host4 | ansible.utils.ipsubnet }}"
       netw4: "{{ inventory_host4 | ansible.utils.ipaddr('network') }}"
       gate4: "{{ inventory_host4 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
+      cidr6: "{{ inventory_host6 }}"
+      addr6: "{{ inventory_host6 | ansible.utils.ipaddr('address') }}"
+      subn6: "{{ inventory_host6 | ansible.utils.ipsubnet }}"
+      netw6: "{{ inventory_host6 | ansible.utils.ipaddr('network') }}"
+      gate6: "{{ inventory_host6 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
 
     srv_fqdn: "{{ role_name }}.{{ domain }}"
     data_dir: "/srv/data/{{ role_name }}"
