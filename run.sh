@@ -21,7 +21,6 @@ elif [ "$HOSTS" = "production" ] ; then
 	echo "Hit Ctrl+C and unset PROD in the environment to run for staging"
 fi
 echo
-sleep 3
 
 # Determine if this inventory has been initialised already
 INITIAL=1
