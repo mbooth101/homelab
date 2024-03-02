@@ -1,0 +1,12 @@
+$ORIGIN {{ host.cidr6 | ip_ptr }}.
+$TTL 5m
+
+;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
+@		IN	SOA	{{ host.fqdn }}.  webmaster.{{ domain }}. ( {{ now(utc=true,fmt='%y%m%d%H%M') }} 1h 30m 24h 5m )
+		IN	NS	{{ host.fqdn }}.
+
+; This host
+a.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0		IN	PTR	{{ host.fqdn }}.
+
+; Gateway router
+1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0		IN	PTR	gateway.{{ domain }}.

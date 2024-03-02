@@ -5,10 +5,6 @@
       - bind-utils
     state: present
 
-- name: Compute Reverse Pointer DNS Record Names
-  ansible.builtin.set_fact:
-    reverse_ptr4: "{{ host.netw4.split('.')[:3] | reverse | join('.') }}.in-addr.arpa"
-
 - name: Allow BIND to Modify Files in the DB Root
   community.general.sefcontext:
     target: "{{ data_dir }}(/.*)?"
@@ -72,7 +68,8 @@
     mode: '0640'
   loop:
     - { src: "forward.zone", dest: "{{ domain }}.zone" }
-    - { src: "reverse.zone", dest: "{{ reverse_ptr4 }}.zone" }
+    - { src: "reverse4.zone", dest: "{{ host.cidr4 | ip_ptr }}.zone" }
+    - { src: "reverse6.zone", dest: "{{ host.cidr6 | ip_ptr }}.zone" }
   when:
     - not zone_config.stat.exists
   notify:
