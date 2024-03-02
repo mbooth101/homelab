@@ -1,4 +1,5 @@
 ---
 dependencies:
+  - role: radvd
   - role: postgres
   - role: firewall

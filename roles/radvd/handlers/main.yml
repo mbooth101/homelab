@@ -1,0 +1,7 @@
+---
+- name: Reload Router Advertiser
+  ansible.builtin.systemd_service:
+    name: radvd.service
+    daemon_reload: true
+    state: reloaded
+

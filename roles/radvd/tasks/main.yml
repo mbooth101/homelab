@@ -1,0 +1,20 @@
+- name: Install Router Advertiser
+  ansible.builtin.dnf:
+    name:
+      - radvd
+    state: present
+
+- name: Install Router Advertiser Configuration
+  ansible.builtin.template:
+    src: radvd.conf
+    dest: /etc/radvd.conf
+    mode: '0644'
+  notify:
+    - Reload Router Advertiser
+
+- name: Enable/Start Router Advertiser
+  ansible.builtin.systemd_service:
+    name: radvd.service
+    enabled: true
+    masked: no
+    state: started
