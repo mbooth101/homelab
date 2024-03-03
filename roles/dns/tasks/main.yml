@@ -45,12 +45,27 @@
     dest: "{{ item.dest }}"
     owner: root
     group: named
+    setype: named_conf_t
     mode: '0640'
   loop:
     - { src: named.conf, dest: /etc/named.conf }
     - { src: named.domains.conf, dest: /etc/named/domains.conf }
   notify:
     - Reload BIND DNS
+
+- name: Generate DNS Zone Update Keys
+  ansible.builtin.shell: /usr/sbin/tsig-keygen -a hmac-sha256 dhcp-ddns > /etc/named/dhcp-ddns.key
+  args:
+    creates: /etc/named/dhcp-ddns.key
+  notify:
+    - Reload BIND DNS
+
+- name: Set Permissions on DNS Zone Update Keys
+  ansible.builtin.file:
+    path: /etc/named/dhcp-ddns.key
+    owner: root
+    group: named
+    mode: '0640'
 
 # Other roles may add records to the DNS zones, so we only need to install
 # if not already present, instead of overwriting when different
