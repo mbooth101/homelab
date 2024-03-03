@@ -33,6 +33,10 @@
   notify:
     - Restart Kea DHCP6
 
+- name: Find the DHCP DDNS Secret
+  ansible.builtin.shell: "grep secret /etc/named/dhcp-ddns.key | sed -e 's/^.*\"\\(.*\\)\";/\\1/'"
+  register: ddns_secret
+
 - name: Install Kea DHCP DDNS Configuration
   ansible.builtin.template:
     src: kea-dhcp-ddns.conf
