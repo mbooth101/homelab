@@ -102,14 +102,18 @@
 
 - name: Update Network Connection Settings
   community.general.nmcli:
+    type: bridge
     conn_name: bridge0
     autoconnect: true
     ip4: "{{ host.cidr4 }}"
     gw4: "{{ host.gate4 }}"
     dns4: "127.0.0.1"
     dns4_search: "{{ domain }}"
+    ip6: "{{ host.cidr6 }}"
+    gw6: "{{ host.gate6 }}"
     dns6: "::1"
     dns6_search: "{{ domain }}"
+    stp: true
     state: present
   register: net_config
 

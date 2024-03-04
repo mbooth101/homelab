@@ -18,7 +18,7 @@
     conn_name: "{{ item }}"
     master: bond0
     state: present
-  loop: "{{ ansible_interfaces }}"
+  loop: "{{ ansible_interfaces | sort }}"
   when: item.startswith('en')
 
 - name: Create Virtual Network Bridge
@@ -42,7 +42,7 @@
     ifname: bond0
     conn_name: bond0
     master: bridge0
-    hairpin: true
+    hairpin: false
     state: present
 
 # Bit overkill, but I couldn't figure out how to bring up the bonded
