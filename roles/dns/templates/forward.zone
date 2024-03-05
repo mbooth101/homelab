@@ -1,5 +1,5 @@
 $ORIGIN {{ domain }}.
-$TTL 5m
+$TTL 14400      ; 4 hours
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
 @		IN	SOA	{{ host.fqdn }}. webmaster.{{ domain }}. ( {{ now(utc=true,fmt='%y%m%d%H%M') }} 1h 30m 24h 5m )
@@ -12,5 +12,3 @@ $TTL 5m
 ; Gateway router
 gateway		IN	A	{{ host.ipv4.gateway }}
 gateway		IN	AAAA	{{ host.ipv6.gateway }}
-
-; Service CNAMES

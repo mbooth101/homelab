@@ -1,5 +1,5 @@
 $ORIGIN {{ host.ipv4.bond | ip_ptr }}.
-$TTL 5m
+$TTL 14400      ; 4 hours
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
 @	IN	SOA	{{ host.fqdn }}.  webmaster.{{ domain }}. ( {{ now(utc=true,fmt='%y%m%d%H%M') }} 1h 30m 24h 5m )
