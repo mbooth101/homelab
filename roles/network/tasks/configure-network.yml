@@ -2,12 +2,6 @@
 # we get the DHCP and DNS services up, after which the tasks may be run
 # again to set the proper configuration
 
-# This should find all physical interfaces no matter how they are
-# named and return them in a predictable order
-- name: Create List of Wired NICs
-  ansible.builtin.set_fact:
-    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
-
 - name: Create Bonded Connection
   community.general.nmcli:
     type: bond
@@ -101,10 +95,3 @@
   ansible.builtin.command:
     cmd: "nmcli device reapply bridge0"
   when: bridge_config.changed
-
-# Bit overkill, but I couldn't figure out how to bring up the bonded
-# connection/virtual bridge without killing Ansible's SSH connection
-- name: Reboot Machine
-  ansible.builtin.reboot:
-    msg: "Rebooting to switch to bonded network connection"
-  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"

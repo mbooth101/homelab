@@ -2,6 +2,25 @@
 # refers directly to either the bond0 or bridge0 interfaces should
 # express a dependency on this role
 
-- name: Configure Network Connection
+# This should find all physical interfaces no matter how they are
+# named and return them in a predictable order
+- name: Create List of Wired NICs
+  ansible.builtin.set_fact:
+    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
+
+- name: Configure Network Connections
   ansible.builtin.include_tasks:
     file: configure-network.yml
+
+# Bit overkill, but I couldn't figure out how to bring up the bonded
+# connection/virtual bridge without killing Ansible's SSH connection
+- name: Reboot Machine
+  ansible.builtin.reboot:
+    msg: "Rebooting to switch to bonded network connection"
+  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"
+
+# We may want to refer to the new interfaces later on, so regather the
+# facts if necessary
+- name: Regather Facts About the New Network Connections
+  ansible.builtin.setup:
+  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"
