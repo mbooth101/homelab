@@ -38,11 +38,11 @@
 - name: Add Wired NICs to Bonded Connection
   community.general.nmcli:
     type: bond-slave
+    master: bond0
     ifname: "{{ item }}"
     conn_name: "{{ item }}"
-    master: bond0
     state: present
-  loop: "{{ ether_interfaces[:-1] }}"
+  loop: "{{ ether_interfaces[1:] }}"
 
 - name: Reapply Bonded Connection Settings
   ansible.builtin.command:
@@ -85,9 +85,9 @@
 - name: Add Wired NIC as a Virtual Network Bridge Port
   community.general.nmcli:
     type: bridge-slave
-    ifname: "{{ ether_interfaces[-1] }}"
-    conn_name: "{{ ether_interfaces[-1] }}"
     master: bridge0
+    ifname: "{{ ether_interfaces[0] }}"
+    conn_name: "{{ ether_interfaces[0] }}"
     hairpin: false
     state: present
 
