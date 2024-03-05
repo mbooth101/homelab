@@ -1,4 +1,4 @@
-$ORIGIN {{ host.cidr4 | ip_ptr }}.
+$ORIGIN {{ host.ipv4.bond | ip_ptr }}.
 $TTL 5m
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
@@ -10,6 +10,3 @@ $TTL 5m
 
 ; Gateway router
 1	IN	PTR	gateway.{{ domain }}.
-
-; Managed switch
-2	IN	PTR	switch.{{ domain }}.

@@ -1,4 +1,4 @@
-$ORIGIN {{ host.cidr6 | ip_ptr }}.
+$ORIGIN {{ host.ipv6.bond | ip_ptr }}.
 $TTL 5m
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL

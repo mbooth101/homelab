@@ -1,0 +1,7 @@
+# Role for configuring network connections, any subsequent role that
+# refers directly to either the bond0 or bridge0 interfaces should
+# express a dependency on this role
+
+- name: Configure Network Connection
+  ansible.builtin.include_tasks:
+    file: configure-network.yml

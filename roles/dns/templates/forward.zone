@@ -6,14 +6,11 @@ $TTL 5m
 		IN	NS	{{ host.fqdn }}.
 
 ; This host
-{{ host.name }}	IN	A	{{ host.addr4 }}
-{{ host.name }}	IN	AAAA	{{ host.addr6 }}
+{{ host.name }}	IN	A	{{ host.ipv4.bond_ip }}
+{{ host.name }}	IN	AAAA	{{ host.ipv6.bond_ip }}
 
 ; Gateway router
-gateway		IN	A	{{ host.gate4 }}
-gateway		IN	AAAA	{{ host.gate6 }}
-
-; Managed switch
-switch		IN	A	{{ host.gate4 | ansible.utils.ipmath(1) }}
+gateway		IN	A	{{ host.ipv4.gateway }}
+gateway		IN	AAAA	{{ host.ipv6.gateway }}
 
 ; Service CNAMES

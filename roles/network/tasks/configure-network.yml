@@ -1,0 +1,110 @@
+# These tasks create an initial temporary network configuration until
+# we get the DHCP and DNS services up, after which the tasks may be run
+# again to set the proper configuration
+
+# This should find all physical interfaces no matter how they are
+# named and return them in a predictable order
+- name: Create List of Wired NICs
+  ansible.builtin.set_fact:
+    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
+
+- name: Create Bonded Connection
+  community.general.nmcli:
+    type: bond
+    conn_name: bond0
+    autoconnect: true
+    ip4: "{{ host.ipv4.bond }}"
+    gw4: "{{ host.ipv4.gateway }}"
+    dns4: "{{ host.ipv4.gateway }}"
+    ip6: "{{ host.ipv6.bond }}"
+    gw6: "{{ host.ipv6.gateway }}"
+    dns6: "{{ host.ipv6.gateway }}"
+    mode: balance-alb
+    state: present
+  when: "'bond0' not in ansible_facts"
+
+- name: Configure Bonded Connection
+  community.general.nmcli:
+    type: bond
+    conn_name: bond0
+    autoconnect: true
+    ip4: "{{ host.ipv4.bond }}"
+    gw4: "{{ host.ipv4.gateway }}"
+    dns4: "127.0.0.1"
+    dns4_search: "{{ domain }}"
+    ip6: "{{ host.ipv6.bond }}"
+    gw6: "{{ host.ipv6.gateway }}"
+    dns6: "::1"
+    dns6_search: "{{ domain }}"
+    mode: balance-alb
+    state: present
+  register: bond_config
+  when: "'bond0' in ansible_facts"
+
+- name: Add Wired NICs to Bonded Connection
+  community.general.nmcli:
+    type: bond-slave
+    ifname: "{{ item }}"
+    conn_name: "{{ item }}"
+    master: bond0
+    state: present
+  loop: "{{ ether_interfaces[:-1] }}"
+
+- name: Reapply Bonded Connection Settings
+  ansible.builtin.command:
+    cmd: "nmcli device reapply bond0"
+  when: bond_config.changed
+
+- name: Create Virtual Network Bridge
+  community.general.nmcli:
+    type: bridge
+    conn_name: bridge0
+    autoconnect: true
+    ip4: "{{ host.ipv4.bridge }}"
+    gw4: "{{ host.ipv4.gateway }}"
+    dns4: "{{ host.ipv4.gateway }}"
+    ip6: "{{ host.ipv6.bridge }}"
+    gw6: "{{ host.ipv6.gateway }}"
+    dns6: "{{ host.ipv6.gateway }}"
+    stp: true
+    state: present
+  when: "'bridge0' not in ansible_facts"
+
+- name: Configure Virtual Network Bridge
+  community.general.nmcli:
+    type: bridge
+    conn_name: bridge0
+    autoconnect: true
+    ip4: "{{ host.ipv4.bridge }}"
+    gw4: "{{ host.ipv4.gateway }}"
+    dns4: "127.0.0.1"
+    dns4_search: "{{ domain }}"
+    ip6: "{{ host.ipv6.bridge }}"
+    gw6: "{{ host.ipv6.gateway }}"
+    dns6: "::1"
+    dns6_search: "{{ domain }}"
+    stp: true
+    state: present
+  register: bridge_config
+  when: "'bridge0' in ansible_facts"
+
+- name: Add Wired NIC as a Virtual Network Bridge Port
+  community.general.nmcli:
+    type: bridge-slave
+    ifname: "{{ ether_interfaces[-1] }}"
+    conn_name: "{{ ether_interfaces[-1] }}"
+    master: bridge0
+    hairpin: false
+    state: present
+
+- name: Reapply Virtual Network Bridge Settings
+  ansible.builtin.command:
+    cmd: "nmcli device reapply bridge0"
+  when: bridge_config.changed
+
+# Bit overkill, but I couldn't figure out how to bring up the bonded
+# connection/virtual bridge without killing Ansible's SSH connection
+- name: Reboot Machine
+  ansible.builtin.reboot:
+    msg: "Rebooting to switch to bonded network connection"
+  when: "'bond0' not in ansible_facts or 'bridge0' not in ansible_facts"

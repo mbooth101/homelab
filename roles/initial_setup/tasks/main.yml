@@ -7,10 +7,6 @@
     group: wheel
     mode: '0770'
 
-- name: Configure Network Connection
-  ansible.builtin.include_tasks:
-    file: configure-network-connection.yml
-
 - name: Configure Ansible User
   ansible.builtin.include_tasks:
     file: configure-ansible-user.yml
