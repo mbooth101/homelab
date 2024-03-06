@@ -1,6 +1,5 @@
 ---
 dependencies:
   - role: network
-  - role: radvd
   - role: postgres
   - role: firewall
