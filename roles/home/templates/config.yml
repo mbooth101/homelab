@@ -22,13 +22,13 @@ services:
     items:
       - name: "Cockpit"
         logo: "assets/services/cockpit.png"
-        url: "https://cockpit.matbooth.co.uk/"
+        url: "https://cockpit.{{ domain }}/"
       - name: "Pi-hole"
         logo: "assets/services/pihole.png"
-        url: "https://pihole.matbooth.co.uk/"
+        url: "https://pihole.{{ domain }}/"
       - name: "Jenkins"
         logo: "assets/services/jenkins.png"
-        url: "https://jenkins.matbooth.co.uk/"
+        url: "https://jenkins.{{ domain }}/"
   - name: "External Services"
     icon: "fas fa-cloud"
     items:
