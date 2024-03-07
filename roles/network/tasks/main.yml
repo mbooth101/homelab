@@ -2,6 +2,10 @@
 # refers directly to either the bond0 or bridge0 interfaces should
 # express a dependency on this role
 
+- name: Permanantly Disable Wifi Adapter
+  ansible.builtin.command:
+    cmd: /usr/sbin/rfkill block wlan
+
 # This should find all physical interfaces no matter how they are
 # named and return them in a predictable order
 - name: Create List of Wired NICs

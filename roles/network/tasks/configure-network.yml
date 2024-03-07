@@ -13,7 +13,7 @@
     ip6: "{{ host.ipv6.bond }}"
     gw6: "{{ host.ipv6.gateway }}"
     dns6: "{{ host.ipv6.gateway }}"
-    mode: balance-alb
+    mode: balance-xor
     state: present
   when: "'bond0' not in ansible_facts"
 
@@ -30,7 +30,7 @@
     gw6: "{{ host.ipv6.gateway }}"
     dns6: "::1"
     dns6_search: "{{ domain }}"
-    mode: balance-alb
+    mode: balance-xor
     state: present
   register: bond_config
   when: "'bond0' in ansible_facts"
@@ -43,6 +43,7 @@
     conn_name: "{{ item }}"
     state: present
   loop: "{{ ether_interfaces[1:] }}"
+  when: item.startswith('en')
 
 - name: Reapply Bonded Connection Settings
   ansible.builtin.command:
