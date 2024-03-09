@@ -5,6 +5,7 @@
 - name: Permanantly Disable Wifi Adapter
   ansible.builtin.command:
     cmd: /usr/sbin/rfkill block wlan
+  changed_when: False
 
 # This should find all physical interfaces no matter how they are
 # named and return them in a predictable order
@@ -15,6 +16,14 @@
 - name: Configure Network Connections
   ansible.builtin.include_tasks:
     file: configure-network.yml
+
+# Disable the systemd stub listener in favour of using the configured
+# DNS resolvers directly
+- name: Disable Local Resolver's Stub Listener
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: 'DNSStubListener=yes'
+    line: 'DNSStubListener=no'
 
 # Bit overkill, but I couldn't figure out how to bring up the bonded
 # connection/virtual bridge without killing Ansible's SSH connection

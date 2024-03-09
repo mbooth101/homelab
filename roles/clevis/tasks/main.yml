@@ -1,0 +1,64 @@
+# Role for configuring the TPM 2 chip to automatically decrypt the LUKS
+# encrypted partitions at boot, for details see:
+# https://fedoramagazine.org/automatically-decrypt-your-disk-using-tpm2/
+
+- name: Install Clevis
+  ansible.builtin.dnf:
+    name:
+      - clevis
+      - clevis-luks
+      - clevis-dracut
+      - clevis-systemd
+    state: present
+
+- name: Query Encrypted Block Device Details
+  ansible.builtin.command:
+    cmd: "/usr/sbin/blkid -t TYPE=crypto_LUKS -o export"
+  register: block_devs
+  changed_when: False
+
+- name: Generate List of Encrypted Block Devices
+  ansible.builtin.set_fact:
+    luks_devices: "{{ [ luks_devices | default([]), dict( _keys | zip(_vals)) ] | flatten(1) }}"
+  loop: "{{ block_devs.stdout | split('\n\n') | list }}"
+  vars:
+    _props: "{{ item.split('\n') | select() | list }}"
+    _keys: "{{ _props | map('split', '=') | map('first') | list }}"
+    _vals: "{{ _props | map('split', '=') | map('last') | list }}"
+
+- name: Find Encrypted Block Device Containing Root Filesystem
+  ansible.builtin.set_fact:
+    root_luks_device: "{{ luks_devices | selectattr('UUID', 'eq', _uuid) | first }}"
+  vars:
+    _root: "{{ ansible_mounts | selectattr('mount', 'eq', '/') | first }}"
+    _uuid: "{{ _root.device.split('-')[1:] | join('-') }}"
+  when: luks_devices | length > 0
+
+- name: Determine if Encrypted Root Block Device is Bound
+  ansible.builtin.command:
+    cmd: "clevis luks list -d {{ root_luks_device.DEVNAME }} tpm2"
+  register: tpm2_slots
+  changed_when: False
+  when: luks_devices | length > 0
+
+# Volume decryption is done in two steps:
+# - The root volume must be decrypted at early boot time so we use Dracut
+#   to rebuild the initramfs including Clevis to do the decryption
+# - Non-root volumes may be decrypted at late boot time by systemd
+- name: Configure TPM2 Chip
+  block:
+    - name: Regenerate Initramfs
+      ansible.builtin.command:
+        cmd: "dracut -fv --regenerate-all"
+    - name: Enroll Root Volume With The Dracut Unlocker
+      ansible.builtin.command:
+        cmd: "clevis luks bind -d {{ root_luks_device.DEVNAME }} -k - tpm2 '{\"pcr_ids\":\"1,4,5,7\"}'"
+        stdin: "{{ luks_password }}"
+    - name: Enroll Secondary Volumes With The Systemd Unlocker
+      ansible.builtin.command:
+        cmd: "systemd-cryptenroll {{ item.DEVNAME }} --tpm2-device=auto --tpm2-pcrs=1,4,5,7"
+      loop: "{{ luks_devices }}"
+      when: item.UUID != root_luks_device.UUID
+      environment:
+        PASSWORD: "{{ luks_password }}"
+  when: tpm2_slots.stdout_lines | length == 0

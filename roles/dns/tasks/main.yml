@@ -91,18 +91,6 @@
   notify:
     - Reload BIND DNS
 
-# Disable the systemd stub listener in favour of BIND providing a
-# local caching DNS resolver
-- name: Disable Local Resolver's DNS Stub Listener
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/resolved.conf
-    regexp: 'DNSStubListener=yes'
-    line: 'DNSStubListener=no'
-- name: Restart Resolver
-  ansible.builtin.systemd_service:
-    name: systemd-resolved.service
-    state: restarted
-
 # This updates the network connection's DNS servers and causes
 # systemd to rewrite the /etc/resolv.conf file to contain the
 # updated DNS resolver details
