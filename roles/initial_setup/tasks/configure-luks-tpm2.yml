@@ -1,8 +1,8 @@
-# Role for configuring the TPM 2 chip to automatically decrypt the LUKS
+# Tasks for configuring the TPM 2 chip to automatically decrypt the LUKS
 # encrypted partitions at boot, for details see:
 # https://fedoramagazine.org/automatically-decrypt-your-disk-using-tpm2/
 
-- name: Install Clevis
+- name: Install Clevis LUKS Unlocker
   ansible.builtin.dnf:
     name:
       - clevis
@@ -16,11 +16,13 @@
     cmd: "/usr/sbin/blkid -t TYPE=crypto_LUKS -o export"
   register: block_devs
   changed_when: False
+  failed_when: block_devs.rc != 0 and block_devs.rc != 2
 
 - name: Generate List of Encrypted Block Devices
   ansible.builtin.set_fact:
     luks_devices: "{{ [ luks_devices | default([]), dict( _keys | zip(_vals)) ] | flatten(1) }}"
   loop: "{{ block_devs.stdout | split('\n\n') | list }}"
+  when: block_devs.stdout_lines | length > 0
   vars:
     _props: "{{ item.split('\n') | select() | list }}"
     _keys: "{{ _props | map('split', '=') | map('first') | list }}"
@@ -32,14 +34,14 @@
   vars:
     _root: "{{ ansible_mounts | selectattr('mount', 'eq', '/') | first }}"
     _uuid: "{{ _root.device.split('-')[1:] | join('-') }}"
-  when: luks_devices | length > 0
+  when: luks_devices | default([]) | length > 0
 
 - name: Determine if Encrypted Root Block Device is Bound
   ansible.builtin.command:
     cmd: "clevis luks list -d {{ root_luks_device.DEVNAME }} tpm2"
   register: tpm2_slots
   changed_when: False
-  when: luks_devices | length > 0
+  when: luks_devices | default([]) | length > 0
 
 # Volume decryption is done in two steps:
 # - The root volume must be decrypted at early boot time so we use Dracut
@@ -61,4 +63,4 @@
       when: item.UUID != root_luks_device.UUID
       environment:
         PASSWORD: "{{ luks_password }}"
-  when: tpm2_slots.stdout_lines | length == 0
+  when: luks_devices | default([]) | length > 0 and tpm2_slots.stdout_lines | length == 0

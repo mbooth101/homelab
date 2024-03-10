@@ -7,6 +7,10 @@
     group: wheel
     mode: '0770'
 
+- name: Configure TPM2 for Automatic LUKS Volume Decryption
+  ansible.builtin.include_tasks:
+    file: configure-luks-tpm2.yml
+
 - name: Configure Ansible User
   ansible.builtin.include_tasks:
     file: configure-ansible-user.yml
