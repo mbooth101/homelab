@@ -1,17 +1,9 @@
+# When including these tasks into a role set the "cname" variable to
+# override the default value of "role_name"
+
 - name: Add CNAME Record to the DNS Zone
-  ansible.builtin.lineinfile:
-    path: "{{ data_dir | dirname }}/dns/{{ domain }}.zone"
-    regexp: "^{{ role_name }}"
-    line: "{{ role_name }}\tIN\tCNAME\t{{ host.fqdn }}."
-  register: cname_zone
-  notify:
-    - Reload BIND DNS
-
-- name: Bump the Timestamp in the SOA DNS Record
-  ansible.builtin.lineinfile:
-    path: "{{ data_dir | dirname}}/dns/{{ domain }}.zone"
-    regexp: "(.*)SOA(.*)[0-9]{10,10}(.*)"
-    line: "\\1SOA\\g<2>{{ now(utc=true,fmt='%y%m%d%H%M') }}\\3"
-    backrefs: true
-  when: cname_zone.changed
-
+  ansible.builtin.command:
+    cmd: "nsupdate -k /etc/named/dhcp-ddns.key"
+    stdin: |
+      update add {{ cname | default(role_name) }}.{{ domain }} 14400 IN CNAME {{ host.fqdn }}
+      send

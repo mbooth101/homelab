@@ -2,4 +2,5 @@
 - name: Reload BIND DNS
   ansible.builtin.systemd_service:
     name: named.service
+    daemon_reload: true
     state: reloaded
