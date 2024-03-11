@@ -9,3 +9,4 @@
     stdin: |
       update add {{ cname | default(role_name) }}.{{ domain }} 14400 IN CNAME {{ host.fqdn }}
       send
+  when: lookup('community.general.dig', cname | default(role_name) + '.' + domain + './CNAME', '@' + host.ipv4.bond_ip ) == "NXDOMAIN"
