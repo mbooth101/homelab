@@ -1,6 +1,6 @@
 ---
-- name: Reload Nginx
+- name: Reload Apache
   ansible.builtin.systemd_service:
-    name: nginx.service
+    name: httpd.service
     daemon_reload: true
     state: reloaded

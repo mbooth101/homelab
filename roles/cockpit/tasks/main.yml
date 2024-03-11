@@ -1,6 +1,6 @@
-- name: Configure Nginx for Cockpit
+- name: Configure Apache for Cockpit
   ansible.builtin.include_tasks:
-    file: ../../proxy/tasks/configure-site.yml
+    file: ../../apache/tasks/configure-site.yml
 
 - name: Install Cockpit
   ansible.builtin.dnf:
@@ -24,16 +24,6 @@
     - { src: disallowed-users , dest: "/etc/cockpit/disallowed-users" }
   notify:
     - Restart Cockpit
-
-- name: Set SELinux Context for Configured Cockpit Port
-  community.general.seport:
-    ports: "{{ http_port }}"
-    proto: "{{ item }}"
-    setype: websm_port_t
-    state: present
-  loop:
-    - tcp
-    - udp
 
 - name: Ensure Cockpit Socket Overrides Directory
   ansible.builtin.file:

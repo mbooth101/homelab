@@ -1,12 +1,8 @@
-- name: Configure Nginx for Homer Dashboard
+- name: Configure Apache for Homer Dashboard
   ansible.builtin.include_tasks:
-    file: ../../proxy/tasks/configure-site.yml
-
-- name: Ensure Homer Web Directory
-  ansible.builtin.file:
-    path: "{{ www_root }}"
-    state: directory
-    mode: '0755'
+    file: ../../apache/tasks/configure-site.yml
+  vars:
+    site_static: true
 
 - name: Download Homer Dashboard
   ansible.builtin.get_url:
@@ -17,7 +13,7 @@
 - name: Install Homer Dashboard
   ansible.builtin.unarchive:
     src: "/srv/homer-v{{ version }}.zip"
-    dest: "{{ www_root }}"
+    dest: "{{ www_root }}/{{ role_name }}"
     remote_src: yes
   when: download.changed
 
@@ -27,21 +23,21 @@
     state: "{{ item.state }}"
     mode: '0755'
   loop:
-    - { path: "{{ www_root }}/assets/tools", state: absent }
-    - { path: "{{ www_root }}/assets/services", state: directory }
+    - { path: "{{ www_root }}/{{ role_name }}/assets/tools", state: absent }
+    - { path: "{{ www_root }}/{{ role_name }}/assets/services", state: directory }
 
 - name: Copy Homer Assets
   ansible.builtin.copy:
     src: "{{ item }}"
-    dest: "{{ www_root }}/assets/services"
+    dest: "{{ www_root }}/{{ role_name }}/assets/services"
     mode: '0644'
   with_fileglob:
     - "*.png"
   notify:
-    - Reload Nginx
+    - Reload Apache
 
 - name: Install Homer Configuration
   ansible.builtin.template:
     src: config.yml
-    dest: "{{ www_root }}/assets/config.yml"
+    dest: "{{ www_root }}/{{ role_name }}/assets/config.yml"
     mode: '0644'

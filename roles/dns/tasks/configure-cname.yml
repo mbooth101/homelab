@@ -1,5 +1,7 @@
-# When including these tasks into a role set the "cname" variable to
-# override the default value of "role_name"
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - cname: set to override the default value of "role_name"
 
 - name: Add CNAME Record to the DNS Zone
   ansible.builtin.command:

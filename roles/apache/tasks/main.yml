@@ -1,0 +1,72 @@
+- name: Install Apache And Certbot
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - mod_ssl
+      - mod_auth_gssapi
+      - mod_auth_mellon
+      - certbot
+    state: present
+
+- name: Create Apache Site Config Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    seuser: system_u
+    setype: httpd_config_t
+    mode: '0755'
+  loop:
+    - { path: /etc/httpd/conf.d/vhosts.d }
+    - { path: /etc/httpd/conf.d/includes.d }
+
+- name: Create Apache Web Root Directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ www_root }}"
+    setype: httpd_sys_content_t
+    mode: '0755'
+
+- name: Install Main Apache Configuration
+  ansible.builtin.template:
+    src: httpd.conf
+    dest: "/etc/httpd/conf/httpd.conf"
+    mode: '0644'
+  notify:
+    - Reload Apache
+
+- name: Install Placeholder Site For Default Virtual Host
+  ansible.builtin.include_tasks: configure-site.yml
+  vars:
+    site_name: default
+    site_static: true
+
+- name: Configure SELinux To Allow Proxy Connections
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+
+- name: Enable/Start Apache
+  ansible.builtin.systemd_service:
+    name: httpd.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Enable/Start TLS Certificate Renewal Timer
+  ansible.builtin.systemd_service:
+    name: certbot-renew.timer
+    enabled: true
+    masked: no
+    state: started
+
+- name: Open Firewall for HTTP/HTTPS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - http
+    - https
+  notify:
+    - Reload Firewall

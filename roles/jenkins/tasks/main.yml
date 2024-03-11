@@ -1,10 +1,10 @@
-- name: Configure Nginx for Jenkins
+- name: Configure Apache for Jenkins
   ansible.builtin.include_tasks:
-    file: ../../proxy/tasks/configure-site.yml
+    file: ../../apache/tasks/configure-site.yml
 
 - name: Enable Jenkins Repository
-  ansible.builtin.get_url:
-    url: https://pkg.jenkins.io/redhat/jenkins.repo
+  ansible.builtin.copy:
+    src: jenkins.repo
     dest: /etc/yum.repos.d/jenkins.repo
     mode: '0644'
 

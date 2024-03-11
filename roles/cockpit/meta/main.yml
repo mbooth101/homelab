@@ -1,5 +1,5 @@
 ---
 dependencies:
-  - role: proxy
+  - role: apache
   - role: containerisation
   - role: virtualisation

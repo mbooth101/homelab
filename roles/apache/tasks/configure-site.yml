@@ -1,0 +1,114 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - site_name: set to override the default value of "role_name"
+# - site_static: set to true to configure static site hosting
+
+- name: Ensure Site Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}"
+    mode: '0755'
+
+- name: Ensure Document Root Directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ www_root }}/{{ site_name | default(role_name) }}"
+    mode: '0755'
+  when: site_static | default(false)
+
+# This section installs a pre-generated self-signed certificate if Certbot
+# has not yet requested one from LetsEncrypt
+
+- name: Ensure Site TLS Certificate Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+    mode: '0710'
+  loop:
+    - "/etc/letsencrypt/archive/{{ srv_fqdn }}"
+    - "/etc/letsencrypt/live/{{ srv_fqdn }}"
+
+- name: Checking For Installed TLS Certificate
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
+  register: tls_cert
+
+- name: Installing Self-Signed TLS Certificate
+  copy:
+    src: "../../apache/files/cert.pem"
+    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when: not tls_cert.stat.exists
+
+- name: Checking For Installed TLS Certificate Key
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
+  register: tls_key
+
+- name: Installing Self-Signed TLS Certificate Key
+  copy:
+    src: "../../apache/files/key.pem"
+    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when: not tls_key.stat.exists
+
+# This file configures a vhost for the calling role, including all necessary TLS
+# moving parts
+
+- name: Install Site Virtual Host
+  ansible.builtin.template:
+    src: ../../apache/templates/apache.vhost.conf
+    dest: "/etc/httpd/conf.d/vhosts.d/{{ _pri_name }}.conf"
+    setype: httpd_config_t
+    mode: '0644'
+  vars:
+    _site: "{{ site_name | default(role_name) }}"
+    _pri_name: "{{ (_site == 'default') | ternary('00-default', '10-' + _site) }}"
+  notify:
+    - Reload Apache
+
+# All files supplied by the calling role named like "*.apache.conf" will be
+# included by the above vhost configuration
+
+- name: Install Site Custom Config
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/{{ item | basename }}"
+    setype: httpd_config_t
+    mode: '0644'
+  with_fileglob:
+    - "{{ role_path }}/templates/*.apache.conf"
+  when: not site_static | default(false)
+  notify:
+    - Reload Apache
+
+- name: Install Static Site Config
+  ansible.builtin.template:
+    src: "../../apache/templates/apache.static.conf"
+    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/static.conf"
+    setype: httpd_config_t
+    mode: '0644'
+  when: site_static | default(false)
+  notify:
+    - Reload Apache
+
+- name: Install Default Virtual Host Placeholder
+  ansible.builtin.template:
+    src: "index.html"
+    dest: "{{ www_root }}/default/index.html"
+  when: site_name | default(role_name) == 'default'
+
+# Adds a DNS alias so that the site is addressable and the name-based
+# vhosts function properly
+
+- name: Configure DNS CNAME
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-cname.yml
+  when: site_name | default(role_name) != 'default'
+  vars:
+    cname: "{{ site_name | default(role_name) }}"

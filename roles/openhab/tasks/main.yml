@@ -1,6 +1,6 @@
-- name: Configure Nginx for OpenHAB
+- name: Configure Apache for OpenHAB
   ansible.builtin.include_tasks:
-    file: ../../proxy/tasks/configure-site.yml
+    file: ../../apache/tasks/configure-site.yml
 
 - name: Enable OpenHAB Repository
   ansible.builtin.copy:
