@@ -36,6 +36,7 @@
 - name: Find the DHCP DDNS Secret
   ansible.builtin.shell: "grep secret /etc/named/dhcp-ddns.key | sed -e 's/^.*\"\\(.*\\)\";/\\1/'"
   register: ddns_secret
+  changed_when: False
 
 - name: Install Kea DHCP DDNS Configuration
   ansible.builtin.template:

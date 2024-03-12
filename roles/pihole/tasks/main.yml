@@ -1,6 +1,6 @@
-- name: Configure Nginx for Pi-hole
+- name: Configure Apache for Pi-hole
   ansible.builtin.include_tasks:
-    file: ../../proxy/tasks/configure-site.yml
+    file: ../../apache/tasks/configure-site.yml
 
 - name: Enable Pi-hole Repository
   community.general.copr:
@@ -34,11 +34,8 @@
 
 - name: Open Firewall for DNS
   ansible.posix.firewalld:
-    service: "{{ item }}"
+    service: dns
     permanent: true
     state: enabled
-  with_items:
-    - dns
   notify:
     - Reload Firewall
-

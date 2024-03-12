@@ -23,19 +23,19 @@
           30346266633137663666653737633362313065643265356333313266663738636630616633386464
           6566363034313266300a663430356334366337343861663134663732303833353766653765343963
           32326436663130643532623463333932663664393033303537356536316438666662
+    - role: pihole
+      vars:
+        http_port: 9001
+    - role: jenkins
+      vars:
+        http_port: 9002
+    - role: openhab
+      vars:
+        http_port: 9003
     - role: cockpit
       vars:
-        http_port: 9000
-          #    - role: pihole
-          #      vars:
-          #        http_port: 9001
-          #    - role: jenkins
-          #      vars:
-          #        http_port: 9002
-          #    - role: openhab
-          #      vars:
-          #        http_port: 9003
-          #    - role: home
+        http_port: 9090
+    - role: home
   become: yes
 
   vars:
@@ -62,4 +62,4 @@
 
     srv_fqdn: "{{ role_name }}.{{ domain }}"
     data_dir: "/srv/data/{{ role_name }}"
-    www_root: "/srv/www/{{ role_name }}"
+    www_root: "/srv/www"

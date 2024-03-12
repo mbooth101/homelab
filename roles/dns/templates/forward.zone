@@ -2,7 +2,7 @@ $ORIGIN {{ domain }}.
 $TTL 14400      ; 4 hours
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
-@		IN	SOA	{{ host.fqdn }}. webmaster.{{ domain }}. ( {{ now(utc=true,fmt='%y%m%d%H%M') }} 1h 30m 24h 5m )
+@		IN	SOA	{{ host.fqdn }}. webmaster.{{ domain }}. ( 0 1h 30m 24h 5m )
 		IN	NS	{{ host.fqdn }}.
 
 ; This host

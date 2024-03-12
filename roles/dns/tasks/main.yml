@@ -40,6 +40,30 @@
     name: "{{ host.name }}"
     use: systemd
 
+# Disable systemd resolver features in favour of using the configured DNS
+# resolvers directly
+- name: Disable Unneeded Local Resolver Features
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '{{ item }}=.*'
+    line: '{{ item }}=no'
+  loop:
+    - DNSStubListener
+    - LLMNR
+    - MulticastDNS
+  notify:
+    - Restart Resolver
+
+- name: Set SELinux Context for Non-Standard DNS Port
+  community.general.seport:
+    ports: 5335
+    proto: "{{ item }}"
+    setype: dns_port_t
+    state: present
+  loop:
+    - tcp
+    - udp
+
 - name: Install Main DNS Configuration
   ansible.builtin.template:
     src: "{{ item.src }}"
@@ -91,13 +115,6 @@
   notify:
     - Reload BIND DNS
 
-# This updates the network connection's DNS servers and causes
-# systemd to rewrite the /etc/resolv.conf file to contain the
-# updated DNS resolver details
-- name: Reconfigure Network Connections
-  ansible.builtin.include_tasks:
-    file: ../../network/tasks/configure-network.yml
-
 - name: Ensure BIND DNS Service Overrides Directory
   ansible.builtin.file:
     state: directory
@@ -118,11 +135,3 @@
     enabled: true
     masked: no
     state: started
-
-- name: Open Firewall for DNS
-  ansible.posix.firewalld:
-    service: dns
-    permanent: true
-    state: enabled
-  notify:
-    - Reload Firewall

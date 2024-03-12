@@ -1,19 +1,16 @@
-# Pi-hole configuration file (vDev-9e3ccd91)
+# Pi-hole configuration file (vDev-abcbcc58)
 # Encoding: UTF-8
 # This file is managed by pihole-FTL
-# Last updated on 2024-02-16 16:13:13
+# Last updated on 2024-03-12 18:57:28
 
 [dns]
   # Array of upstream DNS servers used by Pi-hole
-  # Example: [ "8.8.8.8", "127.0.0.1#5353", "docker-resolver" ]
+  # Example: [ "8.8.8.8", "127.0.0.1#5335", "docker-resolver" ]
   #
   # Possible values are:
   #     array of IP addresses and/or hostnames, optionally with a port (#...)
   upstreams = [
-    "8.8.8.8",
-    "8.8.4.4",
-    "2001:4860:4860:0:0:0:0:8888",
-    "2001:4860:4860:0:0:0:0:8844"
+    "::1#5335"
   ] ### CHANGED, default = []
 
   # Use this option to control deep CNAME inspection. Disabling it might be beneficial
@@ -71,7 +68,7 @@
   #       hostname.
   #   - "PI.HOLE"
   #       Respond with "pi.hole".
-  piholePTR = "HOSTNAMEFQDN" ### CHANGED, default = "PI.HOLE"
+  piholePTR = "PI.HOLE"
 
   # How should FTL handle queries when the gravity database is not available?
   #
@@ -136,7 +133,7 @@
   # Should all reverse lookups for private IP ranges (i.e., 192.168.x.y, etc) which are
   # not found in /etc/hosts or the DHCP leases file be answered with "no such domain"
   # rather than being forwarded upstream?
-  bogusPriv = true
+  bogusPriv = false ### CHANGED, default = true
 
   # Validate DNS replies using DNSSEC?
   dnssec = true ### CHANGED, default = false
@@ -492,6 +489,15 @@
   # How often do we store queries in FTL's database [seconds]?
   DBinterval = 60
 
+  # Should FTL enable Write-Ahead Log (WAL) mode for the on-disk query database
+  # (configured via files.database)?
+  # It is recommended to leave this setting enabled for performance reasons. About the
+  # only reason to disable WAL mode is if you are experiencing specific issues with it,
+  # e.g., when using a database that is accessed from multiple hosts via a network
+  # share. When this setting is disabled, FTL will use SQLite3's default journal mode
+  # (rollback journal in DELETE mode).
+  useWAL = true
+
   [database.network]
     # Should FTL analyze the local ARP cache? When disabled, client identification and the
     # network table will stop working reliably.
@@ -507,7 +513,7 @@
   #
   # Possible values are:
   #     <valid domain>
-  domain = "{{ srv_fqdn }}" ### CHANGED, default = "pi.hole"
+  domain = "{{ role_name }}.{{ domain }}" ### CHANGED, default = "pi.hole"
 
   # Webserver access control list (ACL) allowing for restrictions to be put on the list
   # of IP addresses which have access to the web server. The ACL is a comma separated

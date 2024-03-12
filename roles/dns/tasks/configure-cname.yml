@@ -5,8 +5,7 @@
 
 - name: Add CNAME Record to the DNS Zone
   ansible.builtin.command:
-    cmd: "nsupdate -k /etc/named/dhcp-ddns.key"
+    cmd: "nsupdate -6 -l -k /etc/named/dhcp-ddns.key -p 5335"
     stdin: |
       update add {{ cname | default(role_name) }}.{{ domain }} 14400 IN CNAME {{ host.fqdn }}
       send
-  when: lookup('community.general.dig', cname | default(role_name) + '.' + domain + './CNAME', '@' + host.ipv4.bond_ip ) == "NXDOMAIN"
