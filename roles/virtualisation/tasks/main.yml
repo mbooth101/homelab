@@ -7,7 +7,19 @@
       - libvirt-daemon-driver-nwfilter
       - libvirt-daemon-driver-qemu
       - libvirt-daemon-driver-secret
-      - libvirt-daemon-driver-storage
+        # Installing initscripts and chkconfig fails with:
+        # 1 error: unpacking of archive failed on file /etc/init.d;65f76e71:
+        #   cpio: File from package already exists as a directory in system
+        # 2 error: chkconfig-1.26-1.fc39.x86_64: install failed
+        # So only install a subset of storage drivers to avoid installing
+        # them
+      - libvirt-daemon-driver-storage-disk
+      - libvirt-daemon-driver-storage-iscsi
+      - libvirt-daemon-driver-storage-iscsi-direct
+      - libvirt-daemon-driver-storage-logical
+      - libvirt-daemon-driver-storage-mpath
+      - libvirt-daemon-driver-storage-rbd
+      - libvirt-daemon-driver-storage-scsi
       - libvirt-daemon-lock
       - libvirt-daemon-log
       - libvirt-daemon-plugin-lockd

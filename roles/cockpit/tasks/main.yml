@@ -10,6 +10,11 @@
       - cockpit-pcp
       - cockpit-podman
       - cockpit-selinux
+    # No weak deps avoids virt-install -> libvirt-daemon-config-network
+    # and this prevents the default virtual networking configuration
+    # from clashing with our other DHCP and DNS services -- we'll be
+    # creating virtual machines remotely using virt-manager anyway
+    install_weak_deps: false
     state: present
 
 - name: Install Cockpit Configuration
@@ -60,12 +65,3 @@
     enabled: true
     masked: no
     state: started
-
-# The default NAT device conflicts with the DHCP service, so we
-# need to remove it, but for some reason it doesn't show up
-# immediately, only after the Cockpit management interface is
-# available so it's done here instead of in the virt role
-- name: Delete Default LibVirt Network
-  community.libvirt.virt_net:
-    command: undefine
-    name: default
