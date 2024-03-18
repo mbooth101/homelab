@@ -60,6 +60,5 @@
         network: "{{ inventory_host6 | ansible.utils.ipaddr('network') }}"
         gateway: "{{ inventory_host6 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
 
-    srv_fqdn: "{{ role_name }}.{{ domain }}"
     data_dir: "/srv/data/{{ role_name }}"
     www_root: "/srv/www"

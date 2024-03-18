@@ -26,18 +26,18 @@
     path: "{{ item }}"
     mode: '0710'
   loop:
-    - "/etc/letsencrypt/archive/{{ srv_fqdn }}"
-    - "/etc/letsencrypt/live/{{ srv_fqdn }}"
+    - "/etc/letsencrypt/archive/{{ site_name | default(role_name) }}"
+    - "/etc/letsencrypt/live/{{ site_name | default(role_name) }}"
 
 - name: Checking For Installed TLS Certificate
   ansible.builtin.stat:
-    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
+    path: "/etc/letsencrypt/live/{{ site_name | default(role_name) }}/fullchain.pem"
   register: tls_cert
 
 - name: Installing Self-Signed TLS Certificate
   copy:
     src: "../../apache/files/cert.pem"
-    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/fullchain.pem"
+    dest: "/etc/letsencrypt/live/{{ site_name | default(role_name) }}/fullchain.pem"
     owner: root
     group: root
     mode: '0640'
@@ -45,13 +45,13 @@
 
 - name: Checking For Installed TLS Certificate Key
   ansible.builtin.stat:
-    path: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
+    path: "/etc/letsencrypt/live/{{ site_name | default(role_name) }}/privkey.pem"
   register: tls_key
 
 - name: Installing Self-Signed TLS Certificate Key
   copy:
     src: "../../apache/files/key.pem"
-    dest: "/etc/letsencrypt/live/{{ srv_fqdn }}/privkey.pem"
+    dest: "/etc/letsencrypt/live/{{ site_name | default(role_name) }}/privkey.pem"
     owner: root
     group: root
     mode: '0640'
