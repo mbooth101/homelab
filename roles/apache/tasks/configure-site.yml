@@ -3,6 +3,7 @@
 #
 # - site_name: set to override the default value of "role_name"
 # - site_static: set to true to configure static site hosting
+# - site_proxy: set to true to configure basic proxying to another port
 
 - name: Ensure Site Config Directory
   ansible.builtin.file:
@@ -75,25 +76,34 @@
 # All files supplied by the calling role named like "*.apache.conf" will be
 # included by the above vhost configuration
 
-- name: Install Site Custom Config
+- name: Install Custom Site Config
   ansible.builtin.template:
     src: "{{ item }}"
-    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/{{ item | basename }}"
+    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/10-{{ item | basename }}"
     setype: httpd_config_t
     mode: '0644'
   with_fileglob:
     - "{{ role_path }}/templates/*.apache.conf"
-  when: not site_static | default(false)
   notify:
     - Reload Apache
 
 - name: Install Static Site Config
   ansible.builtin.template:
     src: "../../apache/templates/apache.static.conf"
-    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/static.conf"
+    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/00-static.conf"
     setype: httpd_config_t
     mode: '0644'
   when: site_static | default(false)
+  notify:
+    - Reload Apache
+
+- name: Install Proxied Site Config
+  ansible.builtin.template:
+    src: "../../apache/templates/apache.proxy.conf"
+    dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/00-proxy.conf"
+    setype: httpd_config_t
+    mode: '0644'
+  when: site_proxy | default(false)
   notify:
     - Reload Apache
 

@@ -1,17 +1,19 @@
 - name: Configure Apache for OpenHAB
   ansible.builtin.include_tasks:
     file: ../../apache/tasks/configure-site.yml
+  vars:
+    site_proxy: true
+
+- name: Import GPG Key for OpenHAB Repository
+  ansible.builtin.rpm_key:
+    key: https://openhab.jfrog.io/artifactory/api/gpg/key/public
+    state: present
 
 - name: Enable OpenHAB Repository
   ansible.builtin.copy:
     src: openhab.repo
     dest: /etc/yum.repos.d/openhab.repo
     mode: '0644'
-
-- name: Import GPG Key for OpenHAB Repository
-  ansible.builtin.rpm_key:
-    key: https://openhab.jfrog.io/artifactory/api/gpg/key/public
-    state: present
 
 - name: Install OpenHAB
   ansible.builtin.dnf:
