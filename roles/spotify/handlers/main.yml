@@ -1,0 +1,6 @@
+---
+- name: Restart Spotify
+  ansible.builtin.systemd_service:
+    name: spotifyd.service
+    daemon_reload: true
+    state: restarted

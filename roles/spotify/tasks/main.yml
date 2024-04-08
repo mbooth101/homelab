@@ -1,0 +1,35 @@
+- name: Enable Spotify Repository
+  community.general.copr:
+    state: enabled
+    name: mbooth/spotifyd
+
+# Install latest version always because we are building this RPM
+# ourselves
+- name: Install Spotify
+  ansible.builtin.dnf:
+    name:
+      - spotifyd
+    state: latest
+
+- name: Install Spotify Configuration
+  ansible.builtin.template:
+    src: spotifyd.conf
+    dest: "/etc/spotifyd.conf"
+    mode: '0644'
+  notify:
+    - Restart Spotify
+
+- name: Enable/Start Spotify
+  ansible.builtin.systemd_service:
+    name: spotifyd.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Open Firewall for Spotify
+  ansible.posix.firewalld:
+    service: spotify-connect
+    permanent: true
+    state: enabled
+  notify:
+    - Reload Firewall

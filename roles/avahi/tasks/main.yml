@@ -1,0 +1,20 @@
+- name: Install Avahi
+  ansible.builtin.dnf:
+    name:
+      - avahi
+    state: present
+
+- name: Enable/Start Avahi
+  ansible.builtin.systemd_service:
+    name: avahi-daemon.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Open Firewall for Avahi
+  ansible.posix.firewalld:
+    service: mdns
+    permanent: true
+    state: enabled
+  notify:
+    - Reload Firewall
