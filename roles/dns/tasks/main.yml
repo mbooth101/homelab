@@ -40,17 +40,18 @@
     name: "{{ host.name }}"
     use: systemd
 
+- name: Ensure Local Resolver Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/systemd/resolved.conf.d
+    mode: '0755'
+
 # Disable systemd resolver features in favour of using the configured DNS
 # resolvers directly
 - name: Disable Unneeded Local Resolver Features
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/resolved.conf
-    regexp: '{{ item }}=.*'
-    line: '{{ item }}=no'
-  loop:
-    - DNSStubListener
-    - LLMNR
-    - MulticastDNS
+  ansible.builtin.copy:
+    src: 99-resolved.conf
+    dest: /etc/systemd/resolved.conf.d/99-resolved.conf
   notify:
     - Restart Resolver
 
