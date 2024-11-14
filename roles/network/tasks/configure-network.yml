@@ -37,7 +37,8 @@
 
 - name: Add Wired NICs to Bonded Connection
   community.general.nmcli:
-    type: bond-slave
+    type: ethernet
+    slave_type: bond
     master: bond0
     ifname: "{{ item }}"
     conn_name: "{{ item }}"
@@ -85,7 +86,8 @@
 
 - name: Add Wired NIC as a Virtual Network Bridge Port
   community.general.nmcli:
-    type: bridge-slave
+    type: ethernet
+    slave_type: bridge
     master: bridge0
     ifname: "{{ ether_interfaces[0] }}"
     conn_name: "{{ ether_interfaces[0] }}"
