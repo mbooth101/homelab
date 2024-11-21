@@ -1,7 +1,7 @@
-# Pi-hole configuration file (vDev-abcbcc58)
+# Pi-hole configuration file (vDev-g988a3c3d)
 # Encoding: UTF-8
 # This file is managed by pihole-FTL
-# Last updated on 2024-03-12 18:57:28
+# Last updated on 2024-11-16 22:43:42 GMT
 
 [dns]
   # Array of upstream DNS servers used by Pi-hole
@@ -47,7 +47,7 @@
   analyzeOnlyAandAAAA = false
 
   # Controls whether and how FTL will reply with for address for which a local interface
-  # exists.
+  # exists. Changing this setting causes FTL to restart.
   #
   # Possible values are:
   #   - "NONE"
@@ -201,7 +201,7 @@
 
   # Reverse server (former also called "conditional forwarding") feature
   # Array of reverse servers each one in one of the following forms:
-  # "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>],<domain>"
+  # "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>][,<domain>]"
   #
   # Individual components:
   #
@@ -220,7 +220,7 @@
   #
   # Possible values are:
   #     array of reverse servers each one in one of the following forms:
-  #     "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>],<domain>", e.g.,
+  #     "<enabled>,<ip-address>[/<prefix-len>],<server>[#<port>][,<domain>]", e.g.,
   #     "true,192.168.0.0/24,192.168.0.1,fritz.box"
   revServers = []
 
@@ -245,6 +245,12 @@
     # for a long time. Setting this option to any negative value will disable this feature
     # altogether.
     optimizer = 3600
+
+    # This setting allows you to specify the TTL used for queries blocked upstream. Once
+    # the TTL expires, the query will be forwarded to the upstream server again to check
+    # if the block is still valid. Defaults to caching for one day (86400 seconds).
+    # Setting this value to zero disables caching of queries blocked upstream.
+    upstreamBlockedTTL = 86400
 
   [dns.blocking]
     # Should FTL block queries?
@@ -277,6 +283,18 @@
     #       answer section) and status NODATA. A NODATA response indicates that the domain
     #       exists, but there is no record for the requested query type.
     mode = "NULL"
+
+    # Should FTL enrich blocked replies with EDNS0 information?
+    #
+    # Possible values are:
+    #   - "NONE"
+    #       In NONE mode, no additional EDNS information is added to blocked queries
+    #   - "CODE"
+    #       In CODE mode, blocked queries will be enriched with EDNS info-code BLOCKED (15)
+    #   - "TEXT"
+    #       In TEXT mode, blocked queries will be enriched with EDNS info-code BLOCKED (15)
+    #       and a text message describing the reason for the block
+    edns = "TEXT"
 
   [dns.specialDomains]
     # Should Pi-hole always replies with NXDOMAIN to A and AAAA queries of
@@ -428,6 +446,24 @@
   # clients, which should prevent this from happening.
   multiDNS = false
 
+  # Enable logging for DHCP. This will log all relevant DHCP-related activity, including,
+  # e.g., all the options sent to DHCP clients and the tags used to determine them (if
+  # any). This can be useful for debugging DHCP issues. The generated output is saved to
+  # the file specified by files.log.dnsmasq below.
+  logging = false
+
+  # Ignore unknown DHCP clients.
+  # If this option is set, Pi-hole ignores all clients which are not explicitly
+  # configured through dhcp.hosts. This can be useful to prevent unauthorized clients
+  # from getting an IP address from the DHCP server.
+  # It should be noted that this option is not a security feature, as clients can still
+  # assign themselves an IP address and use the network. It is merely a convenience
+  # feature to prevent unknown clients from getting a valid IP configuration assigned
+  # automatically.
+  # Note that you will need to configure new clients manually in dhcp.hosts before they
+  # can use the network when this feature is enabled.
+  ignoreUnknownClients = false
+
   # Per host parameters for the DHCP server. This allows a machine with a particular
   # hardware address to be always allocated the same hostname, IP address and lease time
   # or to specify static DHCP leases
@@ -436,6 +472,57 @@
   #     Array of static leases each on in one of the following forms:
   #     "[<hwaddr>][,id:<client_id>|*][,set:<tag>][,tag:<tag>][,<ipaddr>][,<hostname>][,<lease_time>][,ignore]"
   hosts = []
+
+  [ntp.ipv4]
+    # Should FTL act as network time protocol (NTP) server (IPv4)?
+    active = false ### CHANGED, default = true
+
+    # IPv4 address to listen on for NTP requests
+    #
+    # Possible values are:
+    #     <valid IPv4 address> or empty string ("") for wildcard (0.0.0.0)
+    address = ""
+
+  [ntp.ipv6]
+    # Should FTL act as network time protocol (NTP) server (IPv6)?
+    active = false ### CHANGED, default = true
+
+    # IPv6 address to listen on for NTP requests
+    #
+    # Possible values are:
+    #     <valid IPv6 address> or empty string ("") for wildcard (::)
+    address = ""
+
+  [ntp.sync]
+    # Should FTL try to synchronize the system time with an upstream NTP server?
+    active = false ### CHANGED, default = true
+
+    # NTP upstream server to sync with, e.g., "pool.ntp.org". Note that the NTP server
+    # should be located as close as possible to you in order to minimize the time offset
+    # possibly introduced by different routing paths.
+    #
+    # Possible values are:
+    #     valid NTP upstream server
+    server = "pool.ntp.org"
+
+    # Interval in seconds between successive synchronization attempts with the NTP server
+    interval = 3600
+
+    # Number of NTP syncs to perform and average before updating the system time
+    count = 8
+
+    [ntp.sync.rtc]
+      # Should FTL update a real-time clock (RTC) if available?
+      set = false
+
+      # Path to the RTC device to update. Leave empty for auto-discovery
+      #
+      # Possible values are:
+      #     Path to the RTC device, e.g., "/dev/rtc0"
+      device = ""
+
+      # Should the RTC be set to UTC?
+      utc = true
 
 [resolver]
   # Should FTL try to resolve IPv4 addresses to hostnames?
@@ -480,10 +567,8 @@
   # recent history?
   DBimport = true
 
-  # Should FTL store queries in the long-term database?
-  DBexport = true
-
   # How long should queries be stored in the database [days]?
+  # Setting this value to 0 will disable the database.
   maxDBdays = 91
 
   # How often do we store queries in FTL's database [seconds]?
@@ -578,18 +663,11 @@
     restore = true
 
   [webserver.tls]
-    # Is Pi-hole running behind a reverse proxy? If yes, Pi-hole will not consider
-    # HTTP-only connections being insecure. This is useful if you are running Pi-hole in a
-    # trusted environment, for example, in a local network, and you are using a reverse
-    # proxy to provide TLS encryption, e.g., by using Traefik (docker). If you are using a
-    # reverse proxy, you can alternatively set webserver.tls.cert to the path of the TLS
-    # certificate file and let Pi-hole handle true end-to-end encryption.
-    rev_proxy = true ### CHANGED, default = false
-
-    # Path to the TLS (SSL) certificate file. This option is only required when at least
-    # one of webserver.port is TLS. The file must be in PEM format, and it must have both,
-    # private key and certificate (the *.pem file created must contain a 'CERTIFICATE'
-    # section as well as a 'RSA PRIVATE KEY' section).
+    # Path to the TLS (SSL) certificate file. All directories along the path must be
+    # readable and accessible by the user running FTL (typically 'pihole'). This option is
+    # only required when at least one of webserver.port is TLS. The file must be in PEM
+    # format, and it must have both, private key and certificate (the *.pem file created
+    # must contain a 'CERTIFICATE' section as well as a 'RSA PRIVATE KEY' section).
     # The *.pem file can be created using
     #     cp server.crt server.pem
     #     cat server.key >> server.pem
@@ -636,15 +714,6 @@
     theme = "default-auto"
 
   [webserver.api]
-    # Do local clients need to authenticate to access the API? This settings allows local
-    # clients to use the API without authentication.
-    localAPIauth = true
-
-    # Do local clients need to authenticate to access the search API? This settings allows
-    # local clients to use pihole -q ... without authentication. Note that "local" in the
-    # sense of the option means only 127.0.0.1 and [::1]
-    searchAPIauth = false
-
     # Number of concurrent sessions allowed for the API. If the number of sessions exceeds
     # this value, no new sessions will be allowed until the number of sessions drops due
     # to session expiration or logout. Note that the number of concurrent sessions is
@@ -682,6 +751,21 @@
     #     <valid Pi-hole password hash>
     app_pwhash = ""
 
+    # Should application password API sessions be allowed to modify config settings?
+    # Setting this to true allows third-party applications using the application password
+    # to modify settings, e.g., the upstream DNS servers, DHCP server settings, or
+    # changing passwords. This setting should only be enabled if really needed and only if
+    # you trust the applications using the application password.
+    app_sudo = false
+
+    # Should FTL create a temporary CLI password? This password is stored in clear in
+    # /etc/pihole and can be used by the CLI (pihole ...  commands) to authenticate
+    # against the API. Note that the password is only valid for the current session and
+    # regenerated on each FTL restart. Sessions initiated with this password cannot modify
+    # the Pi-hole configuration (change passwords, etc.) for security reasons but can
+    # still use the API to query data and manage lists.
+    cli_pw = true
+
     # Array of clients to be excluded from certain API responses (regex):
     # - Query Log (/api/queries)
     # - Top Clients (/api/stats/top_clients)
@@ -711,8 +795,16 @@
 
     # Up to how many clients should be returned in the activity graph endpoint
     # (/api/history/clients)?
-    # This setting can be overwritten at run-time using the parameter N
+    # This setting can be overwritten at run-time using the parameter N. Setting this to 0
+    # will always send all clients. Be aware that this may be challenging for the GUI if
+    # you have many (think > 1.000 clients) in your network
     maxClients = 10
+
+    # How should the API compute the most active clients? If set to true, the API will
+    # return the clients with the most queries globally (within 24 hours). If set to
+    # false, the API will return the clients with the most queries per time slot
+    # individually.
+    client_history_global_max = true
 
     # Allow destructive API calls (e.g. deleting all queries, powering off the system, ...)
     allow_destructive = true
@@ -863,6 +955,12 @@
   # debugging and is not recommended for normal use.
   extraLogging = false
 
+  # Put configuration into read-only mode. This will prevent any changes to the
+  # configuration file via the API or CLI. This setting useful when a configuration is
+  # to be forced/modified by some third-party application (like infrastructure-as-code
+  # providers) and should not be changed by any means.
+  readOnly = true
+
   [misc.check]
     # Pi-hole is very lightweight on resources. Nevertheless, this does not mean that you
     # should run Pi-hole on a server that is otherwise extremely busy as queuing on the
@@ -1003,8 +1101,15 @@
   # Reserved debug flag
   reserved = false
 
+  # Print information about NTP synchronization
+  ntp = false
+
   # Set all debug flags at once. This is a convenience option to enable all debug flags
   # at once. Note that this option is not persistent, setting it to true will enable all
   # *remaining* debug flags but unsetting it will disable *all* debug flags.
   all = false
+
+# Configuration statistics:
+# 150 total entries out of which 139 entries are default
+# --> 11 entries are modified
 
