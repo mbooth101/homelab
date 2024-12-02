@@ -68,7 +68,7 @@
   #       hostname.
   #   - "PI.HOLE"
   #       Respond with "pi.hole".
-  piholePTR = "PI.HOLE"
+  piholePTR = "NONE" ### CHANGED, default = "PI.HOLE"
 
   # How should FTL handle queries when the gravity database is not available?
   #
@@ -128,7 +128,7 @@
   #
   # Possible values are:
   #     <any valid domain>
-  domain = "{{ domain }}" ### CHANGED, default = "lan"
+  domain = "" ### CHANGED, default = "lan"
 
   # Should all reverse lookups for private IP ranges (i.e., 192.168.x.y, etc) which are
   # not found in /etc/hosts or the DHCP leases file be answered with "no such domain"
