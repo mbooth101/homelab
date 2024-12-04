@@ -19,9 +19,15 @@
   ansible.builtin.dnf:
     name:
       - fontconfig
-      - java-17-openjdk-headless
+      - java-21-openjdk-headless
       - jenkins
     state: present
+
+- name: Install Jenkins Configuration
+  ansible.builtin.template:
+    src: jenkins.model.JenkinsLocationConfiguration.xml
+    dest: "/var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml"
+    mode: '0644'
 
 - name: Ensure Jenkins Service Overrides Directory
   ansible.builtin.file:
@@ -44,3 +50,15 @@
     masked: no
     state: started
 
+#- name: Install Jenkins Plugins
+#  community.general.jenkins_plugin:
+#    name: "{{ item }}"
+#  loop:
+#    - ant
+#    - gradle
+#    - maven-plugin
+#    - git
+#    - git-parameter
+#    - github
+#    - gitlab-plugin
+#    - build-name-setter

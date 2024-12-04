@@ -1,0 +1,5 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<jenkins.model.JenkinsLocationConfiguration>
+  <adminAddress>buildmaster@{{ domain }}</adminAddress>
+  <jenkinsUrl>https://{{ role_name }}.{{ domain }}/</jenkinsUrl>
+</jenkins.model.JenkinsLocationConfiguration>

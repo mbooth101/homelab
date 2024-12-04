@@ -18,7 +18,7 @@
 - name: Install OpenHAB
   ansible.builtin.dnf:
     name:
-      - java-17-openjdk-headless
+      - java-21-openjdk-headless
       - openhab
     state: present
 
