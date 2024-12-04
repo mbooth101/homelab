@@ -1,6 +1,8 @@
 - name: Configure Apache for Cockpit
   ansible.builtin.include_tasks:
     file: ../../apache/tasks/configure-site.yml
+  vars:
+    site_proxy: true
 
 - name: Install Cockpit
   ansible.builtin.dnf:
