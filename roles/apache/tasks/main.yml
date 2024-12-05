@@ -3,8 +3,6 @@
     name:
       - httpd
       - mod_ssl
-      - mod_auth_gssapi
-      - mod_auth_mellon
       - certbot
     state: present
 
