@@ -1,0 +1,26 @@
+- name: Configure Apache for Ipsilon Identity Provider
+  ansible.builtin.include_tasks:
+    file: ../../apache/tasks/configure-site.yml
+
+- name: Install Ipsilon
+  ansible.builtin.dnf:
+    name:
+      - ipsilon
+      - ipsilon-authgssapi
+      - ipsilon-authpam
+      - ipsilon-saml2
+      - python3-mod_wsgi
+    state: present
+
+- name: Create Ipsilon Instance
+  ansible.builtin.command:
+    cmd: /usr/sbin/ipsilon-server-install --pam=yes --root-instance
+    creates: /var/lib/ipsilon/root
+
+- name: Install Ipsilon Instance Configuration
+  ansible.builtin.template:
+    src: ipsilon.conf
+    dest: "/etc/ipsilon/root/ipsilon.conf"
+    owner: ipsilon
+    group: ipsilon
+    mode: '0600'
