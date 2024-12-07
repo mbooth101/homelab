@@ -136,3 +136,6 @@ else
 	ansible-playbook \
 		--ask-vault-pass -i $HOSTS --skip-tags "bootstrap" "$@" playbook.yml
 fi
+
+# Update dependecy graph
+./roles_graph.py

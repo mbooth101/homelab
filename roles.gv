@@ -1,0 +1,47 @@
+// Roles
+digraph {
+	apache
+	avahi
+	cockpit
+	containerisation
+	dhcp
+	dns
+	firewall
+	home
+	jenkins
+	network
+	openhab
+	"php-fpm"
+	pihole
+	postgres
+	radvd
+	spotify
+	virtualisation
+	idp
+	sso
+	bootstrap
+	apache -> firewall
+	apache -> dns
+	avahi -> firewall
+	cockpit -> apache
+	cockpit -> containerisation
+	cockpit -> virtualisation
+	dhcp -> network
+	dhcp -> postgres
+	dhcp -> firewall
+	dns -> network
+	home -> apache
+	jenkins -> apache
+	jenkins -> containerisation
+	openhab -> apache
+	pihole -> network
+	pihole -> firewall
+	pihole -> dns
+	pihole -> apache
+	radvd -> network
+	spotify -> avahi
+	spotify -> firewall
+	idp -> apache
+	sso -> firewall
+	sso -> dns
+}
