@@ -5,7 +5,7 @@ import glob
 import graphviz
 import yaml
 
-g = graphviz.Digraph(comment='Roles')
+g = graphviz.Digraph(comment='Role Dependency Graph')
 
 roles = {}
 
@@ -26,4 +26,4 @@ for path in glob.glob('roles/*/meta/main.yml'):
             g.edge(from_role, to_role)
 
 
-g.render('roles.gv', format='png', outfile='roles.png')
+g.render('depgraph.gv', format='png', outfile='depgraph.png')

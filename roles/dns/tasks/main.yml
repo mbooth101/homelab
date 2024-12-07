@@ -116,13 +116,13 @@
   notify:
     - Reload BIND DNS
 
-- name: Ensure BIND DNS Service Overrides Directory
+- name: Ensure DNS Service Overrides Directory
   ansible.builtin.file:
     state: directory
     path: /etc/systemd/system/named.service.d
     mode: '0755'
 
-- name: Install BIND DNS Service Overrides
+- name: Install DNS Service Overrides
   ansible.builtin.template:
     src: named.override.conf
     dest: "/etc/systemd/system/named.service.d/override.conf"
@@ -130,9 +130,17 @@
   notify:
     - Reload BIND DNS
 
-- name: Enable/Start BIND DNS
+- name: Enable/Start DNS
   ansible.builtin.systemd_service:
     name: named.service
     enabled: true
     masked: no
     state: started
+
+- name: Open Firewall for DNS
+  ansible.posix.firewalld:
+    service: dns
+    permanent: true
+    state: enabled
+  notify:
+    - Reload Firewall

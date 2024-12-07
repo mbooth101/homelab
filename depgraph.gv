@@ -1,4 +1,4 @@
-// Roles
+// Role Dependency Graph
 digraph {
 	apache
 	avahi
@@ -30,12 +30,12 @@ digraph {
 	dhcp -> postgres
 	dhcp -> firewall
 	dns -> network
+	dns -> firewall
 	home -> apache
 	jenkins -> apache
 	jenkins -> containerisation
 	openhab -> apache
 	pihole -> network
-	pihole -> firewall
 	pihole -> dns
 	pihole -> apache
 	radvd -> network

@@ -33,11 +33,3 @@
     enabled: true
     masked: no
     state: started
-
-- name: Open Firewall for DNS
-  ansible.posix.firewalld:
-    service: dns
-    permanent: true
-    state: enabled
-  notify:
-    - Reload Firewall

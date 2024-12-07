@@ -138,4 +138,4 @@ else
 fi
 
 # Update dependecy graph
-./roles_graph.py
+./depgraph.py
