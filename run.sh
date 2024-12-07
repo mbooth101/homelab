@@ -32,23 +32,34 @@ sleep 1 ; echo -n "."
 sleep 1 ; echo -n "."
 sleep 1 ; echo ; echo
 
-# Determine if this inventory has been initialised already
-INITIAL=1
-if [ -f .initialised ] ; then
+# Determine if machines have been provisioned already
+PROVISION=1
+if [ -f .provisioned ] ; then
 	while read i; do
 		if [ "$i" = "$HOSTS" ] ; then
-			INITIAL=
+			PROVISION=
 			break
 		fi
-	done <.initialised
+	done <.provisioned
 fi
 
-if [ -n "$INITIAL" ] ; then
+# Determine if machines have been bootstrapped already
+BOOTSTRAP=1
+if [ -f .bootstrapped ] ; then
+	while read i; do
+		if [ "$i" = "$HOSTS" ] ; then
+			BOOTSTRAP=
+			break
+		fi
+	done <.bootstrapped
+fi
+
+if [ -n "$PROVISION" ] ; then
 	while read h; do
 		fqdn=$(echo "$h" | cut -f1 -d' ')
 		host=$(echo "$fqdn" | cut -f1 -d.)
 
-		# If initial run on staging, then kill and recreate the VM
+		# If provisioning staging, then kill and recreate the VM
 		if [ "$HOSTS" == "staging" ] ; then
 
 			# Remove old staging VM
@@ -71,11 +82,11 @@ if [ -n "$INITIAL" ] ; then
 				--vcpus 2 \
 				--memory 4096 \
 				--disk size=16 \
-				--network network=default,mac=52:54:00:00:00:01 \
-				--network network=default,mac=52:54:00:00:00:0a,$nic,address.function=0 \
-				--network network=default,mac=52:54:00:00:00:0b,$nic,address.function=1 \
-				--network network=default,mac=52:54:00:00:00:0c,$nic,address.function=2 \
-				--network network=default,mac=52:54:00:00:00:0d,$nic,address.function=3 \
+				--network network=network,mac=52:54:00:00:00:01 \
+				--network network=network,mac=52:54:00:00:00:0a,$nic,address.function=0 \
+				--network network=network,mac=52:54:00:00:00:0b,$nic,address.function=1 \
+				--network network=network,mac=52:54:00:00:00:0c,$nic,address.function=2 \
+				--network network=network,mac=52:54:00:00:00:0d,$nic,address.function=3 \
 				--os-variant fedora-unknown \
 				--location ${url} \
 				--initrd-inject ks.cfg \
@@ -91,21 +102,37 @@ if [ -n "$INITIAL" ] ; then
 			until nc -z $host 22 ; do
 				sleep 1
 			done
+		else
+			echo "TODO provision physical machine"
 		fi
 
-		# Reset keys for hosts that need initialising
+		# Reset keys for hosts that need bootstrapping
 		ssh-keygen -R $fqdn
 		ssh-keyscan -H $fqdn >> ~/.ssh/known_hosts
+
+		# Configure SSH client for newly provisioned hosts
+		if ! grep -q '$fqdn' ~/.ssh/config ; then
+			echo "Host $fqdn" >> ~/.ssh/config
+			echo "  IdentitiesOnly yes" >> ~/.ssh/config
+			echo "  IdentityFile ~/.ssh/id_home" >> ~/.ssh/config
+			echo "  User ansible-maint" >> ~/.ssh/config
+		fi
+
 	done <$HOSTS
 
+	echo "$HOSTS" >> .provisioned
+fi
+
+if [ -n "$BOOTSTRAP" ] ; then
+
 	# Initial run must prompt for passwords and connect as root in order to set up
-	# public key authentication for the ansible user and disable the root account
-	ANSIBLE_SSH_COMMON_ARGS="-o PubkeyAuthentication=no" \
-	ansible-playbook -u root -k -K \
-		--ask-vault-pass -i $HOSTS "$@" playbook.yml
-	echo "$HOSTS" >> .initialised
+	# public key authentication for the ansible-maint user and disable the root account
+	ansible-playbook -u root --ask-pass \
+		--ask-vault-pass -i $HOSTS --tags "bootstrap" "$@" playbook.yml
+	echo "$HOSTS" >> .bootstrapped
 else
-	# In subsequent runs we connect as the ansible user using public key authentication
+	# In subsequent runs we connect as the ansible-maint user using public key
+	# authentication
 	ansible-playbook \
-		--ask-vault-pass -i $HOSTS "$@" playbook.yml
+		--ask-vault-pass -i $HOSTS --skip-tags "bootstrap" "$@" playbook.yml
 fi
