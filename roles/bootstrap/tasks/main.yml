@@ -1,0 +1,33 @@
+- name: Create Temporary Directory
+  ansible.builtin.file:
+    path: "/var/tmp/.ansible-maint"
+    state: directory
+    recurse: yes
+    owner: root
+    group: wheel
+    mode: '0770'
+
+- name: Switch Default Editor
+  ansible.builtin.dnf:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop:
+    - { name: [ nano-default-editor, nano ], state: absent }
+    - { name: vim-default-editor, state: present }
+
+- name: Configure TPM2 for Automatic LUKS Volume Decryption
+  ansible.builtin.include_tasks:
+    file: configure-luks-tpm2.yml
+
+- name: Configure Ansible Maint User
+  ansible.builtin.include_tasks:
+    file: configure-ansible-maint.yml
+
+# This must be the last thing we do because once disabled, we cannot
+# reconnect as root to perform any further tasks -- subsequent playbook
+# invokations will connect as the ansible-maint user created above
+- name: Disable Root Account Password
+  ansible.builtin.user:
+    name: root
+    password: '!'
+    password_lock: true

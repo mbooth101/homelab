@@ -1,6 +1,0 @@
----
-- name: Reload SSHd
-  service:
-    name: sshd.service
-    daemon_reload: true
-    state: reloaded

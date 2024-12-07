@@ -1,3 +1,6 @@
+# Tasks for configuring the ansible-maint user that will be used
+# for all subsequent playbook invokations
+
 - name: Add Ansible Group
   ansible.builtin.group:
     name: ansible-maint
@@ -18,6 +21,12 @@
     password: '!'
     password_lock: true
 
+- name: Install Sudoers Configuration for Ansible Maint User
+  ansible.builtin.template:
+    src: sudoers
+    dest: "/etc/sudoers.d/ansible-maint"
+    mode: '0440'
+
 - name: Ensure Authorized Keys Directory
   ansible.builtin.file:
     path: /etc/authorized_keys
@@ -26,7 +35,7 @@
     group: root
     mode: '0755'
 
-- name: Install SSH Public Key for Ansible
+- name: Install Public Key
   ansible.posix.authorized_key:
     user: ansible-maint
     state: present
@@ -34,16 +43,15 @@
     manage_dir: false
     key: "{{ lookup('file', '~/.ssh/id_home.pub') }}"
 
-- name: Install Sudoers Configuration for Ansible
-  ansible.builtin.copy:
-    src: sudoers
-    dest: "/etc/sudoers.d/ansible-maint"
-    mode: '0440'
-
-- name: Install Public Key Configuration for Ansible
-  ansible.builtin.copy:
+- name: Install Public Key Configuration
+  ansible.builtin.template:
     src: sshd.conf
-    dest: "/etc/ssh/sshd_config.d/99-{{ domain }}.conf"
+    dest: "/etc/ssh/sshd_config.d/99-ansible-maint.conf"
     mode: '0600'
-  notify:
-    - Reload SSHd
+
+- name: Reload SSHd
+  ansible.builtin.systemd_service:
+    name: sshd.service
+    enabled: true
+    masked: no
+    state: reloaded

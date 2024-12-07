@@ -1,0 +1,4 @@
+## {{ ansible_managed }}
+
+# Allow ansible to run-as root without entering a password
+ansible-maint ALL=(root) NOPASSWD:ALL
