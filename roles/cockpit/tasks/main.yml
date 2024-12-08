@@ -8,15 +8,26 @@
   ansible.builtin.dnf:
     name:
       - cockpit
+      - cockpit-selinux
+      - cockpit-packagekit
+      - cockpit-storaged
+      - cockpit-networkmanager
+    state: present
+
+# VM and container deps are separated out so they can be excluded from
+# testing as they take a long time to install
+- name: Install Cockpit Additional Features
+  ansible.builtin.dnf:
+    name:
       - cockpit-machines
       - cockpit-podman
-      - cockpit-selinux
     # No weak deps avoids virt-install -> libvirt-daemon-config-network
     # and this prevents the default virtual networking configuration
     # from clashing with our other DHCP and DNS services -- we'll be
     # creating virtual machines remotely using virt-manager anyway
     install_weak_deps: false
     state: present
+  when: with_deps
 
 - name: Install Cockpit Configuration
   ansible.builtin.template:
