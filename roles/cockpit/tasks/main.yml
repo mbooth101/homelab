@@ -12,6 +12,7 @@
       - cockpit-packagekit
       - cockpit-storaged
       - cockpit-networkmanager
+      - cockpit-389-ds
     state: present
 
 # VM and container deps are separated out so they can be excluded from

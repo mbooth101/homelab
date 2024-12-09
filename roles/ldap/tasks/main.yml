@@ -1,0 +1,66 @@
+- name: Install LDAP
+  ansible.builtin.dnf:
+    name:
+      - 389-ds-base
+    state: present
+
+- name: Configure CNAME
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-cname.yml
+
+- name: Check For Existing LDAP Instance
+  ansible.builtin.stat:
+    path: /etc/dirsrv/slapd-accounts/dse.ldif
+  register: slapd_instance
+
+- name: Copy LDAP Instance Creation Configuration
+  ansible.builtin.template:
+    src: instance.inf
+    dest: /etc/dirsrv/instance.inf
+    mode: '0600'
+  when: not slapd_instance.stat.exists
+
+- name: Create LDAP Instance
+  ansible.builtin.command:
+    cmd: "dscreate from-file /etc/dirsrv/instance.inf"
+  when: not slapd_instance.stat.exists
+
+- name: Enable/Start LDAP
+  ansible.builtin.systemd_service:
+    name: dirsrv@accounts.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Enable LDAP MemberOf Plugin
+  ansible.builtin.command:
+    cmd: "{{ item }}"
+  loop:
+    - "dsconf accounts plugin memberof enable"
+    - "dsconf accounts plugin memberof set --scope {{ ldap_domain }}"
+    - "dsctl accounts restart"
+  when: not slapd_instance.stat.exists
+
+- name: Determine Initial LDAP User Details
+  local_action: ansible.builtin.command getent passwd {{ lookup('env', 'USER') }}
+  register: ldap_initial_user
+  changed_when: False
+
+- name: Create Facts About Initial LDAP User
+  ansible.builtin.set_fact:
+    ldap_initial_user_id: "{{ (ldap_initial_user.stdout | split(':'))[0] }}"
+    ldap_initial_user_uid: "{{ (ldap_initial_user.stdout | split(':'))[2] }}"
+    ldap_initial_user_gid: "{{ (ldap_initial_user.stdout | split(':'))[3] }}"
+    ldap_initial_user_gecos: "{{ (ldap_initial_user.stdout | split(':'))[4] }}"
+
+- name: Create Initial LDAP User
+  ansible.builtin.command:
+    cmd: "dsidm -v -b {{ ldap_domain }} accounts {{ item }}"
+  loop:
+    - "organizationalunit create --ou people"
+    - "organizationalunit create --ou groups"
+    - "organizationalunit create --ou services"
+    - "posixgroup create --cn {{ ldap_initial_user_id }} --gidNumber {{ ldap_initial_user_gid }}"
+    - "user create --cn {{ ldap_initial_user_id }} --uid {{ ldap_initial_user_id }} --uidNumber {{ ldap_initial_user_uid }} --gidNumber {{ ldap_initial_user_gid }} --displayName '{{ ldap_initial_user_gecos }}' --homeDirectory /home/{{ ldap_initial_user_id }}"
+    - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=people,{{ ldap_domain }}"
+  when: not slapd_instance.stat.exists

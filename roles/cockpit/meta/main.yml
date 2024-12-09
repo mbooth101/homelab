@@ -1,7 +1,8 @@
 ---
 dependencies:
-  - role: apache
+  - role: ldap
   - role: containerisation
     when: with_deps
   - role: virtualisation
     when: with_deps
+  - role: apache
