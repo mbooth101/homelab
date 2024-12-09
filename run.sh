@@ -123,18 +123,24 @@ if [ -n "$PROVISION" ] ; then
 	echo "$HOSTS" >> .provisioned
 fi
 
+# If vault password file not present, just ask
+VAULT_PASS="--ask-vault-pass"
+if [ -f "vault_pass" ] ; then
+	VAULT_PASS="--vault-password-file vault_pass"
+fi
+
 if [ -n "$BOOTSTRAP" ] ; then
 
 	# Initial run must prompt for passwords and connect as root in order to set up
 	# public key authentication for the ansible-maint user and disable the root account
-	ansible-playbook -u root --ask-pass \
-		--ask-vault-pass -i $HOSTS --tags "bootstrap" "$@" playbook.yml
+	ansible-playbook $VAULT_PASS -u root --ask-pass \
+		-i $HOSTS --tags "bootstrap" "$@" playbook.yml
 	echo "$HOSTS" >> .bootstrapped
 else
 	# In subsequent runs we connect as the ansible-maint user using public key
 	# authentication
-	ansible-playbook \
-		--ask-vault-pass -i $HOSTS --skip-tags "bootstrap" "$@" playbook.yml
+	ansible-playbook $VAULT_PASS \
+		-i $HOSTS --skip-tags "bootstrap" "$@" playbook.yml
 fi
 
 # Update dependecy graph
