@@ -78,3 +78,9 @@
     - "user create --cn {{ ldap_initial_user_id }} --uid {{ ldap_initial_user_id }} --uidNumber {{ ldap_initial_user_uid }} --gidNumber {{ ldap_initial_user_gid }} --displayName '{{ ldap_initial_user_gecos }}' --homeDirectory /home/{{ ldap_initial_user_id }}"
     - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=people,{{ ldap_domain }}"
   when: not slapd_instance.stat.exists
+
+- name: Install LDAP Client Configuration
+  ansible.builtin.template:
+    src: ldap.conf
+    dest: /etc/openldap/ldap.conf
+    mode: '0644'
