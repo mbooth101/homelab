@@ -1,0 +1,44 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - cert_name: set to override the default value of "role_name"
+
+- name: Ensure Site TLS Certificate Directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+    mode: '0710'
+  loop:
+    - "/etc/letsencrypt/archive/{{ cert_name | default(role_name) }}"
+    - "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}"
+
+# This section installs a pre-generated self-signed certificate if Certbot
+# has not yet requested one from LetsEncrypt
+
+- name: Checking For Installed TLS Certificate
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/fullchain.pem"
+  register: tls_cert
+
+- name: Installing Self-Signed TLS Certificate
+  copy:
+    src: "../../tls/files/cert.pem"
+    dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/fullchain.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when: not tls_cert.stat.exists
+
+- name: Checking For Installed TLS Certificate Key
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/privkey.pem"
+  register: tls_key
+
+- name: Installing Self-Signed TLS Certificate Key
+  copy:
+    src: "../../tls/files/key.pem"
+    dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/privkey.pem"
+    owner: root
+    group: root
+    mode: '0640'
+  when: not tls_key.stat.exists

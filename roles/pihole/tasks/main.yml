@@ -1,6 +1,6 @@
 - name: Configure Apache for Pi-hole
   ansible.builtin.include_tasks:
-    file: ../../apache/tasks/configure-site.yml
+    file: ../../http/tasks/configure-site.yml
   vars:
     site_proxy: true
 

@@ -1,0 +1,12 @@
+- name: Install Certbot
+  ansible.builtin.dnf:
+    name:
+      - certbot
+    state: present
+
+- name: Enable/Start Certbot TLS Certificate Renewal Timer
+  ansible.builtin.systemd_service:
+    name: certbot-renew.timer
+    enabled: true
+    masked: no
+    state: started

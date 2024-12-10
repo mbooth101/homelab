@@ -1,9 +1,8 @@
-- name: Install Apache And Certbot
+- name: Install Apache
   ansible.builtin.dnf:
     name:
       - httpd
       - mod_ssl
-      - certbot
     state: present
 
 - name: Create Apache Site Config Directories
@@ -47,13 +46,6 @@
 - name: Enable/Start Apache
   ansible.builtin.systemd_service:
     name: httpd.service
-    enabled: true
-    masked: no
-    state: started
-
-- name: Enable/Start TLS Certificate Renewal Timer
-  ansible.builtin.systemd_service:
-    name: certbot-renew.timer
     enabled: true
     masked: no
     state: started
