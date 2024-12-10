@@ -4,9 +4,13 @@
       - 389-ds-base
     state: present
 
-- name: Configure CNAME
+- name: Configure DNS CNAME For LDAP
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-cname.yml
+
+- name: Configure TLS Certificate for LDAP
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-cert.yml
 
 - name: Check For Existing LDAP Instance
   ansible.builtin.stat:
@@ -38,6 +42,16 @@
   loop:
     - "dsconf accounts plugin memberof enable"
     - "dsconf accounts plugin memberof set --scope {{ ldap_domain }}"
+    - "dsctl accounts restart"
+  when: not slapd_instance.stat.exists
+
+- name: Import LDAP Server Certificates
+  ansible.builtin.command:
+    cmd: "{{ item }}"
+  loop:
+    - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/live/{{ role_name }}/fullchain.pem /etc/letsencrypt/live/{{ role_name }}/privkey.pem"
+    - "dsconf accounts security certificate add --file /etc/letsencrypt/live/{{ role_name }}/fullchain.pem --primary-cert --name 'Server-Cert'"
+    - "dsconf accounts config replace nsslapd-security=on"
     - "dsctl accounts restart"
   when: not slapd_instance.stat.exists
 

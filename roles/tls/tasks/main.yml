@@ -4,6 +4,15 @@
       - certbot
     state: present
 
+- name: Ensure TLS Certificate Renewal Hook Directories
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/letsencrypt/renewal-hooks/{{ item }}"
+    mode: '0755'
+  loop:
+    - pre
+    - post
+
 - name: Enable/Start Certbot TLS Certificate Renewal Timer
   ansible.builtin.systemd_service:
     name: certbot-renew.timer
