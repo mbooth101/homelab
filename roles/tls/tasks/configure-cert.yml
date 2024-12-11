@@ -20,9 +20,15 @@
     path: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/fullchain.pem"
   register: tls_cert
 
+- name: Generate Self-Signed TLS Certificates
+  local_action: ansible.builtin.command ./roles/tls/files/create_cert.sh {{ cert_name | default(role_name) }} {{ domain }}
+  changed_when: False
+  when: not tls_cert.stat.exists
+  become: no
+
 - name: Installing Self-Signed TLS Certificates
   ansible.builtin.copy:
-    src: "../../tls/files/{{ item }}"
+    src: "../../tls/files/{{ cert_name | default(role_name) }}/{{ item }}"
     dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/{{ item }}"
     owner: root
     group: root
