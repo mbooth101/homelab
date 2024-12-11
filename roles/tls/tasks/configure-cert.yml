@@ -15,30 +15,21 @@
 # This section installs a pre-generated self-signed certificate if Certbot
 # has not yet requested one from LetsEncrypt
 
-- name: Checking For Installed TLS Certificate
+- name: Checking For Installed TLS Certificates
   ansible.builtin.stat:
     path: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/fullchain.pem"
   register: tls_cert
 
-- name: Installing Self-Signed TLS Certificate
-  copy:
-    src: "../../tls/files/cert.pem"
-    dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/fullchain.pem"
+- name: Installing Self-Signed TLS Certificates
+  ansible.builtin.copy:
+    src: "../../tls/files/{{ item }}"
+    dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/{{ item }}"
     owner: root
     group: root
     mode: '0640'
+  loop:
+    - fullchain.pem
+    - cert.pem
+    - chain.pem
+    - privkey.pem
   when: not tls_cert.stat.exists
-
-- name: Checking For Installed TLS Certificate Key
-  ansible.builtin.stat:
-    path: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/privkey.pem"
-  register: tls_key
-
-- name: Installing Self-Signed TLS Certificate Key
-  copy:
-    src: "../../tls/files/key.pem"
-    dest: "/etc/letsencrypt/live/{{ cert_name | default(role_name) }}/privkey.pem"
-    owner: root
-    group: root
-    mode: '0640'
-  when: not tls_key.stat.exists

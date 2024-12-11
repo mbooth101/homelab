@@ -49,8 +49,9 @@
   ansible.builtin.command:
     cmd: "{{ item }}"
   loop:
-    - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/live/{{ role_name }}/fullchain.pem /etc/letsencrypt/live/{{ role_name }}/privkey.pem"
-    - "dsconf accounts security certificate add --file /etc/letsencrypt/live/{{ role_name }}/fullchain.pem --primary-cert --name 'Server-Cert'"
+    - "dsconf accounts security ca-certificate add --file /etc/letsencrypt/live/{{ role_name }}/chain.pem --name 'Server-CA'"
+    - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/live/{{ role_name }}/cert.pem /etc/letsencrypt/live/{{ role_name }}/privkey.pem"
+    - "dsconf accounts security certificate add --file /etc/letsencrypt/live/{{ role_name }}/cert.pem --primary-cert --name 'Server-Cert'"
     - "dsconf accounts config replace nsslapd-security=on"
     - "dsctl accounts restart"
   when: not slapd_instance.stat.exists
