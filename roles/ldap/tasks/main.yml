@@ -53,6 +53,8 @@
     - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/live/{{ role_name }}/cert.pem /etc/letsencrypt/live/{{ role_name }}/privkey.pem"
     - "dsconf accounts security certificate add --file /etc/letsencrypt/live/{{ role_name }}/cert.pem --primary-cert --name 'Server-Cert'"
     - "dsconf accounts config replace nsslapd-security=on"
+    - "dsconf accounts config replace nsslapd-listenhost={{ role_name }}.{{ domain }}"
+    - "dsconf accounts config replace nsslapd-securelistenhost={{ role_name }}.{{ domain }}"
     - "dsctl accounts restart"
   when: not slapd_instance.stat.exists
 
@@ -72,13 +74,20 @@
   ansible.builtin.command:
     cmd: "dsidm -v -b {{ ldap_domain }} accounts {{ item }}"
   loop:
-    - "organizationalunit create --ou people"
-    - "organizationalunit create --ou groups"
-    - "organizationalunit create --ou services"
+    - "organizationalunit create --ou People"
+    - "organizationalunit create --ou Groups"
+    - "organizationalunit create --ou Services"
     - "posixgroup create --cn {{ ldap_initial_user_id }} --gidNumber {{ ldap_initial_user_gid }}"
     - "user create --cn {{ ldap_initial_user_id }} --uid {{ ldap_initial_user_id }} --uidNumber {{ ldap_initial_user_uid }} --gidNumber {{ ldap_initial_user_gid }} --displayName '{{ ldap_initial_user_gecos }}' --homeDirectory /home/{{ ldap_initial_user_id }}"
-    - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=people,{{ ldap_domain }}"
+    - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
   when: not slapd_instance.stat.exists
+
+- name: Allow LDAP Clients to Read CA Certificates
+  ansible.builtin.copy:
+    src: "/etc/letsencrypt/live/{{ role_name }}/chain.pem"
+    remote_src: true
+    dest: "/etc/openldap/ca.pem"
+    mode: '0644'
 
 - name: Install LDAP Client Configuration
   ansible.builtin.template:
