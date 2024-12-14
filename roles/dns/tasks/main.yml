@@ -5,24 +5,6 @@
       - bind-utils
     state: present
 
-- name: Allow BIND to Modify Files in the DB Root
-  community.general.sefcontext:
-    target: "{{ data_dir }}(/.*)?"
-    setype: named_zone_t
-    state: present
-
-- name: Create BIND Data Directory
-  ansible.builtin.file:
-    state: directory
-    setype: "{{ item.setype }}"
-    path: "{{ item.path }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
-  loop:
-    - { path: "{{ data_dir | dirname }}", setype: var_t, mode: '0755', owner: root, group: root }
-    - { path: "{{ data_dir }}", setype: named_zone_t, mode: '0770', owner: root, group: named }
-
 # This ensures the FQDN is correctly set and "hostname -f" gives the right
 # answer
 - name: Update Hosts File
@@ -97,13 +79,13 @@
 # if not already present, instead of overwriting when different
 - name: Checking For Installed DNS Zone Files
   ansible.builtin.stat:
-    path: "{{ data_dir }}/{{ domain }}.zone"
+    path: "/var/named/{{ domain }}.zone"
   register: zone_config
 
 - name: Install DNS Zone Configuration
   ansible.builtin.template:
     src: "{{ item.src }}"
-    dest: "{{ data_dir }}/{{ item.dest }}"
+    dest: "/var/named/{{ item.dest }}"
     owner: root
     group: named
     mode: '0640'
