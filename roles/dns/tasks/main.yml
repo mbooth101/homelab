@@ -57,7 +57,7 @@
 
 - name: Set SELinux Context for Non-Standard DNS Port
   community.general.seport:
-    ports: 5335
+    ports: "{{ bind9_port }}"
     proto: "{{ item }}"
     setype: dns_port_t
     state: present
