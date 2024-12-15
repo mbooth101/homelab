@@ -74,7 +74,8 @@ if [ -n "$PROVISION" ] ; then
 			echo "Running virt-install"
 			release=41
 			url="https://download.fedoraproject.org/pub/fedora/linux/releases/${release}/Everything/x86_64/os/"
-			nic="address.type=pci,address.domain=0,address.bus=8,address.slot=0"
+			nic1="address.type=pci,address.domain=0,address.bus=1,address.slot=0"
+			nic8="address.type=pci,address.domain=0,address.bus=8,address.slot=0"
 			virt-install \
 				--connect qemu:///system \
 				--autoconsole none \
@@ -82,11 +83,11 @@ if [ -n "$PROVISION" ] ; then
 				--vcpus 2 \
 				--memory 4096 \
 				--disk size=16 \
-				--network network=network,mac=52:54:00:00:00:01 \
-				--network network=network,mac=52:54:00:00:00:0a,$nic,address.function=0 \
-				--network network=network,mac=52:54:00:00:00:0b,$nic,address.function=1 \
-				--network network=network,mac=52:54:00:00:00:0c,$nic,address.function=2 \
-				--network network=network,mac=52:54:00:00:00:0d,$nic,address.function=3 \
+				--network network=network,mac=52:54:00:00:00:01,$nic1 \
+				--network network=network,mac=52:54:00:00:00:0a,$nic8,address.function=0 \
+				--network network=network,mac=52:54:00:00:00:0b,$nic8,address.function=1 \
+				--network network=network,mac=52:54:00:00:00:0c,$nic8,address.function=2 \
+				--network network=network,mac=52:54:00:00:00:0d,$nic8,address.function=3 \
 				--os-variant fedora-unknown \
 				--location ${url} \
 				--initrd-inject ks.cfg \
