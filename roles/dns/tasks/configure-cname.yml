@@ -3,9 +3,16 @@
 #
 # - cname: set to override the default value of "role_name"
 
+- name: Determine if CNAME Record Exists
+  ansible.builtin.command:
+    cmd: "dig -6 @localhost -p {{ bind9_port }} {{ cname | default(role_name) }}.{{ domain }} +short"
+  register: dns_lookup
+  changed_when: False
+
 - name: Add CNAME Record to the DNS Zone
   ansible.builtin.command:
     cmd: "nsupdate -6 -l -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
     stdin: |
       update add {{ cname | default(role_name) }}.{{ domain }} 14400 IN CNAME {{ host.fqdn }}
       send
+  when: not dns_lookup.stdout
