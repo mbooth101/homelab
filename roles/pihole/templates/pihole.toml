@@ -143,7 +143,7 @@
   #
   # Possible values are:
   #     a valid interface name
-  interface = "bond0" ### CHANGED, default = ""
+  interface = "bridge0" ### CHANGED, default = ""
 
   # Add A, AAAA and PTR records to the DNS. This adds one or more names to the DNS with
   # associated IPv4 (A) and IPv6 (AAAA) records

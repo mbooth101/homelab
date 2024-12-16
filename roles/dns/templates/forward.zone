@@ -6,8 +6,8 @@ $TTL 14400      ; 4 hours
 		IN	NS	{{ host.fqdn }}.
 
 ; This host
-{{ host.name }}	IN	A	{{ host.ipv4.bond_ip }}
-{{ host.name }}	IN	AAAA	{{ host.ipv6.bond_ip }}
+{{ host.name }}	IN	A	{{ host.ipv4.address }}
+{{ host.name }}	IN	AAAA	{{ host.ipv6.address }}
 
 ; Gateway router
 gateway		IN	A	{{ host.ipv4.gateway }}

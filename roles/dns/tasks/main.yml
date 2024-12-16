@@ -12,8 +12,8 @@
     path: /etc/hosts
     line: "{{ item }}"
   loop:
-    - "{{ host.ipv4.bond_ip }} {{ host.fqdn }} {{ host.name }}"
-    - "{{ host.ipv6.bond_ip }} {{ host.fqdn }} {{ host.name }}"
+    - "{{ host.ipv4.address }} {{ host.fqdn }} {{ host.name }}"
+    - "{{ host.ipv6.address }} {{ host.fqdn }} {{ host.name }}"
 
 # Ensure the host name is set correctly based on the inventory host on which
 # we're being run
@@ -91,8 +91,8 @@
     mode: '0640'
   loop:
     - { src: "forward.zone", dest: "{{ domain }}.zone" }
-    - { src: "reverse4.zone", dest: "{{ host.ipv4.bond | ip_ptr }}.zone" }
-    - { src: "reverse6.zone", dest: "{{ host.ipv6.bond | ip_ptr }}.zone" }
+    - { src: "reverse4.zone", dest: "{{ host.ipv4.cidr | ip_ptr }}.zone" }
+    - { src: "reverse6.zone", dest: "{{ host.ipv6.cidr | ip_ptr }}.zone" }
   when:
     - not zone_config.stat.exists
   notify:

@@ -1,39 +1,39 @@
-# These tasks create an initial temporary network configuration until
-# we get the DHCP and DNS services up, after which the tasks may be run
-# again to set the proper configuration
+# These tasks create a bonded ethernet connection from all the ports
+# on the Intel NIC and creates a virtual bridge. The bonded connection
+# and all virtual machines will be connected to the virtual bridge:
+#
+#               Server
+#  Gateway     ┌─────────────────────────────────────────────┐
+# ┌────────┐  ┌┴───────┐                                     │
+# │ WAN    │<─│ enp2   │<───────────────┐                    │
+# └────────┘  └┬───────┘                │                    │
+#              │                        │                    │
+#  Switch      │                        │         libvirt    │
+# ┌────────┐  ┌┴───────┐  ┌───────┐     │        ┌────────┐  │
+# │ Port 1 │─>│ enp4f0 │─>│       │  ┌───────┐  ┌┴──────┐ │  │
+# │        │  └┬───────┘  │       │  │       │<─│ vnet0 │ │  │
+# │        │  ┌┴───────┐  │       │  │       │  └┬──────┘ │  │
+# │ Port 2 │─>│ enp4f1 │─>│       │  │       │  ┌┴──────┐ │  │
+# │        │  └┬───────┘  │ bond0 │─>│bridge0│<─│ vnet1 │ │  │
+# │        │  ┌┴───────┐  │       │  │       │  └┬──────┘ │  │
+# │ Port 3 │─>│ enp4f2 │─>│       │  │       │  ┌┴──────┐ │  │
+# │        │  └┬───────┘  │       │  │       │<─│ vnet2 │ │  │
+# │        │  ┌┴───────┐  │       │  └───────┘  └┬──────┘ │  │
+# │ Port 4 │─>│ enp4f3 │─>│       │              └────────┘  │
+# │        │  └┬───────┘  └───────┘                          │
+# │        │   └─────────────────────────────────────────────┘
+# │ Port n │─> ...
+# └────────┘
 
 - name: Create Bonded Connection
   community.general.nmcli:
     type: bond
     conn_name: bond0
     autoconnect: true
-    ip4: "{{ host.ipv4.bond }}"
-    gw4: "{{ host.ipv4.gateway }}"
-    dns4: "{{ host.ipv4.gateway }}"
-    ip6: "{{ host.ipv6.bond }}"
-    gw6: "{{ host.ipv6.gateway }}"
-    dns6: "{{ host.ipv6.gateway }}"
-    mode: balance-xor
-    state: present
-  when: "'bond0' not in ansible_facts"
-
-- name: Configure Bonded Connection
-  community.general.nmcli:
-    type: bond
-    conn_name: bond0
-    autoconnect: true
-    ip4: "{{ host.ipv4.bond }}"
-    gw4: "{{ host.ipv4.gateway }}"
-    dns4: "127.0.0.1"
-    dns4_search: "{{ domain }}"
-    ip6: "{{ host.ipv6.bond }}"
-    gw6: "{{ host.ipv6.gateway }}"
-    dns6: "::1"
-    dns6_search: "{{ domain }}"
     mode: balance-xor
     state: present
   register: bond_config
-  when: "'bond0' in ansible_facts"
+  when: "'bond0' not in ansible_facts"
 
 - name: Add Wired NICs to Bonded Connection
   community.general.nmcli:
@@ -56,42 +56,26 @@
     type: bridge
     conn_name: bridge0
     autoconnect: true
-    ip4: "{{ host.ipv4.bridge }}"
-    gw4: "{{ host.ipv4.gateway }}"
-    dns4: "{{ host.ipv4.gateway }}"
-    ip6: "{{ host.ipv6.bridge }}"
-    gw6: "{{ host.ipv6.gateway }}"
-    dns6: "{{ host.ipv6.gateway }}"
-    stp: true
-    state: present
-  when: "'bridge0' not in ansible_facts"
-
-- name: Configure Virtual Network Bridge
-  community.general.nmcli:
-    type: bridge
-    conn_name: bridge0
-    autoconnect: true
-    ip4: "{{ host.ipv4.bridge }}"
+    ip4: "{{ host.ipv4.cidr }}"
     gw4: "{{ host.ipv4.gateway }}"
     dns4: "127.0.0.1"
     dns4_search: "{{ domain }}"
-    ip6: "{{ host.ipv6.bridge }}"
+    ip6: "{{ host.ipv6.cidr }}"
     gw6: "{{ host.ipv6.gateway }}"
     dns6: "::1"
     dns6_search: "{{ domain }}"
     stp: true
     state: present
   register: bridge_config
-  when: "'bridge0' in ansible_facts"
+  when: "'bridge0' not in ansible_facts"
 
-- name: Add Wired NIC as a Virtual Network Bridge Port
+- name: Add Bonded Ethernet NIC as a Virtual Network Bridge Port
   community.general.nmcli:
     type: ethernet
     slave_type: bridge
     master: bridge0
-    ifname: "{{ ether_interfaces[0] }}"
-    conn_name: "{{ ether_interfaces[0] }}"
-    hairpin: false
+    ifname: bond0
+    conn_name: bond0
     state: present
 
 - name: Reapply Virtual Network Bridge Settings
