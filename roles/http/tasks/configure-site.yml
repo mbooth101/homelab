@@ -78,10 +78,10 @@
 
 - name: Configure DNS CNAME
   ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-cname.yml
+    file: ../../dns/tasks/configure-record.yml
   when: site_name | default(role_name) != 'default'
   vars:
-    cname: "{{ site_name | default(role_name) }}"
+    record_name: "{{ site_name | default(role_name) }}"
 
 # Adds a TLS certificate for the DNS alias created above
 

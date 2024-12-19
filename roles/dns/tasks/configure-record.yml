@@ -1,0 +1,20 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - record_name: set to override the default value of "role_name"
+# - record_type: set to override the default value of "CNAME"
+# - text: set to override the default value of "host.fqdn"
+
+- name: Determine if DNS Record Exists
+  ansible.builtin.command:
+    cmd: "dig @localhost -6 -p {{ bind9_port }} {{ record_name | default(role_name) }}.{{ domain }} {{ record_type | default('CNAME') }} +short"
+  register: dns_lookup
+  changed_when: False
+
+- name: Add DNS Record to the Zone
+  ansible.builtin.command:
+    cmd: "nsupdate -6 -l -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
+    stdin: |
+      update add {{ record_name | default(role_name) }}.{{ domain }} 14400 IN {{ record_type | default('CNAME') }} {{ text | default(host.fqdn) }}
+      send
+  when: not dns_lookup.stdout

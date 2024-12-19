@@ -19,7 +19,7 @@
 # we're being run
 - name: Set Host Name
   ansible.builtin.hostname:
-    name: "{{ host.name }}"
+    name: "{{ host.fqdn }}"
     use: systemd
 
 - name: Ensure Local Resolver Config Directory
