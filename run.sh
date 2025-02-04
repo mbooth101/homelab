@@ -11,7 +11,8 @@ fi
 # Install deps
 if [ -z "$(rpm -qa --qf "%{NAME}\n" | grep '^ansible$')" ] ; then
 	sudo dnf install \
-		ansible python3-netaddr python3-libdnf5 \
+		ansible ansible-freeipa \
+		python3-netaddr python3-libdnf5 \
 		virt-manager virt-install virt-viewer libvirt-client
 fi
 
@@ -75,7 +76,7 @@ if [ -n "$PROVISION" ] ; then
 			release=41
 			url="https://download.fedoraproject.org/pub/fedora/linux/releases/${release}/Everything/x86_64/os/"
 			nic1="address.type=pci,address.domain=0,address.bus=1,address.slot=0"
-			nic8="address.type=pci,address.domain=0,address.bus=8,address.slot=0"
+			nic4="address.type=pci,address.domain=0,address.bus=4,address.slot=0"
 			virt-install \
 				--connect qemu:///system \
 				--autoconsole none \
@@ -84,14 +85,14 @@ if [ -n "$PROVISION" ] ; then
 				--memory 4096 \
 				--disk size=16 \
 				--network network=network,mac=52:54:00:00:00:01,$nic1 \
-				--network network=network,mac=52:54:00:00:00:0a,$nic8,address.function=0 \
-				--network network=network,mac=52:54:00:00:00:0b,$nic8,address.function=1 \
-				--network network=network,mac=52:54:00:00:00:0c,$nic8,address.function=2 \
-				--network network=network,mac=52:54:00:00:00:0d,$nic8,address.function=3 \
+				--network network=network,mac=52:54:00:00:00:0a,$nic4,address.function=0 \
+				--network network=network,mac=52:54:00:00:00:0b,$nic4,address.function=1 \
+				--network network=network,mac=52:54:00:00:00:0c,$nic4,address.function=2 \
+				--network network=network,mac=52:54:00:00:00:0d,$nic4,address.function=3 \
 				--os-variant fedora-unknown \
 				--location ${url} \
-				--initrd-inject ks.cfg \
-				--extra-args "inst.ks=file:/ks.cfg"
+				--initrd-inject ks-vm.cfg \
+				--extra-args "inst.ks=file:/ks-vm.cfg"
 
 			# Wait until VM shuts down following OS installation
 			while [ "$(virsh --connect qemu:///system domstate $host)" != "shut off" ] ; do
