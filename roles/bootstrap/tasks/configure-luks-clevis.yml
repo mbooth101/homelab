@@ -1,0 +1,65 @@
+# Tasks for configuring Clevis to automatically decrypt the LUKS encrypted
+# partitions at boot using keys provided by a Tang key server present on the
+# local network. If the Tang key server is not accessible, the passphrase may
+# still be entered manually on the console.
+
+- name: Install Clevis LUKS Unlocker
+  ansible.builtin.dnf:
+    name:
+      - clevis
+      - clevis-luks
+      - clevis-dracut
+      - clevis-systemd
+    state: present
+
+- name: Forward Password Requests to Clevis
+  ansible.builtin.systemd_service:
+    name: clevis-luks-askpass.path
+    enabled: true
+    masked: no
+    daemon_reload: true
+
+- name: Ensure Dracut Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/dracut.conf.d
+    mode: '0755'
+
+# Configures early boot networking to communicate to the key server
+- name: Install Dracut Configuration
+  ansible.builtin.template:
+    src: dracut.conf
+    dest: /etc/dracut.conf.d/10-early-boot-net.conf
+    mode: '0444'
+  notify: Regenerate Initramfs
+
+# Configures the mechanism to clear the network config created during early boot
+- name: Install NetworkManager Configuration
+  ansible.builtin.template:
+    src: NetworkManager.conf
+    dest: /etc/NetworkManager/conf.d/10-discard-early-boot-net.conf
+    mode: '0644'
+
+- name: Query Encrypted Block Device Details
+  ansible.builtin.command:
+    cmd: "/usr/sbin/blkid -t TYPE=crypto_LUKS -o export"
+  register: block_devs
+  changed_when: False
+  failed_when: block_devs.rc != 0 and block_devs.rc != 2
+
+- name: Generate List of Encrypted Block Devices
+  ansible.builtin.set_fact:
+    luks_devices: "{{ [ luks_devices | default([]), dict( _keys | zip(_vals)) ] | flatten(1) }}"
+  loop: "{{ block_devs.stdout | split('\n\n') | list }}"
+  when: block_devs.stdout_lines | length > 0
+  vars:
+    _props: "{{ item.split('\n') | select() | list }}"
+    _keys: "{{ _props | map('split', '=') | map('first') | list }}"
+    _vals: "{{ _props | map('split', '=') | map('last') | list }}"
+
+- name: Bind Each Encrypted Block Device to Clevis
+  ansible.builtin.include_tasks:
+    bind-encrypted-block-device.yml
+  loop: "{{ luks_devices }}"
+  loop_control:
+    loop_var: luks_device

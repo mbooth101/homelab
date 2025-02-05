@@ -1,0 +1,24 @@
+# Tasks to be performed per encrypted block device
+
+- name: List Existing Bindings for Encrypted Block Device
+  ansible.builtin.command:
+    cmd: "clevis luks list -d {{ luks_device.DEVNAME }}"
+  register: luks_slots
+  changed_when: False
+
+- name: Verify LUKS Passphrase Validity
+  ansible.builtin.command:
+    cmd: "cryptsetup open --type luks2 --test-passphrase {{ luks_device.DEVNAME }}"
+    stdin: "{{ luks_password }}"
+  register: passphrase_validity
+  changed_when: False
+
+- name: Bind Encrypted Block Device to Dracut Unlocker
+  ansible.builtin.command:
+    cmd: "clevis luks bind -y -d {{ luks_device.DEVNAME }} -k- tang '{\"url\":\"192.168.1.38:7500\"}'"
+    stdin: "{{ luks_password }}"
+  when:
+    - passphrase_validity.rc == 0
+    - luks_slots.rc == 0
+    - luks_slots.stdout_lines | length == 0
+  notify: Regenerate Initramfs

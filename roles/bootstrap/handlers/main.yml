@@ -1,0 +1,5 @@
+---
+- name: Regenerate Initramfs
+  ansible.builtin.command:
+    cmd: dracut -fv --regenerate-all
+  changed_when: false

@@ -13,13 +13,13 @@
     state: "{{ item.state }}"
   loop:
     - { name: [ nano-default-editor, nano ], state: absent }
-    - { name: vim-default-editor, state: present }
+    - { name: [ vim-default-editor, vim-enhanced ], state: present }
 
-- name: Configure TPM2 for Automatic LUKS Volume Decryption
+- name: Configure Automatic LUKS Volume Decryption
   ansible.builtin.include_tasks:
-    file: configure-luks-tpm2.yml
+    file: configure-luks-clevis.yml
 
-- name: Configure Ansible Maint User
+- name: Configure Ansible Maintenance User
   ansible.builtin.include_tasks:
     file: configure-ansible-maint.yml
 

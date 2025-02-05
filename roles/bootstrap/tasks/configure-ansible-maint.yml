@@ -1,5 +1,5 @@
 # Tasks for configuring the ansible-maint user that will be used
-# for all subsequent playbook invokations
+# for all subsequent non-bootstrap playbook invokations
 
 - name: Add Ansible Group
   ansible.builtin.group:
@@ -54,4 +54,5 @@
     name: sshd.service
     enabled: true
     masked: no
+    daemon_reload: true
     state: reloaded
