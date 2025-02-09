@@ -23,6 +23,10 @@
   ansible.builtin.include_tasks:
     file: configure-ansible-maint.yml
 
+- name: Configure Network Connections
+  ansible.builtin.include_tasks:
+    file: configure-network.yml
+
 # This must be the last thing we do because once disabled, we cannot
 # reconnect as root to perform any further tasks -- subsequent playbook
 # invokations will connect as the ansible-maint user created above

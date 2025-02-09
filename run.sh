@@ -125,17 +125,21 @@ if [ -n "$PROVISION" ] ; then
 	echo "$HOSTS" >> .provisioned
 fi
 
-# If vault password file not present, just ask
+# If password files not present, just ask
 VAULT_PASS="--ask-vault-pass"
 if [ -f "vault_pass" ] ; then
 	VAULT_PASS="--vault-password-file vault_pass"
 fi
+CONN_PASS="--ask-pass"
+if [ -f "connection_pass" ] ; then
+	CONN_PASS="--connection-password-file connection_pass"
+fi
 
 if [ -n "$BOOTSTRAP" ] ; then
 
-	# Initial run must prompt for passwords and connect as root in order to set up
+	# Initial run must connect as root and use password authentication in order to set up
 	# public key authentication for the ansible-maint user and disable the root account
-	ansible-playbook $VAULT_PASS -u root --ask-pass \
+	ansible-playbook $VAULT_PASS -u root $CONN_PASS \
 		-i $HOSTS --tags "bootstrap" "$@" playbook.yml
 	echo "$HOSTS" >> .bootstrapped
 else

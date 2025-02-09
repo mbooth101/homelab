@@ -1,5 +1,6 @@
 /.provisioned
 /.bootstrapped
 /vault_pass
+/connection_pass
 /roles/tls/files/*/
 __pycache__/

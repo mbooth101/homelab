@@ -1,4 +1,4 @@
-# These tasks create a bonded ethernet connection from all the ports
+# Tasks for creating a bonded ethernet connection from all the ports
 # on the Intel NIC and creates a virtual bridge. The bonded connection
 # and all virtual machines will be connected to the virtual bridge:
 #
@@ -25,7 +25,43 @@
 # │ Port n │─> ...
 # └────────┘
 
-- name: Create Bonded Connection
+# This ensures the FQDN is correctly set and "hostname -f" gives the right
+# answer
+- name: Update Hosts File
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+  loop:
+    - "{{ host.ipv4.address }} {{ host.fqdn }} {{ host.name }}"
+    - "{{ host.ipv6.address }} {{ host.fqdn }} {{ host.name }}"
+
+# Ensure the host name is set correctly based on the inventory host on which
+# we're being run
+- name: Set Host Name
+  ansible.builtin.hostname:
+    name: "{{ host.fqdn }}"
+    use: systemd
+
+# Configures the mechanism to clear any network configuration created during
+# early boot
+- name: Install NetworkManager Configuration
+  ansible.builtin.template:
+    src: NetworkManager.conf
+    dest: /etc/NetworkManager/conf.d/10-discard-early-boot-net.conf
+    mode: '0644'
+
+- name: Permanantly Disable Wifi Adapter
+  ansible.builtin.command:
+    cmd: /usr/sbin/rfkill block wlan
+  changed_when: False
+
+# This should find all physical interfaces no matter how they are
+# named and return them in a predictable order
+- name: Create List of Wired Interfaces
+  ansible.builtin.set_fact:
+    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
+
+- name: Create Bonded Interface
   community.general.nmcli:
     type: bond
     conn_name: bond0
@@ -35,7 +71,9 @@
   register: bond_config
   when: "'bond0' not in ansible_facts"
 
-- name: Add Wired NICs to Bonded Connection
+# The first interface is the onboard ethernet, skip that one and
+# only the interfaces from the Intel NIC
+- name: Add Wired Interfaces to Bonded Interface
   community.general.nmcli:
     type: ethernet
     slave_type: bond
@@ -46,10 +84,11 @@
   loop: "{{ ether_interfaces[1:] }}"
   when: item.startswith('en')
 
-- name: Reapply Bonded Connection Settings
+- name: Reapply Bonded Interface Settings
   ansible.builtin.command:
     cmd: "nmcli device reapply bond0"
   when: bond_config.changed
+  notify: Reboot Machine
 
 - name: Create Virtual Network Bridge
   community.general.nmcli:
@@ -58,18 +97,18 @@
     autoconnect: true
     ip4: "{{ host.ipv4.cidr }}"
     gw4: "{{ host.ipv4.gateway }}"
-    dns4: "127.0.0.1"
+    dns4: "{{ host.ipv4.gateway }}"
     dns4_search: "{{ domain }}"
     ip6: "{{ host.ipv6.cidr }}"
     gw6: "{{ host.ipv6.gateway }}"
-    dns6: "::1"
+    dns6: "{{ host.ipv6.gateway }}"
     dns6_search: "{{ domain }}"
     stp: true
     state: present
   register: bridge_config
   when: "'bridge0' not in ansible_facts"
 
-- name: Add Bonded Ethernet NIC as a Virtual Network Bridge Port
+- name: Add Bonded Interface as a Virtual Network Bridge Port
   community.general.nmcli:
     type: ethernet
     slave_type: bridge
@@ -82,3 +121,4 @@
   ansible.builtin.command:
     cmd: "nmcli device reapply bridge0"
   when: bridge_config.changed
+  notify: Reboot Machine

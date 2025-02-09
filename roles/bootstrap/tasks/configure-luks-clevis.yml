@@ -33,13 +33,6 @@
     mode: '0444'
   notify: Regenerate Initramfs
 
-# Configures the mechanism to clear the network config created during early boot
-- name: Install NetworkManager Configuration
-  ansible.builtin.template:
-    src: NetworkManager.conf
-    dest: /etc/NetworkManager/conf.d/10-discard-early-boot-net.conf
-    mode: '0644'
-
 - name: Query Encrypted Block Device Details
   ansible.builtin.command:
     cmd: "/usr/sbin/blkid -t TYPE=crypto_LUKS -o export"

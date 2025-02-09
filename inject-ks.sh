@@ -7,12 +7,16 @@ set -e
 
 ISO=Fedora-Everything-netinst-x86_64-41-1.4.iso
 VID=$(isoinfo -d -i $ISO | grep -i "Volume id:" | cut -d' ' -f1,2 --complement)
+ROOTPW=$(<connection_pass)
+LUKSPW=$ROOTPW
 
 # Inject kickstart into the root of the iso9660 filesystem
+sed -e "s/@ROOTPW@/$ROOTPW/" -e "s/@LUKSPW@/$LUKSPW/" ks-hw.cfg > /tmp/ks-hw.cfg
 rm -f /tmp/boot.iso && xorriso \
 	-indev $ISO -outdev /tmp/boot.iso \
-	-map ks-hw.cfg /ks-hw.cfg \
+	-map /tmp/ks-hw.cfg /ks-hw.cfg \
 	-boot_image any replay
+rm /tmp/ks-hw.cfg
 
 # Write the image to USB stick
 sudo umount /run/media/mbooth/$VID || :

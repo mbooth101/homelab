@@ -3,3 +3,11 @@
   ansible.builtin.command:
     cmd: dracut -fv --regenerate-all
   changed_when: false
+
+# Not using the ansible reboot module to allow the deployment to
+# finish successfully (we'll be unable to reestablish the existing
+# connection due to disabling the root account)
+- name: Reboot Machine
+  ansible.builtin.command:
+    cmd: shutdown -r +1
+  changed_when: false
