@@ -5,23 +5,6 @@
       - bind-utils
     state: present
 
-# This ensures the FQDN is correctly set and "hostname -f" gives the right
-# answer
-- name: Update Hosts File
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    line: "{{ item }}"
-  loop:
-    - "{{ host.ipv4.address }} {{ host.fqdn }} {{ host.name }}"
-    - "{{ host.ipv6.address }} {{ host.fqdn }} {{ host.name }}"
-
-# Ensure the host name is set correctly based on the inventory host on which
-# we're being run
-- name: Set Host Name
-  ansible.builtin.hostname:
-    name: "{{ host.fqdn }}"
-    use: systemd
-
 - name: Ensure Local Resolver Config Directory
   ansible.builtin.file:
     state: directory
@@ -31,7 +14,7 @@
 # Disable systemd resolver features in favour of using the configured DNS
 # resolvers directly
 - name: Disable Unneeded Local Resolver Features
-  ansible.builtin.copy:
+  ansible.builtin.template:
     src: 99-resolved.conf
     dest: /etc/systemd/resolved.conf.d/99-resolved.conf
   notify:
