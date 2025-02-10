@@ -1,4 +1,12 @@
 ---
+- name: Reload SSHd
+  ansible.builtin.systemd_service:
+    name: sshd.service
+    enabled: true
+    masked: no
+    daemon_reload: true
+    state: reloaded
+
 - name: Regenerate Initramfs
   ansible.builtin.command:
     cmd: dracut -fv --regenerate-all

@@ -42,17 +42,12 @@
     path: /etc/ssh/authorized_keys/ansible-maint
     manage_dir: false
     key: "{{ lookup('file', '~/.ssh/id_home.pub') }}"
+  notify: Reload SSHd
 
 - name: Install Public Key Configuration
   ansible.builtin.template:
     src: sshd.conf
     dest: "/etc/ssh/sshd_config.d/99-ansible-maint.conf"
     mode: '0600'
+  notify: Reload SSHd
 
-- name: Reload SSHd
-  ansible.builtin.systemd_service:
-    name: sshd.service
-    enabled: true
-    masked: no
-    daemon_reload: true
-    state: reloaded
