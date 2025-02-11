@@ -14,6 +14,7 @@
   loop:
     - { name: [ nano-default-editor, nano ], state: absent }
     - { name: [ vim-default-editor, vim-enhanced ], state: present }
+  when: install_rpms
 
 - name: Configure Automatic LUKS Volume Decryption
   ansible.builtin.include_tasks:

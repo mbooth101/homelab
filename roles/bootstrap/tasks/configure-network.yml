@@ -42,6 +42,26 @@
     name: "{{ host.fqdn }}"
     use: systemd
 
+# This should find all physical interfaces no matter how they are
+# named and return them in a predictable order
+- name: Create List of Wired Interfaces
+  ansible.builtin.set_fact:
+    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
+
+# Configures early boot networking used for talking to LUKS key server to
+# unlock encrypted system partitions
+- name: Ensure Dracut Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/dracut.conf.d
+    mode: '0755'
+- name: Install Dracut Configuration
+  ansible.builtin.template:
+    src: dracut.conf
+    dest: /etc/dracut.conf.d/10-early-boot-net.conf
+    mode: '0444'
+  notify: Regenerate Initramfs
+
 # Configures the mechanism to clear any network configuration created during
 # early boot
 - name: Install NetworkManager Configuration
@@ -50,23 +70,18 @@
     dest: /etc/NetworkManager/conf.d/10-discard-early-boot-net.conf
     mode: '0644'
 
+# This does not disable bluetooth
 - name: Permanantly Disable Wifi Adapter
   ansible.builtin.command:
-    cmd: /usr/sbin/rfkill block wlan
+    cmd: /usr/bin/nmcli radio all off
   changed_when: False
-
-# This should find all physical interfaces no matter how they are
-# named and return them in a predictable order
-- name: Create List of Wired Interfaces
-  ansible.builtin.set_fact:
-    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
 
 - name: Create Bonded Interface
   community.general.nmcli:
     type: bond
     conn_name: bond0
     autoconnect: true
-    mode: balance-xor
+    mode: balance-rr
     state: present
   register: bond_config
   when: "'bond0' not in ansible_facts"

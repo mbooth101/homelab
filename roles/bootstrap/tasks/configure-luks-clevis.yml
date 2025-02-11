@@ -11,6 +11,7 @@
       - clevis-dracut
       - clevis-systemd
     state: present
+  when: install_rpms
 
 - name: Forward Password Requests to Clevis
   ansible.builtin.systemd_service:
@@ -18,20 +19,6 @@
     enabled: true
     masked: no
     daemon_reload: true
-
-- name: Ensure Dracut Config Directory
-  ansible.builtin.file:
-    state: directory
-    path: /etc/dracut.conf.d
-    mode: '0755'
-
-# Configures early boot networking to communicate to the key server
-- name: Install Dracut Configuration
-  ansible.builtin.template:
-    src: dracut.conf
-    dest: /etc/dracut.conf.d/10-early-boot-net.conf
-    mode: '0444'
-  notify: Regenerate Initramfs
 
 - name: Query Encrypted Block Device Details
   ansible.builtin.command:
