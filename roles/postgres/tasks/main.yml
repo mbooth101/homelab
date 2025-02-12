@@ -5,42 +5,10 @@
       - python3-psycopg2
     state: present
 
-- name: Allow PostgreSQL to Modify Files in the DB Root
-  community.general.sefcontext:
-    target: "{{ data_dir }}(/.*)?"
-    setype: postgresql_db_t
-    state: present
-
-- name: Create PostgreSQL Data Directory
-  ansible.builtin.file:
-    state: directory
-    setype: "{{ item.setype }}"
-    path: "{{ item.path }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
-    mode: "{{ item.mode }}"
-  loop:
-    - { path: "{{ data_dir | dirname }}", setype: var_t, mode: '0755', owner: root }
-    - { path: "{{ data_dir }}", setype: postgresql_db_t, mode: '0700', owner: postgres }
-
-- name: Ensure PostgreSQL  Service Overrides Directory
-  ansible.builtin.file:
-    state: directory
-    path: /etc/systemd/system/postgresql.service.d
-    mode: '0755'
-
-- name: Install PostgreSQL Service Overrides
-  ansible.builtin.template:
-    src: postgresql.override.conf
-    dest: "/etc/systemd/system/postgresql.service.d/override.conf"
-    mode: '0644'
-  notify:
-    - Restart PostgreSQL
-
 - name: Initialise PostgreSQL
   ansible.builtin.command:
     cmd: postgresql-setup --initdb --unit postgresql
-    creates: "{{ data_dir }}/pg_hba.conf"
+    creates: "/var/lib/pgsql/data/pg_hba.conf"
 
 - name: Install PostgreSQL Configuration
   ansible.builtin.template:
@@ -50,8 +18,8 @@
     group: postgres
     mode: '0600'
   loop:
-    - { src: postgresql.conf , dest: "{{ data_dir }}/postgresql.conf" }
-    - { src: pg_hba.conf , dest: "{{ data_dir }}/pg_hba.conf" }
+    - { src: postgresql.conf , dest: "/var/lib/pgsql/data/postgresql.conf" }
+    - { src: pg_hba.conf , dest: "/var/lib/pgsql/data/pg_hba.conf" }
   notify:
     - Restart PostgreSQL
 
