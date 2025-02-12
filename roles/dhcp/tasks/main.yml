@@ -1,12 +1,12 @@
-- name: Configure PostgreSQL for Kea DHCP
-  ansible.builtin.include_tasks:
-    file: ../../postgres/tasks/configure-db.yml
-
 - name: Install Kea DHCP
   ansible.builtin.dnf:
     name:
       - kea
     state: present
+
+- name: Configure PostgreSQL for Kea DHCP
+  ansible.builtin.include_tasks:
+    file: ../../postgres/tasks/configure-db.yml
 
 - name: Initialise the Kea DHCP Database
   ansible.builtin.command:
@@ -69,7 +69,7 @@
     - Restart Kea DHCP4
     - Restart Kea DHCP6
 
-- name: Enable/Start Kea DHCP
+- name: Enable/Start Kea DHCP Services
   ansible.builtin.systemd_service:
     name: "{{ item }}.service"
     enabled: true
