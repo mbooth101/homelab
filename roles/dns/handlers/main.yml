@@ -10,3 +10,8 @@
     name: systemd-resolved.service
     daemon_reload: true
     state: restarted
+
+- name: Reapply Network Configuration
+  ansible.builtin.command:
+    cmd: nmcli device reapply bridge0
+  changed_when: false

@@ -7,14 +7,15 @@
 
 - name: Determine if DNS Record Exists
   ansible.builtin.command:
-    cmd: "dig @localhost -6 -p {{ bind9_port }} {{ record_name | default(role_name) }}.{{ domain }} {{ record_type | default('CNAME') }} +short"
+    cmd: "dig @{{ host.ipv4.address }} -p {{ bind9_port }} {{ record_name | default(role_name) }}.{{ domain }} {{ record_type | default('CNAME') }} +short"
   register: dns_lookup
   changed_when: False
 
 - name: Add DNS Record to the Zone
   ansible.builtin.command:
-    cmd: "nsupdate -6 -l -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
+    cmd: "nsupdate -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
     stdin: |
+      server {{ host.fqdn }}
       update add {{ record_name | default(role_name) }}.{{ domain }} 14400 IN {{ record_type | default('CNAME') }} {{ text | default(host.fqdn) }}
       send
   when: not dns_lookup.stdout

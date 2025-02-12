@@ -29,6 +29,7 @@
   loop:
     - tcp
     - udp
+  when: bind9_port != 53
 
 - name: Install Main DNS Configuration
   ansible.builtin.template:
@@ -109,3 +110,14 @@
     state: enabled
   notify:
     - Reload Firewall
+
+- name: Switch Network Connection DNS Provider
+  community.general.nmcli:
+    conn_name: bridge0
+    type: ethernet
+    dns4: "{{ host.ipv4.address }}"
+    dns6: "{{ host.ipv6.address }}"
+    conn_reload: true
+    state: present
+  notify:
+    - Reapply Network Configuration
