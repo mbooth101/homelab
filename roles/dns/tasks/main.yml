@@ -70,7 +70,7 @@
   ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "/var/named/{{ item.dest }}"
-    owner: root
+    owner: named
     group: named
     mode: '0640'
   loop:
