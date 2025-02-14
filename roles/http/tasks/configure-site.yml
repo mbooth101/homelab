@@ -5,22 +5,26 @@
 # - site_static: set to true to configure static site hosting
 # - site_proxy: set to true to configure basic proxying to another port
 
-- name: Ensure Site Config Directory
-  ansible.builtin.file:
-    state: directory
-    path: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}"
-    mode: '0755'
+# Adds a DNS alias so that the site is addressable and the name-based
+# vhosts function properly
+- name: Configure Site DNS CNAME
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+  when: site_name | default(role_name) != host.name
+  vars:
+    record_name: "{{ site_name | default(role_name) }}"
 
-- name: Ensure Document Root Directory
-  ansible.builtin.file:
-    state: directory
-    path: "{{ www_root }}/{{ site_name | default(role_name) }}"
-    mode: '0755'
-  when: site_static | default(false)
+# Adds a self-signed TLS certificate for the DNS alias created above,
+# this allows the site to be brought up and a real TLS certificate to
+# be requested via ACME challenge
+- name: Configure Site TLS Self-Signed Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-self-cert.yml
+  vars:
+    cert_name: "{{ site_name | default(role_name) }}"
 
 # This file configures a vhost for the calling role, including all necessary TLS
 # moving parts
-
 - name: Install Site Virtual Host
   ansible.builtin.template:
     src: ../../http/templates/apache.vhost.conf
@@ -29,13 +33,17 @@
     mode: '0644'
   vars:
     _site: "{{ site_name | default(role_name) }}"
-    _pri_name: "{{ (_site == 'default') | ternary('00-default', '10-' + _site) }}"
+    _pri_name: "{{ (_site == host.name) | ternary('00-' + _site, '10-' + _site) }}"
   notify:
     - Reload Apache
 
 # All templates supplied by the calling role named like "*.apache.conf" will be
 # included by the above vhost configuration
-
+- name: Ensure Site Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}"
+    mode: '0755'
 - name: Install Custom Site Config
   ansible.builtin.template:
     src: "{{ item }}"
@@ -46,7 +54,6 @@
     - "{{ role_path }}/templates/*.apache.conf"
   notify:
     - Reload Apache
-
 - name: Install Static Site Config
   ansible.builtin.template:
     src: "../../http/templates/apache.static.conf"
@@ -56,7 +63,6 @@
   when: site_static | default(false)
   notify:
     - Reload Apache
-
 - name: Install Proxied Site Config
   ansible.builtin.template:
     src: "../../http/templates/apache.proxy.conf"
@@ -67,26 +73,25 @@
   notify:
     - Reload Apache
 
-- name: Install Default Virtual Host Placeholder
-  ansible.builtin.template:
-    src: "index.html"
-    dest: "{{ www_root }}/default/index.html"
-  when: site_name | default(role_name) == 'default'
+# Static sites require a place from which to serve files
+- name: Ensure Document Root Directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ www_root }}/html/{{ site_name | default(role_name) }}"
+    mode: '0755'
+  when: site_static | default(false)
 
-# Adds a DNS alias so that the site is addressable and the name-based
-# vhosts function properly
+# Can't wait for handlers to run because need to requisition a new certificate
+# which requires the domain to able to serve the ACME challenge
+- name: Make Site Available Now
+  ansible.builtin.systemd_service:
+    name: httpd.service
+    daemon_reload: true
+    state: reloaded
 
-- name: Configure DNS CNAME
+# Provison real certificates via ACME challenge
+- name: Configure Site TLS Certificate
   ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-record.yml
-  when: site_name | default(role_name) != 'default'
-  vars:
-    record_name: "{{ site_name | default(role_name) }}"
-
-# Adds a TLS certificate for the DNS alias created above
-
-- name: Configure TLS Certificate
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-cert.yml
+    file: ../../tls/tasks/configure-real-cert.yml
   vars:
     cert_name: "{{ site_name | default(role_name) }}"

@@ -1,0 +1,23 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - cert_name: subject of the certificate
+
+- name: TLS - Provision Certificate
+  ansible.builtin.command:
+    cmd: "certbot certonly --webroot --webroot-path {{ www_root }}/acme -d {{ cert_name}}.{{ domain }}"
+    creates: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}/fullchain.pem"
+  register: tls_provisioned
+
+- name: TLS - Remove Self-Signed Certificates
+  ansible.builtin.file:
+    dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+    state: absent
+  when: tls_provisioned.changed
+
+- name: TLS - Symlink Provisioned Certificates
+  ansible.builtin.file:
+    dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+    src: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}"
+    state: link
+  when: tls_provisioned.changed

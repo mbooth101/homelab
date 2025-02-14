@@ -16,12 +16,15 @@
     - { path: /etc/httpd/conf.d/vhosts.d }
     - { path: /etc/httpd/conf.d/includes.d }
 
-- name: Create Apache Web Root Directory
+- name: Create Apache Web Root Directories
   ansible.builtin.file:
     state: directory
-    path: "{{ www_root }}"
+    path: "{{ www_root }}/{{ item }}"
     setype: httpd_sys_content_t
     mode: '0755'
+  loop:
+    - acme
+    - html
 
 - name: Install Main Apache Configuration
   ansible.builtin.template:
@@ -30,12 +33,6 @@
     mode: '0644'
   notify:
     - Reload Apache
-
-- name: Install Placeholder Site For Default Virtual Host
-  ansible.builtin.include_tasks: configure-site.yml
-  vars:
-    site_name: default
-    site_static: true
 
 - name: Configure SELinux To Allow Proxy Connections
   ansible.posix.seboolean:
@@ -60,3 +57,14 @@
     - https
   notify:
     - Reload Firewall
+
+# Create a default, catch-all virtual host site
+- name: Install Placeholder Site For Default Virtual Host
+  ansible.builtin.include_tasks: configure-site.yml
+  vars:
+    site_name: "{{ host.name }}"
+    site_static: true
+- name: Install Default Virtual Host Placeholder Site Files
+  ansible.builtin.template:
+    src: "index.html"
+    dest: "{{ www_root }}/html/{{ host.name }}/index.html"

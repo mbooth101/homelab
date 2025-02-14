@@ -5,13 +5,13 @@
 # - record_type: set to override the default value of "CNAME"
 # - text: set to override the default value of "host.fqdn"
 
-- name: Determine if DNS Record Exists
+- name: DNS - Determine if Record Exists
   ansible.builtin.command:
     cmd: "dig @{{ host.ipv4.address }} -p {{ bind9_port }} {{ record_name | default(role_name) }}.{{ domain }} {{ record_type | default('CNAME') }} +short"
   register: dns_lookup
   changed_when: False
 
-- name: Add DNS Record to the Zone
+- name: DNS - Add Record to the Zone
   ansible.builtin.command:
     cmd: "nsupdate -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
     stdin: |
