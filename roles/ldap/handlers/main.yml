@@ -1,0 +1,6 @@
+---
+- name: Restart LDAP
+  ansible.builtin.systemd_service:
+    name: dirsrv@accounts.service
+    daemon_reload: true
+    state: restarted

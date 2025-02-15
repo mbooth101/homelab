@@ -1,0 +1,4 @@
+## {{ ansible_managed }}
+
+# Kerberos Keytab File Location
+KRB5_KTNAME=/etc/dirsrv/ds.keytab

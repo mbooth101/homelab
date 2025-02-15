@@ -6,23 +6,26 @@
 
 - name: Configure DNS CNAME For LDAP
   ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-cname.yml
+    file: ../../dns/tasks/configure-record.yml
 
-- name: Configure TLS Certificate for LDAP
+- name: Configure DNS SRV Record for LDAP
   ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-cert.yml
+    file: ../../dns/tasks/configure-record.yml
+  vars:
+    record_name: "_ldap._tcp"
+    record_type: "SRV"
+    text: "0 100 389 {{ role_name }}.{{ domain }}"
 
-- name: Check For Existing LDAP Instance
-  ansible.builtin.stat:
-    path: /etc/dirsrv/slapd-accounts/dse.ldif
-  register: slapd_instance
-
-- name: Copy LDAP Instance Creation Configuration
+- name: Install LDAP Instance Creation Configuration
   ansible.builtin.template:
     src: instance.inf
     dest: /etc/dirsrv/instance.inf
     mode: '0600'
-  when: not slapd_instance.stat.exists
+
+- name: Check For Existing LDAP Instance
+  ansible.builtin.stat:
+    path: "/etc/dirsrv/slapd-{{ ldap_instance }}/dse.ldif"
+  register: slapd_instance
 
 - name: Create LDAP Instance
   ansible.builtin.command:
@@ -31,10 +34,12 @@
 
 - name: Enable/Start LDAP
   ansible.builtin.systemd_service:
-    name: dirsrv@accounts.service
+    name: "{{ item }}.service"
     enabled: true
     masked: no
     state: started
+  loop:
+    - "dirsrv@{{ ldap_instance }}"
 
 - name: Enable LDAP MemberOf Plugin
   ansible.builtin.command:
@@ -45,13 +50,25 @@
     - "dsctl accounts restart"
   when: not slapd_instance.stat.exists
 
-- name: Import LDAP Server Certificates
+- name: Configure TLS Certificate for LDAP
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-self-cert.yml
+  vars:
+    cert_name: "{{ role_name }}"
+
+- name: Configure TLS Certificate for LDAP
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-real-cert.yml
+  vars:
+    cert_name: "{{ role_name }}"
+
+- name: Import LDAP Server TLS Certificates
   ansible.builtin.command:
     cmd: "{{ item }}"
   loop:
-    - "dsconf accounts security ca-certificate add --file /etc/letsencrypt/live/{{ role_name }}/chain.pem --name 'Server-CA'"
-    - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/live/{{ role_name }}/cert.pem /etc/letsencrypt/live/{{ role_name }}/privkey.pem"
-    - "dsconf accounts security certificate add --file /etc/letsencrypt/live/{{ role_name }}/cert.pem --primary-cert --name 'Server-Cert'"
+    - "dsconf accounts security ca-certificate add --file /etc/letsencrypt/certs/{{ role_name }}.{{ domain }}/chain.pem --name 'Server-CA'"
+    - "dsctl accounts tls import-server-key-cert /etc/letsencrypt/certs/{{ role_name }}.{{ domain }}/cert.pem /etc/letsencrypt/certs/{{ role_name }}.{{ domain }}/privkey.pem"
+    - "dsconf accounts security certificate add --file /etc/letsencrypt/certs/{{ role_name }}.{{ domain }}/cert.pem --primary-cert --name 'Server-Cert'"
     - "dsconf accounts config replace nsslapd-security=on"
     - "dsconf accounts config replace nsslapd-listenhost={{ role_name }}.{{ domain }}"
     - "dsconf accounts config replace nsslapd-securelistenhost={{ role_name }}.{{ domain }}"
@@ -72,25 +89,46 @@
 
 - name: Create Initial LDAP User
   ansible.builtin.command:
-    cmd: "dsidm -v -b {{ ldap_domain }} accounts {{ item }}"
+    cmd: "dsidm -v -b {{ ldap_domain }} {{ ldap_instance }} {{ item }}"
   loop:
     - "organizationalunit create --ou People"
     - "organizationalunit create --ou Groups"
     - "organizationalunit create --ou Services"
+    - "posixgroup create --cn admins --gidNumber 10"
+    - "posixgroup create --cn users --gidNumber 100"
     - "posixgroup create --cn {{ ldap_initial_user_id }} --gidNumber {{ ldap_initial_user_gid }}"
     - "user create --cn {{ ldap_initial_user_id }} --uid {{ ldap_initial_user_id }} --uidNumber {{ ldap_initial_user_uid }} --gidNumber {{ ldap_initial_user_gid }} --displayName '{{ ldap_initial_user_gecos }}' --homeDirectory /home/{{ ldap_initial_user_id }}"
+    - "group add_member admins uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
+    - "group add_member users uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
     - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
   when: not slapd_instance.stat.exists
 
-- name: Allow LDAP Clients to Read CA Certificates
-  ansible.builtin.copy:
-    src: "/etc/letsencrypt/live/{{ role_name }}/chain.pem"
-    remote_src: true
-    dest: "/etc/openldap/ca.pem"
-    mode: '0644'
+- name: Install Additional LDAP Service Configuration
+  ansible.builtin.template:
+    src: "dirsrv"
+    dest: "/etc/sysconfig/dirsrv"
+  notify:
+    - Restart LDAP
+
+- name: Install TLS Certificate Renewal Hook for LDAP Service
+  ansible.builtin.template:
+    src: dirsrv_cert_hook.sh
+    dest: "/etc/letsencrypt/renewal-hooks/post/dirsrv_cert_hook.sh"
+    mode: '755'
 
 - name: Install LDAP Client Configuration
   ansible.builtin.template:
     src: ldap.conf
     dest: /etc/openldap/ldap.conf
     mode: '0644'
+
+- name: Open Firewall for LDAP
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - ldap
+    - ldaps
+  notify:
+    - Reload Firewall
