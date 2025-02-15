@@ -1,0 +1,60 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - cert_name: subject of the certificate
+# - cert_self: set to true for self-signed certificates
+
+- name: TLS - Ensure Certificate Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+    mode: '0755'
+
+# Install a pre-generated self-signed certificate for staging purposes
+# or bootstrapping purposes
+- name: TLS - Provision Self-Signed Certificate
+  block:
+    - name: TLS - Generate Self-Signed Certificates
+      local_action: ansible.builtin.command ./roles/tls/files/create_cert.sh {{ cert_name }}.{{ domain }}
+      changed_when: False
+      become: no
+
+    - name: TLS - Install Self-Signed Certificates
+      ansible.builtin.copy:
+        src: "../../tls/files/{{ cert_name }}.{{ domain }}/{{ item }}"
+        dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}/{{ item }}"
+        owner: root
+        group: root
+        mode: '0640'
+      loop:
+        - fullchain.pem
+        - cert.pem
+        - chain.pem
+        - privkey.pem
+  when: cert_self | default(False)
+
+# Install a certificate requested from a certificate authority via
+# the ACME challenge mechanism, removes any self-signed certificates
+# that might already exist and symlink the real certificates in their
+# place
+- name: TLS - Provision Certificate
+  block:
+    - name: TLS - Provision Certificate
+      ansible.builtin.command:
+        cmd: "certbot certonly --webroot --webroot-path {{ www_root }}/acme -d {{ cert_name}}.{{ domain }}"
+        creates: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}/fullchain.pem"
+      register: tls_provisioned
+
+    - name: TLS - Remove Self-Signed Certificates
+      ansible.builtin.file:
+        dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+        state: absent
+      when: tls_provisioned.changed
+
+    - name: TLS - Symlink Provisioned Certificates
+      ansible.builtin.file:
+        dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+        src: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}"
+        state: link
+      when: tls_provisioned.changed
+  when: not cert_self | default(False)

@@ -14,15 +14,6 @@
   vars:
     record_name: "{{ site_name | default(role_name) }}"
 
-# Adds a self-signed TLS certificate for the DNS alias created above,
-# this allows the site to be brought up and a real TLS certificate to
-# be requested via ACME challenge
-- name: Configure Site TLS Self-Signed Certificate
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-self-cert.yml
-  vars:
-    cert_name: "{{ site_name | default(role_name) }}"
-
 # This file configures a vhost for the calling role, including all necessary TLS
 # moving parts
 - name: Install Site Virtual Host
@@ -81,6 +72,16 @@
     mode: '0755'
   when: site_static | default(false)
 
+# Adds a self-signed TLS certificate for the site DNS name, this allows
+# the site to be brought up and a real TLS certificate to be requested
+# via ACME challenge
+- name: Configure Site TLS Self-Signed Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-cert.yml
+  vars:
+    cert_name: "{{ site_name | default(role_name) }}"
+    cert_self: True
+
 # Can't wait for handlers to run because need to requisition a new certificate
 # which requires the domain to able to serve the ACME challenge
 - name: Make Site Available Now
@@ -92,6 +93,6 @@
 # Provison real certificates via ACME challenge
 - name: Configure Site TLS Certificate
   ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-real-cert.yml
+    file: ../../tls/tasks/configure-cert.yml
   vars:
     cert_name: "{{ site_name | default(role_name) }}"

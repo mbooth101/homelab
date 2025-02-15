@@ -50,15 +50,9 @@
     - "dsctl accounts restart"
   when: not slapd_instance.stat.exists
 
-- name: Configure TLS Certificate for LDAP
+- name: Configure LDAP TLS Certificate
   ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-self-cert.yml
-  vars:
-    cert_name: "{{ role_name }}"
-
-- name: Configure TLS Certificate for LDAP
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-real-cert.yml
+    file: ../../tls/tasks/configure-cert.yml
   vars:
     cert_name: "{{ role_name }}"
 
