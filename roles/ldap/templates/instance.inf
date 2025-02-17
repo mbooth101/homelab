@@ -4,7 +4,7 @@ start = False
 strict_host_checking = False
 
 [slapd]
-instance_name = accounts
+instance_name = {{ ldap_instance }}
 root_password = {{ ldap_manager_password }}
 self_sign_cert = False
 

@@ -1,0 +1,96 @@
+- name: Install Kerberos
+  ansible.builtin.dnf:
+    name:
+      - krb5-server
+      - krb5-workstation
+    state: present
+
+- name: Configure DNS CNAME For Kerberos
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+
+- name: Configure DNS SRV Records for Kerberos Services
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+  loop:
+    - { srv: '_kerberos-master._tcp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kerberos-master._udp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kerberos._tcp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kerberos._udp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kpasswd._tcp', text: "0 100 464 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kpasswd._udp', text: "0 100 464 {{ role_name }}.{{ domain }}" }
+    - { srv: '_kerberos', type: TXT, text: "\"{{ krb_realm }}\"" }
+  vars:
+    record_name: "{{ item.srv | default(role_name) }}"
+    record_type: "{{ item.type | default('SRV') }}"
+    text: "{{ item.text }}"
+
+- name: Install Kerberos Configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: krb5.conf, dest: /etc/krb5.conf, mode: '0644' }
+    - { src: kdc.conf, dest: /var/kerberos/krb5kdc/kdc.conf, mode: '0600' }
+    - { src: kadm5.acl, dest: /var/kerberos/krb5kdc/kadm5.acl, mode: '0600' }
+  notify:
+    - Reload KDC
+    - Reload KAdmin
+
+- name: Initialise Kerberos Principal Database
+  ansible.builtin.command:
+    cmd: "/usr/sbin/kdb5_util create -r {{ krb_realm }} -s -P {{ krb_master_password }}"
+    creates: /var/kerberos/krb5kdc/principal
+  register: init_principal
+
+- name: Create Kerberos Admin and Host Principals
+  ansible.builtin.command:
+    cmd: "kadmin.local -q '{{ item }}'"
+  loop:
+    - "add_principal -pw {{ krb_master_password }} root/admin"
+    - "add_principal -randkey host/{{ host.fqdn }}"
+    - "add_principal -randkey host/{{ host.name }}"
+    - "ktadd host/{{ host.fqdn }}"
+    - "ktadd host/{{ host.name }}"
+  when: init_principal.changed
+
+- name: Create Kerberos Keytab for LDAP
+  ansible.builtin.command:
+    cmd: "kadmin.local -q '{{ item }}'"
+    creates: /etc/dirsrv/ds.keytab
+  loop:
+    - "add_principal -randkey ldap/{{ host.fqdn }}"
+    - "add_principal -randkey ldap/{{ host.name }}"
+    - "ktadd -k /etc/dirsrv/ds.keytab ldap/{{ host.fqdn }}"
+    - "ktadd -k /etc/dirsrv/ds.keytab ldap/{{ host.name }}"
+  notify:
+    - Restart LDAP
+
+- name: Allow LDAP Keytab Read Access
+  ansible.builtin.file:
+    path: /etc/dirsrv/ds.keytab
+    owner: dirsrv
+    group: dirsrv
+    mode: '0600'
+
+- name: Enable/Start Kerberos
+  ansible.builtin.systemd_service:
+    name: "{{ item }}.service"
+    enabled: true
+    masked: no
+    state: started
+  loop:
+    - krb5kdc
+    - kadmin
+
+- name: Open Firewall for Kerberos
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - kerberos
+    - kadmin
+  notify:
+    - Reload Firewall

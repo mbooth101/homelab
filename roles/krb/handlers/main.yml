@@ -1,0 +1,13 @@
+---
+- name: Reload KDC
+  ansible.builtin.systemd_service:
+    name: krb5kdc.service
+    daemon_reload: true
+    state: reloaded
+
+- name: Reload KAdmin
+  ansible.builtin.systemd_service:
+    name: kadmin.service
+    daemon_reload: true
+    state: reloaded
+

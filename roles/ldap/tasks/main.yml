@@ -16,30 +16,24 @@
     record_type: "SRV"
     text: "0 100 389 {{ role_name }}.{{ domain }}"
 
-- name: Install LDAP Instance Creation Configuration
+- name: Install LDAP Instance Creation Template
   ansible.builtin.template:
     src: instance.inf
     dest: /etc/dirsrv/instance.inf
     mode: '0600'
 
-- name: Check For Existing LDAP Instance
-  ansible.builtin.stat:
-    path: "/etc/dirsrv/slapd-{{ ldap_instance }}/dse.ldif"
-  register: slapd_instance
-
 - name: Create LDAP Instance
   ansible.builtin.command:
     cmd: "dscreate from-file /etc/dirsrv/instance.inf"
-  when: not slapd_instance.stat.exists
+    creates: "/etc/dirsrv/slapd-{{ ldap_instance }}/dse.ldif"
+  register: slapd_instance
 
 - name: Enable/Start LDAP
   ansible.builtin.systemd_service:
-    name: "{{ item }}.service"
+    name: "dirsrv@{{ ldap_instance }}.service"
     enabled: true
     masked: no
     state: started
-  loop:
-    - "dirsrv@{{ ldap_instance }}"
 
 - name: Enable LDAP MemberOf Plugin
   ansible.builtin.command:
@@ -48,7 +42,7 @@
     - "dsconf accounts plugin memberof enable"
     - "dsconf accounts plugin memberof set --scope {{ ldap_domain }}"
     - "dsctl accounts restart"
-  when: not slapd_instance.stat.exists
+  when: slapd_instance.changed
 
 - name: Configure LDAP TLS Certificate
   ansible.builtin.include_tasks:
@@ -67,7 +61,7 @@
     - "dsconf accounts config replace nsslapd-listenhost={{ role_name }}.{{ domain }}"
     - "dsconf accounts config replace nsslapd-securelistenhost={{ role_name }}.{{ domain }}"
     - "dsctl accounts restart"
-  when: not slapd_instance.stat.exists
+  when: slapd_instance.changed
 
 - name: Determine Initial LDAP User Details
   local_action: ansible.builtin.command getent passwd {{ lookup('env', 'USER') }}
@@ -88,16 +82,16 @@
     - "organizationalunit create --ou People"
     - "organizationalunit create --ou Groups"
     - "organizationalunit create --ou Services"
-    - "posixgroup create --cn admins --gidNumber 10"
+    - "posixgroup create --cn wheel --gidNumber 10"
     - "posixgroup create --cn users --gidNumber 100"
     - "posixgroup create --cn {{ ldap_initial_user_id }} --gidNumber {{ ldap_initial_user_gid }}"
     - "user create --cn {{ ldap_initial_user_id }} --uid {{ ldap_initial_user_id }} --uidNumber {{ ldap_initial_user_uid }} --gidNumber {{ ldap_initial_user_gid }} --displayName '{{ ldap_initial_user_gecos }}' --homeDirectory /home/{{ ldap_initial_user_id }}"
-    - "group add_member admins uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
+    - "group add_member wheel uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
     - "group add_member users uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
     - "group add_member {{ ldap_initial_user_id }} uid={{ ldap_initial_user_id }},ou=People,{{ ldap_domain }}"
-  when: not slapd_instance.stat.exists
+  when: slapd_instance.changed
 
-- name: Install Additional LDAP Service Configuration
+- name: Install LDAP Service Environment Configuration
   ansible.builtin.template:
     src: "dirsrv"
     dest: "/etc/sysconfig/dirsrv"
