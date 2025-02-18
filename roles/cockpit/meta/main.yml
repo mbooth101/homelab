@@ -1,8 +1,9 @@
 ---
 dependencies:
+  - role: firewall
+  - role: http
   - role: ldap
   - role: containerisation
     when: with_deps
   - role: virtualisation
     when: with_deps
-  - role: apache

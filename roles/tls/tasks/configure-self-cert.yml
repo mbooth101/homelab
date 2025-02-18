@@ -1,0 +1,30 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - cert_name: subject of the certificate
+
+- name: TLS - Ensure Certificate Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
+    mode: '0755'
+
+# Install a pre-generated self-signed certificate for staging purposes
+# or bootstrapping purposes
+- name: TLS - Generate Self-Signed Certificates
+  local_action: ansible.builtin.command ./roles/tls/files/create_cert.sh {{ cert_name }}.{{ domain }}
+  changed_when: False
+  become: no
+
+# Only perform the copy if files don't already exist
+- name: TLS - Install Self-Signed Certificates
+  ansible.builtin.copy:
+    src: "../../tls/files/{{ cert_name }}.{{ domain }}/{{ item }}"
+    dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}/{{ item }}"
+    mode: '0640'
+    force: False
+  loop:
+    - fullchain.pem
+    - cert.pem
+    - chain.pem
+    - privkey.pem

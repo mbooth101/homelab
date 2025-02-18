@@ -40,6 +40,26 @@
     state: true
     persistent: true
 
+# Create self-signed TLS certificates for the host, this allows the httpd
+# service to be brought up and real TLS certificates to be requested via
+# ACME challenge
+- name: Configure Site TLS Self-Signed Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-self-cert.yml
+  vars:
+    cert_name: "{{ host.name }}"
+
+# Create a default, catch-all virtual host site
+- name: Install Placeholder Site For Default Virtual Host
+  ansible.builtin.include_tasks: configure-site.yml
+  vars:
+    site_name: "{{ host.name }}"
+    site_static: true
+- name: Install Default Virtual Host Placeholder Site Files
+  ansible.builtin.template:
+    src: "index.html"
+    dest: "{{ www_root }}/html/{{ host.name }}/index.html"
+
 - name: Enable/Start Apache
   ansible.builtin.systemd_service:
     name: httpd.service
@@ -58,13 +78,9 @@
   notify:
     - Reload Firewall
 
-# Create a default, catch-all virtual host site
-- name: Install Placeholder Site For Default Virtual Host
-  ansible.builtin.include_tasks: configure-site.yml
+# Provisions a real TLS certificate via ACME challenge
+- name: Configure Site TLS Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-cert.yml
   vars:
-    site_name: "{{ host.name }}"
-    site_static: true
-- name: Install Default Virtual Host Placeholder Site Files
-  ansible.builtin.template:
-    src: "index.html"
-    dest: "{{ www_root }}/html/{{ host.name }}/index.html"
+    cert_name: "{{ host.name }}"

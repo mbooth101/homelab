@@ -1,19 +1,19 @@
-- name: Configure Apache for Cockpit
-  ansible.builtin.include_tasks:
-    file: ../../apache/tasks/configure-site.yml
-  vars:
-    site_proxy: true
-
 - name: Install Cockpit
   ansible.builtin.dnf:
     name:
       - cockpit
-      - cockpit-selinux
+      - cockpit-389-ds
       - cockpit-packagekit
+      - cockpit-selinux
       - cockpit-storaged
       - cockpit-networkmanager
-      - cockpit-389-ds
     state: present
+
+- name: Configure Apache for Cockpit
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
 
 # VM and container deps are separated out so they can be excluded from
 # testing as they take a long time to install
@@ -30,12 +30,15 @@
     state: present
   when: with_deps
 
+- name: Remove Cockpit Banner
+  ansible.builtin.file:
+    path: /etc/issue.d/cockpit.issue
+    state: absent
+
 - name: Install Cockpit Configuration
   ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
-    owner: root
-    group: root
     mode: '0644'
   loop:
     - { src: cockpit.conf , dest: "/etc/cockpit/cockpit.conf" }

@@ -7,16 +7,24 @@
 
 # Adds a DNS alias so that the site is addressable and the name-based
 # vhosts function properly
-- name: Configure Site DNS CNAME
+- name: HTTP - Configure Site DNS CNAME
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml
   when: site_name | default(role_name) != host.name
   vars:
     record_name: "{{ site_name | default(role_name) }}"
 
+# Provisions a TLS certificate via ACME challenge
+- name: HTTP - Configure Site TLS Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/configure-cert.yml
+  when: site_name | default(role_name) != host.name
+  vars:
+    cert_name: "{{ site_name | default(role_name) }}"
+
 # This file configures a vhost for the calling role, including all necessary TLS
 # moving parts
-- name: Install Site Virtual Host
+- name: HTTP - Install Site Virtual Host
   ansible.builtin.template:
     src: ../../http/templates/apache.vhost.conf
     dest: "/etc/httpd/conf.d/vhosts.d/{{ _pri_name }}.conf"
@@ -30,12 +38,12 @@
 
 # All templates supplied by the calling role named like "*.apache.conf" will be
 # included by the above vhost configuration
-- name: Ensure Site Config Directory
+- name: HTTP - Ensure Site Config Directory
   ansible.builtin.file:
     state: directory
     path: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}"
     mode: '0755'
-- name: Install Custom Site Config
+- name: HTTP - Install Custom Site Config
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/10-{{ item | basename }}"
@@ -45,7 +53,7 @@
     - "{{ role_path }}/templates/*.apache.conf"
   notify:
     - Reload Apache
-- name: Install Static Site Config
+- name: HTTP - Install Static Site Config
   ansible.builtin.template:
     src: "../../http/templates/apache.static.conf"
     dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/00-static.conf"
@@ -54,7 +62,7 @@
   when: site_static | default(false)
   notify:
     - Reload Apache
-- name: Install Proxied Site Config
+- name: HTTP - Install Proxied Site Config
   ansible.builtin.template:
     src: "../../http/templates/apache.proxy.conf"
     dest: "/etc/httpd/conf.d/includes.d/{{ site_name | default(role_name) }}/00-proxy.conf"
@@ -65,34 +73,9 @@
     - Reload Apache
 
 # Static sites require a place from which to serve files
-- name: Ensure Document Root Directory
+- name: HTTP - Ensure Document Root Directory
   ansible.builtin.file:
     state: directory
     path: "{{ www_root }}/html/{{ site_name | default(role_name) }}"
     mode: '0755'
   when: site_static | default(false)
-
-# Adds a self-signed TLS certificate for the site DNS name, this allows
-# the site to be brought up and a real TLS certificate to be requested
-# via ACME challenge
-- name: Configure Site TLS Self-Signed Certificate
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-cert.yml
-  vars:
-    cert_name: "{{ site_name | default(role_name) }}"
-    cert_self: True
-
-# Can't wait for handlers to run because need to requisition a new certificate
-# which requires the domain to able to serve the ACME challenge
-- name: Make Site Available Now
-  ansible.builtin.systemd_service:
-    name: httpd.service
-    daemon_reload: true
-    state: reloaded
-
-# Provison real certificates via ACME challenge
-- name: Configure Site TLS Certificate
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-cert.yml
-  vars:
-    cert_name: "{{ site_name | default(role_name) }}"
