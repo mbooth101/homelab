@@ -74,6 +74,25 @@
     group: dirsrv
     mode: '0600'
 
+- name: Create Kerberos Keytab for Apache
+  ansible.builtin.command:
+    cmd: "kadmin.local -q '{{ item }}'"
+    creates: /etc/httpd/http.keytab
+  loop:
+    - "add_principal -randkey HTTP/{{ host.fqdn }}"
+    - "add_principal -randkey HTTP/{{ host.name }}"
+    - "ktadd -k /etc/httpd/http.keytab HTTP/{{ host.fqdn }}"
+    - "ktadd -k /etc/httpd/http.keytab HTTP/{{ host.name }}"
+  notify:
+    - Reload Apache
+
+- name: Allow Apache Keytab Read Access
+  ansible.builtin.file:
+    path: /etc/httpd/http.keytab
+    owner: apache
+    group: apache
+    mode: '0600'
+
 - name: Enable/Start Kerberos
   ansible.builtin.systemd_service:
     name: "{{ item }}.service"
