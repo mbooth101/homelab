@@ -1,0 +1,88 @@
+- name: Import GPG Key for Jenkins Repository
+  ansible.builtin.rpm_key:
+    key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+    state: present
+
+- name: Enable Jenkins Repository
+  ansible.builtin.copy:
+    src: jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+    mode: '0644'
+
+- name: Install Jenkins
+  ansible.builtin.dnf:
+    name:
+      - fontconfig
+      - java-21-openjdk-headless
+      - jenkins
+    state: present
+  register: jenkins_install
+
+- name: Configure Apache for Jenkins
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
+
+- name: Ensure Jenkins Service Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/systemd/system/jenkins.service.d
+    mode: '0755'
+
+- name: Install Jenkins Service Overrides
+  ansible.builtin.template:
+    src: jenkins.override.conf
+    dest: "/etc/systemd/system/jenkins.service.d/override.conf"
+    mode: '0644'
+  notify:
+    - Restart Jenkins
+
+- name: Enable/Start Jenkins
+  ansible.builtin.systemd_service:
+    name: jenkins.service
+    enabled: true
+    masked: no
+    state: started
+  register: jenkins_start
+
+# Jenkins can take a minute to come up and it needs to be online for the next steps
+- name: Wait On Jenkins Start
+  ansible.builtin.wait_for:
+    timeout: 30
+  delegate_to: localhost
+  when: jenkins_start.changed
+
+- name: Install Jenkins Plugins
+  community.general.jenkins_plugin:
+    name: "{{ item }}"
+    url: "http://[::1]:{{ http_port }}"
+    state: present
+  loop:
+    - ant
+    - build-name-setter
+    - git
+    - github
+    - gradle
+    - maven-plugin
+    - saml
+    - ssh-slaves
+    - timestamper
+    - workflow-aggregator
+  when: jenkins_install.changed
+  notify:
+    - Restart Jenkins
+
+- name: Install Jenkins Configuration
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/var/lib/jenkins/{{ item }}"
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+    force: False
+  loop:
+    - config.xml
+    - jenkins.model.JenkinsLocationConfiguration.xml
+  notify:
+    - Restart Jenkins
