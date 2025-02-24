@@ -1,9 +1,3 @@
-- name: Configure Apache for OpenHAB
-  ansible.builtin.include_tasks:
-    file: ../../apache/tasks/configure-site.yml
-  vars:
-    site_proxy: true
-
 - name: Import GPG Key for OpenHAB Repository
   ansible.builtin.rpm_key:
     key: https://openhab.jfrog.io/artifactory/api/gpg/key/public
@@ -22,46 +16,28 @@
       - openhab
     state: present
 
-- name: Create OpenHAB Data Directory
-  ansible.builtin.file:
-    state: directory
-    path: "{{ item.path }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
-    mode: '0755'
-  loop:
-    - { path: "{{ data_dir | dirname }}", owner: root }
-    - { path: "{{ data_dir }}", owner: openhab }
-
-# These files will be altered by the running service, so only do
-# it once to avoid overwriting user data
-- name: Checking For Installed OpenHAB Data Files
-  ansible.builtin.stat:
-    path: "{{ data_dir }}/etc"
-  register: openhab_config
-
-- name: Install OpenHAB Data Files
-  ansible.builtin.copy:
-    src: "/var/lib/openhab/{{ item }}/"
-    dest: "{{ data_dir }}/{{ item }}"
-    owner: openhab
-    group: openhab
-    mode: preserve
-    remote_src: true
-  loop:
-    - etc
-    - persistence
-  when:
-    - not openhab_config.stat.exists
+- name: Configure Apache for OpenHAB
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
 
 - name: Configure OpenHAB Embedded SSH Server
   ansible.builtin.lineinfile:
-    path: "{{ data_dir }}/etc/org.apache.karaf.shell.cfg"
+    path: "/var/lib/openhab/etc/org.apache.karaf.shell.cfg"
     regexp: "{{ item.re }}"
     line: "{{ item.line }}"
   loop:
     - { re: "^sshPort", line: "sshPort = 2222" }
     - { re: "^sshHost", line: "sshHost = ::1" }
+  notify:
+    - Restart OpenHAB
+
+- name: Configure OpenHAB Embedded SSH Keys
+  ansible.builtin.lineinfile:
+    path: "/var/lib/openhab/etc/keys.properties"
+    regexp: '(^\#karaf=)(.*)$'
+    line: "openhab={{ (lookup('file', '~/.ssh/id_openhab.pub') | split(' '))[1] }},_g_:admingroup"
   notify:
     - Restart OpenHAB
 
