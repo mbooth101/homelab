@@ -2,5 +2,6 @@
 /.bootstrapped
 /vault_pass
 /connection_pass
+/*.iso
 /roles/tls/files/*/
 __pycache__/

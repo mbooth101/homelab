@@ -3,9 +3,9 @@
 set -e
 
 # Check if running for staging or production
-HOSTS=${PROD:+production}
-if [ -z "$HOSTS" ] ; then
-	HOSTS="staging"
+DEPLOYMENT_ENV=${PROD:+production}
+if [ -z "$DEPLOYMENT_ENV" ] ; then
+	DEPLOYMENT_ENV="staging"
 fi
 
 # Install deps
@@ -17,15 +17,15 @@ if [ -z "$(rpm -qa --qf "%{NAME}\n" | grep '^ansible$')" ] ; then
 fi
 
 # Give time to change our minds
-MSG="Running For \"$HOSTS\" Hosts"
+MSG="Running for \"$DEPLOYMENT_ENV\" hosts"
 echo
 printf '!%.0s' $(seq 1 $((${#MSG} + 8))) ; echo
 echo "!!! $MSG !!!"
 printf '!%.0s' $(seq 1 $((${#MSG} + 8))) ; echo
 echo
-if [ "$HOSTS" = "staging" ] ; then
+if [ "$DEPLOYMENT_ENV" = "staging" ] ; then
 	echo -n "Hit Ctrl+C and set PROD in the environment to run for production"
-elif [ "$HOSTS" = "production" ] ; then
+elif [ "$DEPLOYMENT_ENV" = "production" ] ; then
 	echo -n "Hit Ctrl+C and unset PROD in the environment to run for staging"
 fi
 sleep 1 ; echo -n "."
@@ -33,96 +33,146 @@ sleep 1 ; echo -n "."
 sleep 1 ; echo -n "."
 sleep 1 ; echo ; echo
 
-# Determine if machines have been provisioned already
+# Determine if machines have been provisioned already, PROVISION will be unset if so
 PROVISION=1
 if [ -f .provisioned ] ; then
 	while read i; do
-		if [ "$i" = "$HOSTS" ] ; then
+		if [ "$i" = "$DEPLOYMENT_ENV" ] ; then
 			PROVISION=
 			break
 		fi
 	done <.provisioned
 fi
 
-# Determine if machines have been bootstrapped already
+# Determine if machines have been bootstrapped already, BOOTSTRAP will be unset if so
 BOOTSTRAP=1
 if [ -f .bootstrapped ] ; then
 	while read i; do
-		if [ "$i" = "$HOSTS" ] ; then
+		if [ "$i" = "$DEPLOYMENT_ENV" ] ; then
 			BOOTSTRAP=
 			break
 		fi
 	done <.bootstrapped
 fi
 
+# Provisioning is requested
 if [ -n "$PROVISION" ] ; then
-	while read h; do
+	while read -u 7 h; do
 		fqdn=$(echo "$h" | cut -f1 -d' ')
 		host=$(echo "$fqdn" | cut -f1 -d.)
+		ip=$(echo "$h" | sed -e 's/.*inventory_host4=\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*$/\1/')
+		gw=$(echo "$ip" | cut -f1,2,3 -d.).1
+		rootpw=$(<connection_pass)
 
 		# If provisioning staging, then kill and recreate the VM
-		if [ "$HOSTS" == "staging" ] ; then
+		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
+			# Interpolate kickstart file
+			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/vda/" -e "s/@NVME1@/vdb/" \
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" ks.cfg > /tmp/ks.cfg
+
+			# Create virtual network if not exists
+			if ! virsh --connect=qemu:///system net-list --all --name | grep -q homelab ; then
+				virsh --connect=qemu:///system net-create $(pwd)/homelab-virtual-network.xml
+			fi
 
 			# Remove old staging VM
-			if [ -n "$(virsh --connect qemu:///system list --all --name | grep $host)" ] ; then
+			if virsh --connect qemu:///system list --all --name | grep -q $host ; then
 				if [ "$(virsh --connect qemu:///system domstate $host)" != "shut off" ] ; then
 					virsh --connect qemu:///system destroy --graceful --domain $host
 				fi
-				virsh --connect qemu:///system undefine --remove-all-storage --domain $host
+				virsh --connect qemu:///system undefine --remove-all-storage --nvram --domain $host
 			fi
 
 			# Recreate staging VM and install OS
 			echo "Running virt-install"
-			release=41
-			url="https://download.fedoraproject.org/pub/fedora/linux/releases/${release}/Everything/x86_64/os/"
-			nic1="address.type=pci,address.domain=0,address.bus=1,address.slot=0"
-			nic4="address.type=pci,address.domain=0,address.bus=4,address.slot=0"
+			release=43
+			url="https://download.fedoraproject.org/pub/fedora/linux/development/${release}/Everything/x86_64/os/"
 			virt-install \
 				--connect qemu:///system \
 				--autoconsole none \
 				--name "$host" \
 				--vcpus 2 \
 				--memory 4096 \
-				--disk size=16 \
-				--network network=network,mac=52:54:00:00:00:01,$nic1 \
-				--network network=network,mac=52:54:00:00:00:0a,$nic4,address.function=0 \
-				--network network=network,mac=52:54:00:00:00:0b,$nic4,address.function=1 \
-				--network network=network,mac=52:54:00:00:00:0c,$nic4,address.function=2 \
-				--network network=network,mac=52:54:00:00:00:0d,$nic4,address.function=3 \
+				--boot uefi \
+				--disk /var/lib/libvirt/images/$host-nvme0.qcow2,size=20,target.dev=vda,target.bus=virtio,serial=nvme0000 \
+				--disk /var/lib/libvirt/images/$host-nvme1.qcow2,size=20,target.dev=vdb,target.bus=virtio,serial=nvme0001 \
+				--disk /var/lib/libvirt/images/$host-sda.qcow2,size=5,target.dev=sda,target.bus=sata \
+				--disk /var/lib/libvirt/images/$host-sdb.qcow2,size=5,target.dev=sdb,target.bus=sata \
+				--disk /var/lib/libvirt/images/$host-sdc.qcow2,size=5,target.dev=sdc,target.bus=sata \
+				--disk /var/lib/libvirt/images/$host-sdd.qcow2,size=5,target.dev=sdd,target.bus=sata \
+				--network network=homelab,mac=52:54:00:00:00:01,address.type=pci,address.domain=0,address.bus=2,address.slot=0 \
+				--network network=homelab,mac=52:54:00:00:00:0a,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=0 \
+				--network network=homelab,mac=52:54:00:00:00:0b,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=1 \
+				--network network=homelab,mac=52:54:00:00:00:0c,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=2 \
+				--network network=homelab,mac=52:54:00:00:00:0d,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=3 \
 				--os-variant fedora-unknown \
 				--location ${url} \
-				--initrd-inject ks-vm.cfg \
-				--extra-args "inst.ks=file:/ks-vm.cfg"
+				--initrd-inject /tmp/ks.cfg \
+				--extra-args "inst.ks=file:/ks.cfg"
 
-			# Wait until VM shuts down following OS installation
+			# Wait until VM shuts down following OS installation then restart it
 			while [ "$(virsh --connect qemu:///system domstate $host)" != "shut off" ] ; do
 				sleep 2
 			done
-
-			# Restart VM and wait until SSH is up
 			virsh --connect qemu:///system start $host
-			until nc -z $host 22 ; do
-				sleep 1
-			done
+
+		# If provisioning production, then generate boot ISO on USB stick
 		else
-			echo "TODO provision physical machine"
+			# Interpolate kickstart file
+			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/nvme0n1/" -e "s/@NVME1@/nvme1n1/" \
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" ks.cfg > /tmp/ks.cfg
+
+			# Find USB stick
+			until mount | grep -q iso9660 ; do
+				read -n1 -s -r -p $'Insert USB stick then press any key to continue\n' key
+			done
+			usb_dev=$(mount | grep iso9660 | cut -d' ' -f1 | sed -e 's/[0-9]$//')
+			usb_mnt=$(mount | grep iso9660 | cut -d' ' -f3)
+
+			# Find ISO image and inject kickstart into the root of the iso9660 filesystem
+			iso=$(ls -1 *.iso | head -n1)
+			vol_id=$(isoinfo -d -i $iso | grep -i "Volume id:" | cut -d' ' -f1,2 --complement)
+			rm -f /tmp/boot.iso && xorriso \
+				-indev $iso -outdev /tmp/boot.iso \
+				-map /tmp/ks.cfg /ks.cfg \
+				-boot_image any replay
+
+			# Write the image to USB stick
+			sudo umount $usb_mnt || :
+			sudo dd if=/tmp/boot.iso of=$usb_dev bs=8M status=progress oflag=direct
+
+			# Edit grub configuration
+			mkdir -p /tmp/anaconda && sudo mount ${usb_dev}2 /tmp/anaconda
+			sudo sed -i \
+				-e "/^set default/s/1/0/" -e "/^set timeout/s/60/3/" \
+				-e "/^menuentry 'Install/,+3s/quiet$/inst.ks=hd:LABEL=$vol_id:\/ks.cfg fbcon=rotate:1/" /tmp/anaconda/EFI/BOOT/{BOOT.conf,grub.cfg}
+			sudo umount /tmp/anaconda && rmdir /tmp/anaconda
+
+			# Wait for OS installation
+			read -n1 -s -r -p $'Install production from USB stick then any key to continue\n' key
 		fi
 
-		# Reset keys for hosts that need bootstrapping
-		ssh-keygen -R $fqdn
-		ssh-keyscan -H $fqdn >> ~/.ssh/known_hosts
+		# Wait until SSH is up on provisioned machine
+		echo "Waiting for SSH service to come up on provisioned machine..."
+		until nc -z $ip 22 ; do
+			sleep 5
+		done
 
 		# Configure SSH client for newly provisioned hosts
-		if ! grep -q '$fqdn' ~/.ssh/config ; then
+		if ! grep -q "Host $fqdn" ~/.ssh/config ; then
 			echo "Host $fqdn" >> ~/.ssh/config
 			echo "  IdentitiesOnly yes" >> ~/.ssh/config
 			echo "  IdentityFile ~/.ssh/id_home" >> ~/.ssh/config
 			echo "  User ansible-maint" >> ~/.ssh/config
 		fi
 
-	done <$HOSTS
+		# Reset keys for newly provisioned hosts
+		ssh-keygen -R $fqdn
+		ssh-keyscan -t "ecdsa,ed25519,rsa" -H $fqdn >> ~/.ssh/known_hosts
 
-	echo "$HOSTS" >> .provisioned
+	done 7<<<"$(cat $DEPLOYMENT_ENV)"
+
+	echo "$DEPLOYMENT_ENV" >> .provisioned
 fi
 
 # If password files not present, just ask
@@ -136,17 +186,16 @@ if [ -f "connection_pass" ] ; then
 fi
 
 if [ -n "$BOOTSTRAP" ] ; then
-
 	# Initial run must connect as root and use password authentication in order to set up
 	# public key authentication for the ansible-maint user and disable the root account
 	ansible-playbook $VAULT_PASS -u root $CONN_PASS \
-		-i $HOSTS --tags "bootstrap" "$@" playbook.yml
-	echo "$HOSTS" >> .bootstrapped
+		-i $DEPLOYMENT_ENV --tags "bootstrap" "$@" playbook.yml
+	echo "$DEPLOYMENT_ENV" >> .bootstrapped
 else
 	# In subsequent runs we connect as the ansible-maint user using public key
 	# authentication
 	ansible-playbook $VAULT_PASS \
-		-i $HOSTS --skip-tags "bootstrap" "$@" playbook.yml
+		-i $DEPLOYMENT_ENV --skip-tags "bootstrap" "$@" playbook.yml
 fi
 
 # Update dependecy graph

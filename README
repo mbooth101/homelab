@@ -1,20 +1,22 @@
 # Home Lab Server
 
-Before starting, Fedora must be installed and there must be a user account that is in the sudoers group (e.g. %wheel on RHEL/Fedora systems).
-
 ## First Run
 
 ```
-$ INITIAL=true ./run.sh
+$ ./run.sh        # Staging VM
+$ PROD=1 ./run.sh # Real hardware
 ```
 
-This runs a playbook that sets up public key authentication for a special Ansible user and disables password authentication entirely, which means this will command will work only once. You will be prompted for the SSH connection password and BECOME password for sudo privilege escalation.
+If a machine has not yet been provisioned, the script will provision a VM or boot USB stick to be used on real hardware.
+
+Once provisioned, a bootstrap playbook will be executed to configure fundamentals like network adapters, user accounts, public key authentication, LUKS decryption, etc.
 
 ## Subsequent Runs
 
 ```
-$ ./run.sh
+$ ./run.sh        # Staging VM
+$ PROD=1 ./run.sh # Real hardware
 ```
 
-Runs the main server deployment playbook without prompting for any passwords.
+Subsequent runs will execute the main playbooks to install and configure all the services. Provisioning and bootstrapping will be skipped.
 
