@@ -1,12 +1,3 @@
-- name: Create Temporary Directory
-  ansible.builtin.file:
-    path: "/var/tmp/.ansible-maint"
-    state: directory
-    recurse: yes
-    owner: root
-    group: wheel
-    mode: '0770'
-
 - name: Switch Default Editor
   ansible.builtin.dnf:
     name: "{{ item.name }}"

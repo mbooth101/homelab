@@ -68,11 +68,13 @@ if [ -n "$PROVISION" ] ; then
 		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
 			# Interpolate kickstart file
 			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/vda/" -e "s/@NVME1@/vdb/" \
-			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" ks.cfg > /tmp/ks.cfg
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" -e "s/@ROTATE@/0/" ks.cfg > /tmp/ks.cfg
 
 			# Create virtual network if not exists
 			if ! virsh --connect=qemu:///system net-list --all --name | grep -q homelab ; then
-				virsh --connect=qemu:///system net-create $(pwd)/homelab-virtual-network.xml
+				virsh --connect=qemu:///system net-define $(pwd)/homelab-virtual-network.xml
+				virsh --connect=qemu:///system net-autostart homelab
+				virsh --connect=qemu:///system net-start homelab
 			fi
 
 			# Remove old staging VM
@@ -94,8 +96,8 @@ if [ -n "$PROVISION" ] ; then
 				--vcpus 2 \
 				--memory 4096 \
 				--boot uefi \
-				--disk /var/lib/libvirt/images/$host-nvme0.qcow2,size=20,target.dev=vda,target.bus=virtio,serial=nvme0000 \
-				--disk /var/lib/libvirt/images/$host-nvme1.qcow2,size=20,target.dev=vdb,target.bus=virtio,serial=nvme0001 \
+				--disk /var/lib/libvirt/images/$host-nvme0.qcow2,size=16,target.dev=vda,target.bus=virtio,serial=nvme0000 \
+				--disk /var/lib/libvirt/images/$host-nvme1.qcow2,size=16,target.dev=vdb,target.bus=virtio,serial=nvme0001 \
 				--disk /var/lib/libvirt/images/$host-sda.qcow2,size=5,target.dev=sda,target.bus=sata \
 				--disk /var/lib/libvirt/images/$host-sdb.qcow2,size=5,target.dev=sdb,target.bus=sata \
 				--disk /var/lib/libvirt/images/$host-sdc.qcow2,size=5,target.dev=sdc,target.bus=sata \
@@ -120,7 +122,7 @@ if [ -n "$PROVISION" ] ; then
 		else
 			# Interpolate kickstart file
 			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/nvme0n1/" -e "s/@NVME1@/nvme1n1/" \
-			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" ks.cfg > /tmp/ks.cfg
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" -e "s/@ROTATE@/1/" ks.cfg > /tmp/ks.cfg
 
 			# Find USB stick
 			until mount | grep -q iso9660 ; do
