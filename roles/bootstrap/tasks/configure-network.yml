@@ -62,78 +62,34 @@
     mode: '0444'
   notify: Regenerate Initramfs
 
-# Configures the mechanism to clear any network configuration created during
-# early boot
-- name: Install NetworkManager Configuration
+# We use systemd-networkd instead of NetworkManager to make handover from the
+# early boot environment easier
+- name: Disable NetworkManager
+  ansible.builtin.systemd_service:
+    name: NetworkManager.service
+    enabled: false
+    state: stopped
+- name: Enable Systemd Network
+  ansible.builtin.systemd_service:
+    name: systemd-networkd.service
+    enabled: true
+    state: started
+
+- name: Install Bonded Device and Network Configuration
   ansible.builtin.template:
-    src: NetworkManager.conf
-    dest: /etc/NetworkManager/conf.d/10-discard-early-boot-net.conf
+    src: "{{ item }}"
+    dest: "/etc/systemd/network/10-{{ item }}"
     mode: '0644'
+  loop:
+    - "bond0.network"
+    - "bond0.netdev"
+  notify: Restart Network
 
-# This does not disable bluetooth
-- name: Permanantly Disable Wifi Adapter
-  ansible.builtin.command:
-    cmd: /usr/bin/nmcli radio all off
-  changed_when: False
-
-- name: Create Bonded Interface
-  community.general.nmcli:
-    type: bond
-    conn_name: bond0
-    autoconnect: true
-    mode: balance-rr
-    state: present
-  register: bond_config
-  when: "'bond0' not in ansible_facts"
-
-# The first interface is the onboard ethernet, skip that one and
-# only the interfaces from the Intel NIC
-- name: Add Wired Interfaces to Bonded Interface
-  community.general.nmcli:
-    type: ethernet
-    slave_type: bond
-    master: bond0
-    ifname: "{{ item }}"
-    conn_name: "{{ item }}"
-    state: present
+- name: Install Bonded Port Network Configuration
+  ansible.builtin.template:
+    src: "bond0-port.network"
+    dest: "/etc/systemd/network/10-{{ item }}.network"
+    mode: '0644'
   loop: "{{ ether_interfaces[1:] }}"
   when: item.startswith('en')
-
-- name: Reapply Bonded Interface Settings
-  ansible.builtin.command:
-    cmd: "nmcli device reapply bond0"
-  when: bond_config.changed
-  notify: Reboot Machine
-
-- name: Create Virtual Network Bridge
-  community.general.nmcli:
-    type: bridge
-    conn_name: bridge0
-    autoconnect: true
-    ip4: "{{ host.ipv4.cidr }}"
-    gw4: "{{ host.ipv4.gateway }}"
-    dns4: "{{ host.ipv4.gateway }}"
-    dns4_search: "{{ domain }}"
-    ip6: "{{ host.ipv6.cidr }}"
-    gw6: "{{ host.ipv6.gateway }}"
-    dns6: "{{ host.ipv6.gateway }}"
-    dns6_search: "{{ domain }}"
-    stp: true
-    state: present
-  register: bridge_config
-  when: "'bridge0' not in ansible_facts"
-
-- name: Add Bonded Interface as a Virtual Network Bridge Port
-  community.general.nmcli:
-    type: ethernet
-    slave_type: bridge
-    master: bridge0
-    ifname: bond0
-    conn_name: bond0
-    state: present
-
-- name: Reapply Virtual Network Bridge Settings
-  ansible.builtin.command:
-    cmd: "nmcli device reapply bridge0"
-  when: bridge_config.changed
-  notify: Reboot Machine
+  notify: Restart Network

@@ -7,9 +7,10 @@
     - { name: [ vim-default-editor, vim-enhanced ], state: present }
   when: install_rpms
 
-- name: Configure Automatic LUKS Volume Decryption
-  ansible.builtin.include_tasks:
-    file: configure-luks-clevis.yml
+- name: Disable Plymouth Boot Theme
+  ansible.builtin.command:
+    cmd: "plymouth-set-default-theme details"
+  notify: Regenerate Initramfs
 
 - name: Configure Ansible Maintenance User
   ansible.builtin.include_tasks:
@@ -19,6 +20,10 @@
   ansible.builtin.include_tasks:
     file: configure-network.yml
 
+- name: Configure Automatic LUKS Volume Decryption
+  ansible.builtin.include_tasks:
+    file: configure-luks-clevis.yml
+
 # This must be the last thing we do because once disabled, we cannot
 # reconnect as root to perform any further tasks -- subsequent playbook
 # invokations will connect as the ansible-maint user created above
@@ -27,3 +32,4 @@
     name: root
     password: '!'
     password_lock: true
+  notify: Reboot Machine

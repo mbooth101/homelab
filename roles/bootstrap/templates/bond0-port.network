@@ -1,0 +1,7 @@
+## {{ ansible_managed }}
+
+[Match]
+Name={{ item }}
+
+[Network]
+Bond=bond0

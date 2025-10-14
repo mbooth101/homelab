@@ -8,6 +8,8 @@
  <bridge name="virbr1" stp="on" delay="0"/>
  <ip address="192.168.124.1" netmask="255.255.255.0">
  </ip>
+ <ip address="192.168.124.11" netmask="255.255.255.0">
+ </ip>
  <ip family="ipv6" address="fd00:1234:1234::1" prefix="64">
  </ip>
 </network>

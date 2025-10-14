@@ -1,16 +1,20 @@
 ---
-- name: Reload SSHd
-  ansible.builtin.systemd_service:
-    name: sshd.service
-    enabled: true
-    masked: no
-    daemon_reload: true
-    state: reloaded
-
 - name: Regenerate Initramfs
   ansible.builtin.command:
     cmd: dracut -fv --regenerate-all
   changed_when: false
+
+- name: Reload SSHd
+  ansible.builtin.systemd_service:
+    name: sshd.service
+    daemon_reload: true
+    state: reloaded
+
+- name: Restart Network
+  ansible.builtin.systemd_service:
+    name: systemd-networkd.service
+    daemon_reload: true
+    state: restarted
 
 # Not using the ansible reboot module to allow the deployment to
 # finish successfully (we'll be unable to reestablish the existing
