@@ -46,7 +46,7 @@
 
 - name: Install Public Key Configuration
   ansible.builtin.template:
-    src: sshd.conf
+    src: ansible-maint.sshd.conf
     dest: "/etc/ssh/sshd_config.d/99-ansible-maint.conf"
     mode: '0600'
   notify: Reload SSHd

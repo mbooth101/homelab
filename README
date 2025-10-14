@@ -1,5 +1,23 @@
 # Home Lab Server
 
+## Pre-requisites
+
+Clevis is used for auto decryption of LUKS encrypted volumes, which requires a Tang server to be running elsewhere on the network. Installation process for that is as follows:
+
+```
+# dnf install tang
+# semanage port -a -t tangd_port_t -p tcp 7500
+# firewall-cmd --zone=libvirt --add-port=7500/tcp
+# cat <<EOF | sudo tee -a /etc/systemd/system/tangd.socket.d/override.conf
+[Socket]
+ListenStream=
+ListenStream=7500
+EOF
+# systemctl daemon-reload
+# systemctl enable tangd.socket
+# systemctl restart tangd.socket
+```
+
 ## First Run
 
 ```

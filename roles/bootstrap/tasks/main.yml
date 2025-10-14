@@ -26,10 +26,12 @@
 
 # This must be the last thing we do because once disabled, we cannot
 # reconnect as root to perform any further tasks -- subsequent playbook
-# invokations will connect as the ansible-maint user created above
-- name: Disable Root Account Password
-  ansible.builtin.user:
-    name: root
-    password: '!'
-    password_lock: true
-  notify: Reboot Machine
+# invocations will connect as the ansible-maint user created above --
+# root may still login on the console if physically present
+- name: Prevent Remote Root Logins
+  ansible.builtin.template:
+    src: permitrootlogin.sshd.conf
+    dest: "/etc/ssh/sshd_config.d/01-permitrootlogin.conf"
+    mode: '0600'
+  notify: Reload SSHd
+
