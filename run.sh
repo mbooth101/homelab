@@ -63,12 +63,15 @@ if [ -n "$PROVISION" ] ; then
 		ip=$(echo "$h" | sed -e 's/.*inventory_host4=\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*$/\1/')
 		gw=$(echo "$ip" | cut -f1,2,3 -d.).1
 		rootpw=$(<connection_pass)
+		release=43
+		url="https://fedora.mirrorservice.org/fedora/linux/development/${release}/Everything/x86_64/os/"
 
 		# If provisioning staging, then kill and recreate the VM
 		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
 			# Interpolate kickstart file
 			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/vda/" -e "s/@NVME1@/vdb/" \
-			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" -e "s/@ROTATE@/0/" ks.cfg > /tmp/ks.cfg
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" \
+			    -e "s/@ROTATE@/0/" -e "s|@URL@|$url|" ks.cfg > /tmp/ks.cfg
 
 			# Create virtual network if not exists
 			if ! virsh --connect=qemu:///system net-list --all --name | grep -q homelab ; then
@@ -87,14 +90,12 @@ if [ -n "$PROVISION" ] ; then
 
 			# Recreate staging VM and install OS
 			echo "Running virt-install"
-			release=43
-			url="https://download.fedoraproject.org/pub/fedora/linux/development/${release}/Everything/x86_64/os/"
 			virt-install \
 				--connect qemu:///system \
 				--autoconsole none \
 				--name "$host" \
 				--vcpus 2 \
-				--memory 4096 \
+				--memory 8192 \
 				--boot uefi \
 				--disk /var/lib/libvirt/images/$host-nvme0.qcow2,size=16,target.dev=vda,target.bus=virtio,serial=nvme0000 \
 				--disk /var/lib/libvirt/images/$host-nvme1.qcow2,size=16,target.dev=vdb,target.bus=virtio,serial=nvme0001 \
@@ -122,7 +123,8 @@ if [ -n "$PROVISION" ] ; then
 		else
 			# Interpolate kickstart file
 			sed -e "s/@ROOTPW@/$rootpw/" -e "s/@LUKSPW@/$rootpw/" -e "s/@NVME0@/nvme0n1/" -e "s/@NVME1@/nvme1n1/" \
-			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" -e "s/@ROTATE@/1/" ks.cfg > /tmp/ks.cfg
+			    -e "s/@HOSTNAME@/$host/" -e "s/@IPADDR@/$ip/" -e "s/@GATEWAY@/$gw/g" \
+			    -e "s/@ROTATE@/1/" -e "s|@URL@|$url|" ks.cfg > /tmp/ks.cfg
 
 			# Find USB stick
 			until mount | grep -q iso9660 ; do
