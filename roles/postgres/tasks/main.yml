@@ -2,6 +2,7 @@
   ansible.builtin.dnf:
     name:
       - postgresql-server
+      - postgresql-contrib
       - python3-psycopg2
     state: present
 
