@@ -4,10 +4,4 @@
 Name=bond0
 
 [Network]
-Address={{ host.ipv4.cidr }}
-Gateway={{ host.ipv4.gateway }}
-DNS={{ host.ipv4.gateway }}
-Address={{ host.ipv6.cidr }}
-Gateway={{ host.ipv6.gateway }}
-DNS={{ host.ipv6.gateway }}
-Domains={{ domain }}
+Bridge=bridge0

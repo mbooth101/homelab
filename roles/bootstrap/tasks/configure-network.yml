@@ -75,20 +75,30 @@
     enabled: true
     state: started
 
-- name: Install Bonded Device and Network Configuration
+- name: Install Bridge Device Configuration
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "/etc/systemd/network/10-{{ item }}"
+    mode: '0644'
+  loop:
+    - "bridge0.network"
+    - "bridge0.netdev"
+  notify: Restart Network
+
+- name: Install Bond Device Configuration
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/systemd/network/20-{{ item }}"
     mode: '0644'
   loop:
     - "bond0.network"
     - "bond0.netdev"
   notify: Restart Network
 
-- name: Install Bonded Port Network Configuration
+- name: Install Bonded Port Configuration
   ansible.builtin.template:
     src: "bond0-port.network"
-    dest: "/etc/systemd/network/10-{{ item }}.network"
+    dest: "/etc/systemd/network/30-{{ item }}.network"
     mode: '0644'
   loop: "{{ ether_interfaces[1:] }}"
   when: item.startswith('en')

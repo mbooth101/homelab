@@ -1,0 +1,8 @@
+## {{ ansible_managed }}
+
+[NetDev]
+Name=bridge0
+Kind=bridge
+
+[Bridge]
+STP=yes
