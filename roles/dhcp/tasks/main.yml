@@ -2,6 +2,7 @@
   ansible.builtin.dnf:
     name:
       - kea
+      - kea-hooks
     state: present
 
 - name: Configure PostgreSQL for Kea DHCP
