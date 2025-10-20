@@ -4,6 +4,14 @@
       - avahi
     state: present
 
+- name: Install Avahi Configuration
+  ansible.builtin.template:
+    src: avahi-daemon.conf
+    dest: "/etc/avahi/avahi-daemon.conf"
+    mode: '0644'
+  notify:
+    - Restart Avahi
+
 - name: Enable/Start Avahi
   ansible.builtin.systemd_service:
     name: avahi-daemon.service

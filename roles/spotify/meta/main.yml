@@ -1,4 +1,4 @@
 ---
 dependencies:
-  - role: avahi
   - role: firewall
+  - role: avahi
