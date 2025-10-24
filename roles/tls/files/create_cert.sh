@@ -11,6 +11,11 @@ DIR_HOST="$DIR/$HOST"
 # Just a count of how many certs we've already issued
 SERIAL="$( printf "%02g" $(( $(find . -mindepth 1 -maxdepth 1 -type d | wc -l) + 1 )) )"
 
+# Install openssl if command not found
+if ! which openssl &>/dev/null ; then
+	sudo dnf install --assumeyes openssl
+fi
+
 if [ ! -d $DIR_HOST ] ; then
 	mkdir $DIR_HOST
 	openssl genrsa -out $DIR_HOST/privkey.pem 4096

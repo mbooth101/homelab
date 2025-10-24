@@ -11,7 +11,7 @@ fi
 # Install deps
 if [ -z "$(rpm -qa --qf "%{NAME}\n" | grep '^ansible$')" ] ; then
 	sudo dnf install \
-		ansible ansible-freeipa \
+		ansible ansible-freeipa openssl \
 		python3-netaddr python3-libdnf5 python3-graphviz \
 		virt-manager virt-install virt-viewer libvirt-client
 fi
