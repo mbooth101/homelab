@@ -162,6 +162,10 @@ if [ -n "$PROVISION" ] ; then
 			sleep 5
 		done
 
+		# Add hosts entry for newly provisioned hosts
+		if ! grep -q "$fqdn" /etc/hosts ; then
+			sudo bash -c 'echo "$ip $fqdn" >> /etc/hosts'
+		fi
 		# Configure SSH client for newly provisioned hosts
 		if ! grep -q "Host $fqdn" ~/.ssh/config ; then
 			echo "Host $fqdn" >> ~/.ssh/config
