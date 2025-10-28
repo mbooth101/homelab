@@ -14,8 +14,7 @@ ListenStream=
 ListenStream=7500
 EOF
 # systemctl daemon-reload
-# systemctl enable tangd.socket
-# systemctl restart tangd.socket
+# systemctl enable --now tangd.socket
 ```
 
 ## First Run
