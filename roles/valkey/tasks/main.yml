@@ -1,0 +1,23 @@
+- name: Install Valkey
+  ansible.builtin.dnf:
+    name:
+      - valkey
+    state: present
+
+- name: Install Valkey Configuration
+  ansible.builtin.template:
+    src: valkey.conf
+    dest: /etc/valkey/valkey.conf
+    owner: valkey
+    group: root
+    mode: '0640'
+  notify:
+    - Restart Valkey
+
+- name: Enable/Start Valkey
+  ansible.builtin.systemd_service:
+    name: valkey.service
+    enabled: true
+    masked: no
+    state: started
+
