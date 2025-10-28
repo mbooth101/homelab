@@ -1,0 +1,6 @@
+# Install a certificate requested from a certificate authority via
+# the ACME challenge mechanism
+- name: TLS - Provision Certificate From Letsencrypt
+  ansible.builtin.command:
+    cmd: "certbot certonly --webroot --webroot-path {{ www_root }}/acme -d {{ _cert_name }}.{{ domain }}"
+    creates: "/etc/letsencrypt/live/{{ _cert_name }}.{{ domain }}/fullchain.pem"

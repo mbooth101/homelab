@@ -3,39 +3,18 @@
 #
 # - cert_name: subject of the certificate
 
-- name: TLS - Ensure Certificate Directory
-  ansible.builtin.file:
-    state: directory
-    path: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}"
-    mode: '0755'
+# Provisions real certs via ACME challenge
+- name: TLS - Configure Site Real TLS Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/real-cert.yml
+  when: not self_signed_certs
+  vars:
+    _cert_name: "{{ cert_name }}"
 
-# Install a certificate requested from a certificate authority via
-# the ACME challenge mechanism
-- name: TLS - Provision Certificate
-  ansible.builtin.command:
-    cmd: "certbot certonly --webroot --webroot-path {{ www_root }}/acme -d {{ cert_name}}.{{ domain }}"
-    creates: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}/fullchain.pem"
-  register: tls_provisioned
-
-- name: TLS - Remove Self-Signed Certificates
-  ansible.builtin.file:
-    dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}/{{ item }}"
-    state: absent
-  loop:
-    - fullchain.pem
-    - cert.pem
-    - chain.pem
-    - privkey.pem
-  when: tls_provisioned.changed
-
-- name: TLS - Symlink Provisioned Certificates
-  ansible.builtin.file:
-    dest: "/etc/letsencrypt/certs/{{ cert_name }}.{{ domain }}/{{ item }}"
-    src: "/etc/letsencrypt/live/{{ cert_name }}.{{ domain }}/{{ item }}"
-    state: link
-  loop:
-    - fullchain.pem
-    - cert.pem
-    - chain.pem
-    - privkey.pem
-  when: tls_provisioned.changed
+# Provisions self-signed certs via local CA
+- name: TLS - Configure Site Self-Signed TLS Certificate
+  ansible.builtin.include_tasks:
+    file: ../../tls/tasks/self-cert.yml
+  when: self_signed_certs
+  vars:
+    _cert_name: "{{ cert_name }}"
