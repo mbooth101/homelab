@@ -64,7 +64,7 @@ if [ -n "$PROVISION" ] ; then
 		gw=$(echo "$ip" | cut -f1,2,3 -d.).1
 		rootpw=$(<connection_pass)
 		release=43
-		url="https://fedora.mirrorservice.org/fedora/linux/development/${release}/Everything/x86_64/os/"
+		url="https://fedora.mirrorservice.org/fedora/linux/releases/${release}/Everything/x86_64/os/"
 
 		# If provisioning staging, then kill and recreate the VM
 		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
