@@ -10,15 +10,13 @@
 - name: HTTP - Configure Site DNS CNAME
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml
-  when: site_name | default(role_name) != host.name
   vars:
     record_name: "{{ site_name | default(role_name) }}"
 
-# Provisions a TLS certificate via ACME challenge
+# Provisions a TLS certificate to ensure SSL parts function properly
 - name: HTTP - Configure Site TLS Certificate
   ansible.builtin.include_tasks:
     file: ../../tls/tasks/configure-cert.yml
-  when: site_name | default(role_name) != host.name
   vars:
     cert_name: "{{ site_name | default(role_name) }}"
 
