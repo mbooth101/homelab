@@ -42,6 +42,6 @@
 - name: Add Database Extensions
   community.postgresql.postgresql_ext:
     name: "{{ item }}"
-    db: "{{ db_name }}"
+    login_db: "{{ db_name }}"
     cascade: true
   loop: "{{ db_extensions | default([]) }}"

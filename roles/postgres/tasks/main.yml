@@ -1,8 +1,8 @@
 - name: Install PostgreSQL
   ansible.builtin.dnf:
     name:
-      - postgresql-server
-      - postgresql-contrib
+      - postgresql18-server
+      - postgresql18-contrib
       - python3-psycopg2
     state: present
 
