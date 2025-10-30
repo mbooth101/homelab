@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: http
+  - role: postgres
+  - role: valkey
