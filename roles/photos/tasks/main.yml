@@ -8,6 +8,9 @@
 - name: Install Immich And Postgresql Extensions
   ansible.builtin.dnf:
     name:
+      - immich
+      - python3-immich_ml
+      - python3-immich_ml+cpu
       - VectorChord
     state: latest
 
@@ -33,3 +36,27 @@
     db_extensions:
     - vchord
     - earthdistance
+
+- name: Install Immich Configuration
+  ansible.builtin.template:
+    src: immich.env
+    dest: "/etc/sysconfig/immich"
+    mode: '0644'
+  notify:
+    - Restart Immich
+
+- name: Enable/Start Immich
+  ansible.builtin.systemd_service:
+    name: "{{ item }}.service"
+    enabled: true
+    masked: no
+    state: started
+  loop:
+    - immich-machine-learning
+    - immich
+
+- name: Configure Apache for Immich
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
