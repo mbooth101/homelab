@@ -1,0 +1,114 @@
+- name: Install JVM
+  ansible.builtin.dnf:
+    name:
+      - java-21-openjdk-headless
+    state: present
+
+- name: Add Keycloak System Group
+  ansible.builtin.group:
+    name: keycloak
+    state: present
+    system: true
+
+- name: Add Keycloak System User
+  ansible.builtin.user:
+    name: keycloak
+    comment: Keycloak User
+    state: present
+    system: true
+    home: /opt/keycloak
+    create_home: false
+    group: keycloak
+
+- name: Configure PostgreSQL for Keycloak
+  ansible.builtin.include_tasks:
+    file: ../../postgres/tasks/configure-db.yml
+
+- name: Download Keycloak Tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/keycloak/keycloak/releases/download/{{ kc_version }}/keycloak-{{ kc_version }}.tar.gz"
+    dest: "/opt/keycloak-{{ kc_version }}.tar.gz"
+
+- name: Extract Keycloak Tarball
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "/opt/keycloak-{{ kc_version }}.tar.gz"
+    dest: "/opt"
+    creates: "/opt/keycloak-{{ kc_version }}/version.txt"
+
+- name: Create Versionless Symlink To Keycloak Root
+  ansible.builtin.file:
+    src: "/opt/keycloak-{{ kc_version }}"
+    dest: "/opt/keycloak"
+    state: link
+
+- name: Install Keycloak Configuration
+  ansible.builtin.template:
+    src: keycloak.conf
+    dest: "/opt/keycloak/conf/keycloak.conf"
+    mode: '0644'
+  notify:
+    - Restart Keycloak
+
+- name: Bootstrap Initial Keycloak Admin Account
+  ansible.builtin.command:
+    cmd: "/opt/keycloak/bin/kc.sh bootstrap-admin user --username admin --password:env KCPW"
+    creates: "/opt/keycloak/data"
+  environment:
+    KCPW: "{{ kc_admin_pw }}"
+
+- name: Set Ownership of Keycloak Files
+  ansible.builtin.file:
+    path: "/opt/keycloak-{{ kc_version }}"
+    recurse: true
+    group: keycloak
+    owner: keycloak
+
+- name: Install Service Unit for Keycloak
+  ansible.builtin.template:
+    src: keycloak.service
+    dest: "/usr/lib/systemd/system/keycloak.service"
+    mode: '0644'
+  notify:
+    - Restart Keycloak
+
+- name: Enable/Start Keycloak Service
+  ansible.builtin.systemd_service:
+    name: keycloak.service
+    daemon_reload: true
+    enabled: true
+    masked: no
+    state: started
+
+- name: Wait On Keycloak Start
+  ansible.builtin.wait_for:
+    port: "{{ http_port }}"
+
+- name: Create Keycloak Realm
+  community.general.keycloak_realm:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    enabled: true
+    smtp_server:
+      host: smtp.aa.net.uk
+      port: "587"
+      starttls: true
+      auth: false
+      from: "keycloak@{{ domain }}"
+      fromDisplayName: "Keycloak"
+      replyTo: "no-reply@{{ domain }}"
+    login_with_email_allowed: false
+    reset_password_allowed: true
+    remember_me: true
+    state: present
+
+- name: Configure Apache for Keycloak
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
+

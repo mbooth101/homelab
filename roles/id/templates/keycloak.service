@@ -1,0 +1,17 @@
+[Unit]
+Description=Keycloak Identity and Access Management
+Documentation=https://www.keycloak.org/documentation
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=keycloak
+Group=keycloak
+SuccessExitStatus=143
+EnvironmentFile=-/etc/sysconfig/keycloak
+WorkingDirectory=/opt/keycloak
+ExecStart=/opt/keycloak/bin/kc.sh start
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
