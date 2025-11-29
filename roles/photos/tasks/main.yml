@@ -14,11 +14,21 @@
       - VectorChord
     state: latest
 
+# Check if extension is configured correctly first to avoid unnecessary restart
+# of PostgreSQL -- reports changed if the required config is absent
+- name: Check PostgreSQL Extension Configuration
+  ansible.builtin.command:
+    cmd: "grep '^shared_preload_libraries.*vchord.*$' /var/lib/pgsql/data/postgresql.auto.conf"
+  register: preload_lib_config
+  changed_when: preload_lib_config.rc != 0
+  failed_when: False
+
 # This extension must be loaded at PostgreSQL start up time
 - name: Configure VectorChord Extension for PostgreSQL
   community.postgresql.postgresql_set:
     name: shared_preload_libraries
     value: vchord,vector
+  when: preload_lib_config.changed
   register: preload_lib
 
 # A change to shared_preload_libraries requires PostgreSQL to be restarted
