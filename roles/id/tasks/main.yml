@@ -82,6 +82,7 @@
 
 - name: Wait On Keycloak Start
   ansible.builtin.wait_for:
+    host: "::1"
     port: "{{ http_port }}"
 
 - name: Create Keycloak Realm
