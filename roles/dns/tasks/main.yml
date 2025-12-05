@@ -11,9 +11,7 @@
     path: /etc/systemd/resolved.conf.d
     mode: '0755'
 
-# Disable systemd resolver features in favour of using the configured DNS
-# resolvers directly
-- name: Disable Unneeded Local Resolver Features
+- name: Install Local Resolver Configuration
   ansible.builtin.template:
     src: 99-resolved.conf
     dest: /etc/systemd/resolved.conf.d/99-resolved.conf

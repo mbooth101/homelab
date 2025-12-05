@@ -5,13 +5,13 @@
 # - site_static: set to true to configure static site hosting
 # - site_proxy: set to true to configure basic proxying to another port
 
-# Adds a DNS alias so that the site is addressable and the name-based
+# Adds DNS A/AAAA records so that the site is addressable and the name-based
 # vhosts function properly
-- name: HTTP - Configure Site DNS CNAME
+- name: HTTP - Configure Site DNS Records
   ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-record.yml
+    file: ../../dns/tasks/configure-a-records.yml
   vars:
-    record_name: "{{ site_name | default(role_name) }}"
+    record: "{{ site_name | default(role_name) }}.{{ domain }}"
 
 # Provisions a TLS certificate to ensure SSL parts function properly
 - name: HTTP - Configure Site TLS Certificate

@@ -40,20 +40,19 @@
     state: true
     persistent: true
 
-# Create self-signed TLS certificates for the host, this allows the httpd
-# service to be brought up and real TLS certificates to be requested via
-# ACME challenge
-- name: Configure Site TLS Self-Signed Certificate
-  ansible.builtin.include_tasks:
-    file: ../../tls/tasks/configure-cert.yml
-  vars:
-    cert_name: "{{ host.name }}"
-    self_signed_certs: True
+- name: Open Firewall for HTTP/HTTPS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - http
+    - https
 
-# Create a default, catch-all virtual host site
-- name: Install Default Virtual Host
+- name: Install HTTP Default Virtual Host
   ansible.builtin.template:
-    src: apache.vhost-default.conf
+    src: vhost-default-http.conf
     dest: /etc/httpd/conf.d/vhosts.d/00-default.conf
     setype: httpd_config_t
     mode: '0644'
@@ -67,21 +66,18 @@
     masked: no
     state: started
 
-- name: Open Firewall for HTTP/HTTPS
-  ansible.posix.firewalld:
-    service: "{{ item }}"
-    permanent: true
-    state: enabled
-  loop:
-    - http
-    - https
-  notify:
-    - Reload Firewall
-
-# Replace the self-signed TLS certificates created earlier with real
-# certificates
-- name: Configure Site TLS Certificate
+- name: Configure TLS Certificate for Default Virtual Host
   ansible.builtin.include_tasks:
     file: ../../tls/tasks/configure-cert.yml
   vars:
     cert_name: "{{ host.name }}"
+
+- name: Install HTTPS Default Virtual Host
+  ansible.builtin.template:
+    src: vhost-default-https.conf
+    dest: /etc/httpd/conf.d/vhosts.d/01-default.conf
+    setype: httpd_config_t
+    mode: '0644'
+  notify:
+    - Reload Apache
+

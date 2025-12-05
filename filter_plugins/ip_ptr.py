@@ -63,11 +63,13 @@ def ip_ptr(value):
         addr4 = ipaddr(value, 'address', version=4)
         addr6 = ipaddr(value, 'address', version=6)
         if addr4:
-            return "%s.in-addr.arpa" % '.'.join(reversed(addr4.split('.')[:3]))
+            prefix = ipaddr(value, 'prefix', version=4)
+            return "%s.in-addr.arpa" % '.'.join(reversed(addr4.split('.')[:int(prefix/8)]))
         if addr6:
-            prefix_nybbles = int(int(ipaddr(value, 'prefix', version=6)) / 4)
+            prefix = ipaddr(value, 'prefix', version=6)
+            prefix_nybbles = int(prefix / 4)
             rev_addr = list(reversed(ip_address(addr6).exploded.replace(':', '')))
-            return "%s.ip6.arpa" % '.'.join(rev_addr[prefix_nybbles:])
+            return "%s.ip6.arpa" % '.'.join(rev_addr[int(32 - prefix_nybbles):])
         raise ValueError
     except ValueError:
         msg = "{0} is not a valid IP address".format(value)
