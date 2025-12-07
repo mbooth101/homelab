@@ -96,6 +96,7 @@
     - timestamper
     - ws-cleanup
     # Distributed builds
+    - docker-plugin
     - libvirt-slave
     - ssh-slaves
     # Notifications

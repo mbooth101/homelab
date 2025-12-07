@@ -12,6 +12,13 @@ credentials:
   user: {
     }
 jenkins:
+  clouds:
+  - hypervisor:
+      hypervisorSshPort: 0
+      hypervisorSystemUrl: "system"
+      hypervisorTransport: "unix"
+      hypervisorType: "QEMU"
+      maxOnlineSlaves: 2
   crumbIssuer:
     standard:
       excludeClientIPFromCrumb: false

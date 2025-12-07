@@ -2,3 +2,5 @@
 dependencies:
   - role: http
   - role: id
+  - role: containerisation
+  - role: virtualisation
