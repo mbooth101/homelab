@@ -1,6 +1,6 @@
 [jenkins]
-name=Jenkins
-baseurl=http://pkg.jenkins.io/redhat
+name="Jenkins Stable"
+baseurl=http://pkg.jenkins.io/redhat-stable
 gpgcheck=1
-gpgkey="https://pkg.jenkins.io/redhat/jenkins.io-2023.key"
+gpgkey="https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key"
 enabled=1

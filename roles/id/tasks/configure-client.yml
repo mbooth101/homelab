@@ -1,0 +1,60 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - client.name
+# - client.description
+# - client.secret
+# - client.redirect_uris
+# - client.logout_uri
+
+- name: ID - Configure Keycloak OpenID Connect Client
+  community.general.keycloak_client:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    # Client config
+    client_id: "{{ client.name | lower | replace(' ', '_') }}"
+    name: "{{ client.name }}"
+    description: "{{ client.description | default('') }}"
+    root_url: "{{ _root_url }}"
+    admin_url: "{{ _root_url }}"
+    enabled: true
+    client_authenticator_type: client-secret
+    secret: "{{ client.secret }}"
+    redirect_uris: "{{ _redirect_uris }}"
+    web_origins: [ "{{ _root_url }}" ]
+    standard_flow_enabled: true
+    implicit_flow_enabled: false
+    direct_access_grants_enabled: true
+    service_accounts_enabled: false
+    public_client: false
+    protocol: openid-connect
+    attributes:
+      post.logout.redirect.uris: "{{ _root_url }}{{ client.logout_uri }}"
+    authorization_services_enabled: false
+    state: present
+  vars:
+    _root_url: "https://{{ role_name }}.{{ domain }}"
+    __replace: '{{ _root_url ~ "\1" }}'
+    _redirect_uris: "{{ client.redirect_uris | map('regex_replace', '^(.*)$', __replace) | list }}"
+
+- name: ID - Configure Keycloak Groups
+  community.general.keycloak_group:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    name: "{{ item.group }}"
+    parents:
+      - name: "{{ item.parent }}"
+    state: present
+  loop:
+    - parent: "users"
+      group: "{{ client.name | lower | replace(' ', '_') }}_users"
+    - parent: "admins"
+      group: "{{ client.name | lower | replace(' ', '_') }}_admins"

@@ -20,10 +20,6 @@
     create_home: false
     group: keycloak
 
-- name: Configure PostgreSQL for Keycloak
-  ansible.builtin.include_tasks:
-    file: ../../postgres/tasks/configure-db.yml
-
 - name: Download Keycloak Tarball
   ansible.builtin.get_url:
     url: "https://github.com/keycloak/keycloak/releases/download/{{ kc_version }}/keycloak-{{ kc_version }}.tar.gz"
@@ -41,6 +37,17 @@
     src: "/opt/keycloak-{{ kc_version }}"
     dest: "/opt/keycloak"
     state: link
+
+- name: Configure PostgreSQL for Keycloak
+  ansible.builtin.include_tasks:
+    file: ../../postgres/tasks/configure-db.yml
+
+- name: Configure Apache for Keycloak
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
+    http_port: "{{ kc_http_port }}"
 
 - name: Install Keycloak Configuration
   ansible.builtin.template:
@@ -83,12 +90,12 @@
 - name: Wait On Keycloak Start
   ansible.builtin.wait_for:
     host: "::1"
-    port: "{{ http_port }}"
+    port: "{{ kc_http_port }}"
 
 - name: Create Keycloak Realm
   community.general.keycloak_realm:
     auth_client_id: admin-cli
-    auth_keycloak_url: "http://[::1]:{{ http_port }}"
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
     auth_realm: master
     auth_username: admin
     auth_password: "{{ kc_admin_pw }}"
@@ -107,9 +114,54 @@
     remember_me: true
     state: present
 
-- name: Configure Apache for Keycloak
-  ansible.builtin.include_tasks:
-    file: ../../http/tasks/configure-site.yml
-  vars:
-    site_proxy: true
+- name: Configure Keycloak Groups
+  community.general.keycloak_group:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "users"
+    - "admins"
+
+- name: Create Keycloak Client Scope For Groups
+  community.general.keycloak_clientscope:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    name: groups
+    description: "Additional claims about the groups a subject belongs to"
+    protocol: openid-connect
+    protocol_mappers:
+      - name: groups
+        protocol: openid-connect
+        protocolMapper: oidc-group-membership-mapper
+        config:
+          claim.name: groups
+          full.path: false
+          id.token.claim: true
+          access.token.claim: true
+          lightweight.claim: false
+          userinfo.token.claim: true
+          introspection.token.claim: true
+    state: present
+
+# Must set all the scopes, any scopes unspecified here will lose their type :-(
+- name: Set Default Client Scopes For Realm
+  community.general.keycloak_clientscope_type:
+    auth_client_id: admin-cli
+    auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
+    auth_realm: master
+    auth_username: admin
+    auth_password: "{{ kc_admin_pw }}"
+    realm: "{{ domain }}"
+    default_clientscopes: ['acr', 'basic', 'email', 'groups', 'profile', 'role_list']
+    optional_clientscopes: ['address', 'microprofile-jwt', 'offline_access', 'organization', 'phone']
 

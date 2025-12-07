@@ -1,4 +1,4 @@
 ---
 dependencies:
   - role: http
-  - role: idp
+  - role: id

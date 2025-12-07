@@ -4,6 +4,7 @@
 # - site_name: set to override the default value of "role_name"
 # - site_static: set to true to configure static site hosting
 # - site_proxy: set to true to configure basic proxying to another port
+# - http_port: set to the port number to which Apache should proxy requests
 
 # Adds DNS A/AAAA records so that the site is addressable and the name-based
 # vhosts function properly

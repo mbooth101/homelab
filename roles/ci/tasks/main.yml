@@ -12,17 +12,29 @@
 - name: Install Jenkins
   ansible.builtin.dnf:
     name:
+      - git
       - fontconfig
       - java-21-openjdk-headless
       - jenkins
     state: present
-  register: jenkins_install
 
 - name: Configure Apache for Jenkins
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
   vars:
     site_proxy: true
+    http_port: "{{ jenkins_http_port }}"
+
+- name: Configure Keycloak for Jenkins
+  ansible.builtin.include_tasks:
+    file: ../../id/tasks/configure-client.yml
+  vars:
+    client:
+      name: "Jenkins"
+      description: "Continuous Integration"
+      secret: "{{ jenkins_secret }}"
+      redirect_uris: [ "/securityRealm/finishLogin" ]
+      logout_uri: "/OicLogout"
 
 - name: Ensure Jenkins Service Overrides Directory
   ansible.builtin.file:
@@ -44,45 +56,61 @@
     enabled: true
     masked: no
     state: started
-  register: jenkins_start
 
 # Jenkins can take a minute to come up and it needs to be online for the next steps
 - name: Wait On Jenkins Start
   ansible.builtin.wait_for:
-    timeout: 30
-  delegate_to: localhost
-  when: jenkins_start.changed
+    host: "::1"
+    port: "{{ jenkins_http_port }}"
 
 - name: Install Jenkins Plugins
   community.general.jenkins_plugin:
     name: "{{ item }}"
-    url: "http://[::1]:{{ http_port }}"
+    url: "http://[::1]:{{ jenkins_http_port }}"
     state: present
   loop:
+    # Admin / Security
+    - dark-theme
+    - dashboard-view
+    - cloudbees-folder
+    - configuration-as-code
+    - antisamy-markup-formatter
+    - oic-auth
+    - matrix-auth
+    - role-strategy
+    # Build tools
     - ant
-    - build-name-setter
-    - git
-    - github
     - gradle
     - maven-plugin
-    - saml
-    - ssh-slaves
+    # Source control
+    - git
+    - git-parameter
+    - github
+    - gitlab-plugin
+    # Build features
+    - build-name-setter
+    - build-timeout
+    - embeddable-build-status
+    - ssh-agent
+    - throttle-concurrents
     - timestamper
-    - workflow-aggregator
-  when: jenkins_install.changed
+    - ws-cleanup
+    # Distributed builds
+    - libvirt-slave
+    - ssh-slaves
+    # Notifications
+    - email-ext
+    - emailext-template
+    - mailer
   notify:
     - Restart Jenkins
 
 - name: Install Jenkins Configuration
   ansible.builtin.template:
-    src: "{{ item }}"
-    dest: "/var/lib/jenkins/{{ item }}"
-    owner: jenkins
+    src: jenkins.yaml
+    dest: /var/lib/jenkins/jenkins.yaml
     group: jenkins
-    mode: '0644'
-    force: False
-  loop:
-    - config.xml
-    - jenkins.model.JenkinsLocationConfiguration.xml
+    mode: '0640'
   notify:
     - Restart Jenkins
+

@@ -12,6 +12,7 @@ EnvironmentFile=-/etc/sysconfig/keycloak
 WorkingDirectory=/opt/keycloak
 ExecStart=/opt/keycloak/bin/kc.sh start
 Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target

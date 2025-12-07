@@ -1,4 +1,5 @@
 ---
+kc_http_port: 9091
 kc_version: "26.4.6"
 kc_admin_pw: !vault |
           $ANSIBLE_VAULT;1.1;AES256
