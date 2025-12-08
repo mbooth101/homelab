@@ -1,33 +1,28 @@
 - name: Install LibVirt
   ansible.builtin.dnf:
     name:
-      - libvirt-daemon-driver-interface
-      - libvirt-daemon-driver-network
-      - libvirt-daemon-driver-nodedev
-      - libvirt-daemon-driver-nwfilter
-      - libvirt-daemon-driver-qemu
-      - libvirt-daemon-driver-secret
-        # Installing initscripts and chkconfig fails with:
-        # 1 error: unpacking of archive failed on file /etc/init.d;65f76e71:
-        #   cpio: File from package already exists as a directory in system
-        # 2 error: chkconfig-1.26-1.fc39.x86_64: install failed
-        # So only install a subset of storage drivers to avoid installing
-        # them
-      - libvirt-daemon-driver-storage-disk
-      - libvirt-daemon-driver-storage-iscsi
-      - libvirt-daemon-driver-storage-iscsi-direct
-      - libvirt-daemon-driver-storage-logical
-      - libvirt-daemon-driver-storage-mpath
-      - libvirt-daemon-driver-storage-rbd
-      - libvirt-daemon-driver-storage-scsi
-      - libvirt-daemon-lock
-      - libvirt-daemon-log
-      - libvirt-daemon-plugin-lockd
-      - libvirt-daemon-proxy
-      - python3-libvirt
-      - python3-lxml
+      - libvirt
     state: present
 
+# We don't use these hypervisors
+- name: Disable LibVirt Support for VirtualBox and Xen
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: false
+    masked: no
+    state: stopped
+  loop:
+    - virtvboxd.service
+    - virtvboxd-admin.socket
+    - virtvboxd-ro.socket
+    - virtvboxd.socket
+    - virtxend.service
+    - virtxend-admin.socket
+    - virtxend-ro.socket
+    - virtxend.socket
+
+# Need to start all these sockets that otherwise would not be started until
+# the next reboot
 - name: Enable/Start LibVirt Sockets
   ansible.builtin.systemd_service:
     name: "{{ item }}.socket"
@@ -35,10 +30,34 @@
     masked: no
     state: started
   loop:
+    - virtinterfaced-admin
+    - virtinterfaced-ro
     - virtinterfaced
+    - virtlockd-admin
+    - virtlockd
+    - virtlogd-admin
+    - virtlogd
+    - virtlxcd-admin
+    - virtlxcd-ro
+    - virtlxcd
+    - virtnetworkd-admin
+    - virtnetworkd-ro
     - virtnetworkd
+    - virtnodedevd-admin
+    - virtnodedevd-ro
     - virtnodedevd
-    - virtstoraged
-    - virtsecretd
-    - virtqemud
+    - virtnwfilterd-admin
+    - virtnwfilterd-ro
+    - virtnwfilterd
+    - virtproxyd-admin
+    - virtproxyd-ro
     - virtproxyd
+    - virtqemud-admin
+    - virtqemud-ro
+    - virtqemud
+    - virtsecretd-admin
+    - virtsecretd-ro
+    - virtsecretd
+    - virtstoraged-admin
+    - virtstoraged-ro
+    - virtstoraged
