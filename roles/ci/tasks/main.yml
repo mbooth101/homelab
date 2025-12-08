@@ -87,6 +87,8 @@
     - git-parameter
     - github
     - gitlab-plugin
+    # Pipelines
+    - workflow-aggregator
     # Build features
     - build-name-setter
     - build-timeout
