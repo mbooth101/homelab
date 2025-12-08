@@ -2,4 +2,5 @@
 dependencies:
   - role: http
   - role: postgres
+  - role: id
   - role: valkey

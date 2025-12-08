@@ -33,7 +33,7 @@
     public_client: false
     protocol: openid-connect
     attributes:
-      post.logout.redirect.uris: "{{ _root_url }}{{ client.logout_uri }}"
+      post.logout.redirect.uris: "{{ _root_url }}{{ client.logout_uri | default('/') }}"
     authorization_services_enabled: false
     state: present
   vars:

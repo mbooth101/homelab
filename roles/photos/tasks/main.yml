@@ -47,6 +47,23 @@
     - vchord
     - earthdistance
 
+- name: Configure Apache for Immich
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_proxy: true
+    http_port: "{{ immich_http_port }}"
+
+- name: Configure Keycloak for Immich
+  ansible.builtin.include_tasks:
+    file: ../../id/tasks/configure-client.yml
+  vars:
+    client:
+      name: "Immich"
+      description: "Photo and Video Management"
+      secret: "{{ immich_secret }}"
+      redirect_uris: [ "app.immich:///oauth-callback", "/auth/login", "/user-settings" ]
+
 - name: Install Immich Configuration
   ansible.builtin.template:
     src: immich.env
@@ -65,8 +82,3 @@
     - immich-machine-learning
     - immich
 
-- name: Configure Apache for Immich
-  ansible.builtin.include_tasks:
-    file: ../../http/tasks/configure-site.yml
-  vars:
-    site_proxy: true
