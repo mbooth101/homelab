@@ -23,6 +23,5 @@
   ansible.posix.firewalld:
     service: mdns
     permanent: true
+    immediate: true
     state: enabled
-  notify:
-    - Reload Firewall

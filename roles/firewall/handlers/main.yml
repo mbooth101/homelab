@@ -1,6 +1,0 @@
----
-- name: Reload Firewall
-  ansible.builtin.systemd_service:
-    name: firewalld.service
-    daemon_reload: true
-    state: reloaded
