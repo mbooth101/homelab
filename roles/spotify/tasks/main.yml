@@ -1,7 +1,8 @@
 - name: Enable Spotify Repository
-  community.general.copr:
-    state: enabled
-    name: mbooth/spotifyd
+  ansible.builtin.copy:
+    src: mbooth-spotifyd.repo
+    dest: /etc/yum.repos.d/mbooth-spotifyd.repo
+    mode: '0644'
 
 # Install latest version always because we are building this RPM
 # ourselves
