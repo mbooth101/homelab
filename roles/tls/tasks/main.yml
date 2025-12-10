@@ -17,3 +17,18 @@
     enabled: true
     masked: no
     state: started
+
+# Necessary in staging environment so the installed services can trust each
+# other without having to disable any certificate validation settings
+- name: Install Self-Signed Authority Certificate
+  ansible.builtin.copy:
+    src: CA.pem
+    dest: /etc/pki/ca-trust/source/anchors/CA.pem
+    mode: '0640'
+  when: self_signed_certs
+
+- name: Update System CA Trust Store
+  ansible.builtin.command:
+    cmd: update-ca-trust
+  changed_when: false
+  when: self_signed_certs

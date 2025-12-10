@@ -8,8 +8,8 @@ SUBJECT="/C=GB/ST=South Yorkshire/L=Sheffield/O=Mat Booth Ltd/CN=$HOST"
 DIR="$(readlink -f $(dirname $0))"
 DIR_HOST="$DIR/$HOST"
 
-# Just a count of how many certs we've already issued
-SERIAL="$( printf "%02g" $(( $(find . -mindepth 1 -maxdepth 1 -type d | wc -l) + 1 )) )"
+# Just a simple unix timestamp
+SERIAL="$( date +%s )"
 
 # Install openssl if command not found
 if ! which openssl &>/dev/null ; then

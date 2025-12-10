@@ -108,7 +108,7 @@ jenkins:
     oic:
       clientId: "jenkins"
       clientSecret: "{{ jenkins_secret }}"
-      disableSslVerification: {{ self_signed_certs | default(false) }}
+      disableSslVerification: false
       emailFieldName: "email"
       fullNameFieldName: "display_name"
       groupIdStrategy: "caseSensitive"
