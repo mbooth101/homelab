@@ -37,3 +37,8 @@ $ PROD=1 ./run.sh # Real hardware
 
 Subsequent runs will execute the main playbooks to install and configure all the services. Provisioning and bootstrapping will be skipped.
 
+## Role Dependencies
+
+A role dependency graph to help me remember how it all hangs together:
+
+![Role Dependency Graph](depgraph.png)

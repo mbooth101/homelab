@@ -1,47 +1,38 @@
 // Role Dependency Graph
 digraph {
-	apache
-	avahi
-	cockpit
-	containerisation
-	dhcp
-	dns
-	firewall
-	home
-	jenkins
-	network
-	openhab
-	"php-fpm"
-	pihole
-	postgres
-	radvd
-	spotify
-	virtualisation
-	idp
-	sso
 	bootstrap
-	apache -> firewall
-	apache -> dns
-	avahi -> firewall
-	cockpit -> apache
-	cockpit -> containerisation
-	cockpit -> virtualisation
-	dhcp -> network
-	dhcp -> postgres
-	dhcp -> firewall
-	dns -> network
+	dns
 	dns -> firewall
-	home -> apache
-	jenkins -> apache
-	jenkins -> containerisation
-	openhab -> apache
-	pihole -> network
-	pihole -> dns
-	pihole -> apache
-	radvd -> network
-	spotify -> avahi
+	firewall
+	dhcp
+	dhcp -> firewall
+	dhcp -> dns
+	dhcp -> postgres
+	postgres
+	cockpit
+	cockpit -> firewall
+	cockpit -> http
+	http
+	http -> firewall
+	http -> dns
+	http -> tls
+	tls
+	cockpit -> containerisation
+	containerisation
+	cockpit -> virtualisation
+	virtualisation
+	id
+	id -> http
+	id -> postgres
+	photos
+	photos -> http
+	photos -> postgres
+	photos -> id
+	photos -> valkey
+	valkey
+	spotify
 	spotify -> firewall
-	idp -> apache
-	sso -> firewall
-	sso -> dns
+	spotify -> avahi
+	avahi
+	avahi -> firewall
 }
