@@ -12,8 +12,61 @@ credentials:
   user: {
     }
 jenkins:
+  authorizationStrategy:
+    globalMatrix:
+      entries:
+      - user:
+          name: "anonymous"
+          permissions:
+          - "Job/Read"
+          - "Overall/Read"
+      - group:
+          name: "authenticated"
+          permissions:
+          - "Job/Read"
+          - "Overall/Read"
+          - "View/Read"
+      - group:
+          name: "jenkins_admins"
+          permissions:
+          - "Overall/Administer"
+      - group:
+          name: "jenkins_users"
+          permissions:
+          - "Agent/Build"
+          - "Agent/Configure"
+          - "Agent/Connect"
+          - "Agent/Create"
+          - "Agent/Delete"
+          - "Agent/Disconnect"
+          - "Agent/Provision"
+          - "Credentials/Create"
+          - "Credentials/Delete"
+          - "Credentials/ManageDomains"
+          - "Credentials/Update"
+          - "Credentials/View"
+          - "Job/Build"
+          - "Job/Cancel"
+          - "Job/Configure"
+          - "Job/Create"
+          - "Job/Delete"
+          - "Job/Discover"
+          - "Job/Move"
+          - "Job/Read"
+          - "Job/ViewStatus"
+          - "Job/Workspace"
+          - "Overall/Read"
+          - "Run/Delete"
+          - "Run/Replay"
+          - "Run/Update"
+          - "SCM/Tag"
+          - "View/Configure"
+          - "View/Create"
+          - "View/Delete"
+          - "View/Read"
   clouds:
   - hypervisor:
+      hypervisorHost: ""
       hypervisorSshPort: 0
       hypervisorSystemUrl: "system"
       hypervisorTransport: "unix"
@@ -57,15 +110,16 @@ jenkins:
       clientSecret: "{{ jenkins_secret }}"
       disableSslVerification: {{ self_signed_certs | default(false) }}
       emailFieldName: "email"
-      userNameField: "sub"
-      fullNameFieldName: "preferred_username"
+      fullNameFieldName: "display_name"
       groupIdStrategy: "caseSensitive"
+      groupsFieldName: "groups"
       postLogoutRedirectUrl: "https://{{ role_name }}.{{ domain }}/OicLogout"
       serverConfiguration:
         wellKnown:
           scopesOverride: "openid profile email"
           wellKnownOpenIDConfigurationUrl: "https://id.{{ domain }}/realms/{{ domain }}/.well-known/openid-configuration"
       userIdStrategy: "caseSensitive"
+      userNameField: "preferred_username"
   slaveAgentPort: 0
   updateCenter:
     sites:
@@ -94,6 +148,8 @@ security:
     usageStatisticsEnabled: true
   apiTokenProperty: {
     }
+  cps:
+    hideSandbox: false
   crumb: {
     }
   gitHooks:

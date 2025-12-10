@@ -65,6 +65,7 @@
     creates: "/opt/keycloak/data"
   environment:
     KCPW: "{{ kc_admin_pw }}"
+  register: bootstrap
 
 - name: Set Ownership of Keycloak Files
   ansible.builtin.file:
@@ -111,6 +112,7 @@
         value: "{{ kc_admin_pw }}"
         temporary: false
     state: present
+  when: bootstrap.changed
 
 - name: Grant Admin Role to Keycloak Admin Account
   community.general.keycloak_user_rolemapping:
@@ -124,6 +126,7 @@
     roles:
       - name: admin
     state: present
+  when: bootstrap.changed
 
 - name: Delete Temporary Keycloak Admin Account
   community.general.keycloak_user:
@@ -217,19 +220,31 @@
               annotations: {}
     state: present
 
-- name: Configure Keycloak Groups
-  community.general.keycloak_group:
+- name: Add Display Name Mapper to User Profile Client Scope
+  community.general.keycloak_clientscope:
     auth_client_id: admin-cli
     auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
     auth_realm: master
     auth_username: admin
     auth_password: "{{ kc_admin_pw }}"
     realm: "{{ domain }}"
-    name: "{{ item }}"
+    name: profile
+    protocol: openid-connect
+    protocol_mappers:
+      - name: display name
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        config:
+          user.attribute: displayName
+          jsonType.label: String
+          claim.name: display_name
+          full.path: false
+          id.token.claim: true
+          access.token.claim: true
+          lightweight.claim: false
+          userinfo.token.claim: true
+          introspection.token.claim: true
     state: present
-  loop:
-    - "users"
-    - "admins"
 
 - name: Create Keycloak Client Scope For Groups
   community.general.keycloak_clientscope:

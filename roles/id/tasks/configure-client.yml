@@ -50,11 +50,7 @@
     auth_password: "{{ kc_admin_pw }}"
     realm: "{{ domain }}"
     name: "{{ item.group }}"
-    parents:
-      - name: "{{ item.parent }}"
     state: present
   loop:
-    - parent: "users"
-      group: "{{ client.name | lower | replace(' ', '_') }}_users"
-    - parent: "admins"
-      group: "{{ client.name | lower | replace(' ', '_') }}_admins"
+    - group: "{{ client.name | lower | replace(' ', '_') }}_users"
+    - group: "{{ client.name | lower | replace(' ', '_') }}_admins"
