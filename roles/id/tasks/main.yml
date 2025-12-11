@@ -24,6 +24,8 @@
   ansible.builtin.get_url:
     url: "https://github.com/keycloak/keycloak/releases/download/{{ kc_version }}/keycloak-{{ kc_version }}.tar.gz"
     dest: "/opt/keycloak-{{ kc_version }}.tar.gz"
+  retries: 3
+  delay: 2
 
 - name: Extract Keycloak Tarball
   ansible.builtin.unarchive:
