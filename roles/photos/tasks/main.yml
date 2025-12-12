@@ -83,3 +83,33 @@
     - immich-machine-learning
     - immich
 
+# Immich can take a minute to come up and it needs to have initialised the
+# database for the next steps
+- name: Wait On Immich Start
+  ansible.builtin.wait_for:
+    host: "::1"
+    port: "{{ immich_http_port }}"
+
+- name: Insert Initial Configuration Into Immich Database
+  community.postgresql.postgresql_query:
+    login_db: "{{ db_name }}"
+    query: "INSERT INTO system_metadata (key,value) VALUES ('{{ item.key }}','{{ item.value | to_json }}') ON CONFLICT (key) DO NOTHING"
+  loop:
+    - key: "admin-onboarding"
+      value:
+        isOnboarded: true
+    - key: "system-config"
+      value:
+        map:
+          enabled: false
+        oauth:
+          enabled: true
+          clientId: immich
+          issuerUrl: "https://id.{{ domain }}/realms/{{ domain }}/.well-known/openid-configuration"
+          autoLaunch: true
+          clientSecret: "{{ immich_secret }}"
+        passwordLogin:
+          enabled: false
+        newVersionCheck:
+          enabled: false
+
