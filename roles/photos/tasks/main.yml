@@ -6,6 +6,9 @@
 
 # Install latest version always because we are building this RPM
 # ourselves
+# Excluding texlive-base prevents the installation of about 500 optional
+# texlive and perl dependencies that we're not interested in that would
+# otherwise be pulled in my python3-matplotlib
 - name: Install Immich And Postgresql Extensions
   ansible.builtin.dnf:
     name:
@@ -13,6 +16,8 @@
       - python3-immich_ml
       - python3-immich_ml+cpu
       - VectorChord
+    exclude:
+      - texlive-base
     state: latest
 
 # Check if extension is configured correctly first to avoid unnecessary restart
