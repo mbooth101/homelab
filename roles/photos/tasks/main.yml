@@ -4,21 +4,11 @@
     dest: /etc/yum.repos.d/mbooth-immich.repo
     mode: '0644'
 
-# Install latest version always because we are building this RPM
-# ourselves
-# Excluding texlive-base prevents the installation of about 500 optional
-# texlive and perl dependencies that we're not interested in that would
-# otherwise be pulled in my python3-matplotlib
-- name: Install Immich And Postgresql Extensions
+- name: Install Postgresql Extensions For Immich
   ansible.builtin.dnf:
     name:
-      - immich
-      - python3-immich_ml
-      - python3-immich_ml+cpu
       - VectorChord
-    exclude:
-      - texlive-base
-    state: latest
+    state: present
 
 # Check if extension is configured correctly first to avoid unnecessary restart
 # of PostgreSQL -- reports changed if the required config is absent
@@ -45,6 +35,21 @@
     state: restarted
   when: preload_lib.changed
 
+# Install latest version always because we are building this RPM
+# ourselves
+# Excluding texlive-base prevents the installation of about 500 optional
+# texlive and perl dependencies that we're not interested in that would
+# otherwise be pulled in my python3-matplotlib
+- name: Install Immich
+  ansible.builtin.dnf:
+    name:
+      - immich
+      - python3-immich_ml
+      - python3-immich_ml+cpu
+    exclude:
+      - texlive-base
+    state: latest
+
 - name: Configure PostgreSQL for Immich
   ansible.builtin.include_tasks:
     file: ../../postgres/tasks/configure-db.yml
@@ -69,6 +74,13 @@
       description: "Photo and Video Management"
       secret: "{{ immich_secret }}"
       redirect_uris: [ "app.immich:///oauth-callback", "/auth/login", "/user-settings" ]
+    user_groups:
+      - name: immich_users
+        attrs:
+          immich_role: user
+      - name: immich_admins
+        attrs:
+          immich_role: admin
 
 - name: Install Immich Configuration
   ansible.builtin.template:
@@ -100,9 +112,6 @@
     login_db: "{{ db_name }}"
     query: "INSERT INTO system_metadata (key,value) VALUES ('{{ item.key }}','{{ item.value | to_json }}') ON CONFLICT (key) DO NOTHING"
   loop:
-    - key: "admin-onboarding"
-      value:
-        isOnboarded: true
     - key: "system-config"
       value:
         map:
@@ -110,9 +119,10 @@
         oauth:
           enabled: true
           clientId: immich
+          clientSecret: "{{ immich_secret }}"
           issuerUrl: "https://id.{{ domain }}/realms/{{ domain }}/.well-known/openid-configuration"
           autoLaunch: true
-          clientSecret: "{{ immich_secret }}"
+          roleClaim: immich_role
         passwordLogin:
           enabled: false
         newVersionCheck:

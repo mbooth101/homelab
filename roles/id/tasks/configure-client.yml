@@ -43,7 +43,7 @@
   retries: 3
   delay: 2
 
-- name: ID - Configure Keycloak Groups
+- name: ID - Configure Keycloak User Groups
   community.general.keycloak_group:
     auth_client_id: admin-cli
     auth_keycloak_url: "http://[::1]:{{ kc_http_port }}"
@@ -51,8 +51,12 @@
     auth_username: admin
     auth_password: "{{ kc_admin_pw }}"
     realm: "{{ domain }}"
-    name: "{{ item.group }}"
+    name: "{{ item.name }}"
+    attributes: "{{ item.attrs | default({}) }}"
     state: present
-  loop:
-    - group: "{{ client.name | lower | replace(' ', '_') }}_users"
-    - group: "{{ client.name | lower | replace(' ', '_') }}_admins"
+  loop: "{{ _user_groups }}"
+  vars:
+    _default_groups:
+      - name: "{{ client.name | lower | replace(' ', '_') }}_users"
+      - name: "{{ client.name | lower | replace(' ', '_') }}_admins"
+    _user_groups: "{{ user_groups | default(_default_groups) }}"

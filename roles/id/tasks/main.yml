@@ -282,6 +282,6 @@
     auth_username: admin
     auth_password: "{{ kc_admin_pw }}"
     realm: "{{ domain }}"
-    default_clientscopes: ['acr', 'basic', 'email', 'groups', 'profile', 'role_list']
+    default_clientscopes: ['acr', 'basic', 'email', 'groups', 'profile', 'role_list', 'roles', 'saml_organization', 'web-origins']
     optional_clientscopes: ['address', 'microprofile-jwt', 'offline_access', 'organization', 'phone']
 
