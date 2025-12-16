@@ -1,2 +1,4 @@
 ---
 bind9_port: 53
+ddns_secret_name: dhcp-ddns
+ddns_secret_algo: hmac-sha256

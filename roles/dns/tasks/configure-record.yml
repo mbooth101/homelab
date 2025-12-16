@@ -1,21 +1,18 @@
 # When including these tasks into a role, the following variables are
 # available:
 #
-# - record.name: set to override the default value of "role_name"
-# - record.type: set to override the default value of "CNAME"
-# - record.text: set to override the default value of "host.fqdn"
+# - record.name: set to override the default of "{{ role_name }}.{{ domain }}"
+# - record.type: set the type of record, e.g. CNAME or SRV
+# - record.text: set the value of the record, either a string or list of strings
 
-- name: DNS - Determine if Record Exists
-  ansible.builtin.command:
-    cmd: "dig @{{ host.ipv4.address }} -p {{ bind9_port }} {{ record.name | default(role_name) }}.{{ domain }} {{ record.type | default('CNAME') }} +short"
-  register: dns_lookup
-  changed_when: False
-
-- name: DNS - Add Record to the Zone
-  ansible.builtin.command:
-    cmd: "nsupdate -k /etc/named/dhcp-ddns.key -p {{ bind9_port }}"
-    stdin: |
-      server {{ host.fqdn }}
-      update add {{ record.name | default(role_name) }}.{{ domain }} 14400 IN {{ record.type | default('CNAME') }} {{ record.text | default(host.fqdn) }}
-      send
-  when: not dns_lookup.stdout
+- name: "DNS - Add {{ record.type | default('CNAME') }} Record to the Zone"
+  community.general.nsupdate:
+    key_name: "{{ ddns_secret_name }}"
+    key_algorithm: "{{ ddns_secret_algo }}"
+    key_secret: "{{ ddns_secret }}"
+    server: "{{ host.ipv6.address }}"
+    port: "{{ bind9_port }}"
+    record: "{{ record.name | default(role_name + '.' + domain) }}."
+    type: "{{ record.type | default('CNAME') }}"
+    value: "{{ record.text }}"
+    state: present

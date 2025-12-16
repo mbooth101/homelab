@@ -12,7 +12,7 @@
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-a-records.yml
   vars:
-    record: "{{ site_name | default(role_name) }}.{{ domain }}"
+    dns_record: "{{ site_name | default(role_name) }}.{{ domain }}"
 
 # Provisions a TLS certificate to ensure SSL parts function properly
 - name: HTTP - Configure Site TLS Certificate

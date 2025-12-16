@@ -3,6 +3,7 @@
     name:
       - bind
       - bind-utils
+      - python3-dns
     state: present
 
 - name: Ensure Local Resolver Config Directory
@@ -43,19 +44,28 @@
   notify:
     - Reload BIND DNS
 
-- name: Generate DNS Zone Update Keys
-  ansible.builtin.shell: /usr/sbin/tsig-keygen -a hmac-sha256 dhcp-ddns > /etc/named/dhcp-ddns.key
+- name: Generate DNS Zone Update Key
+  ansible.builtin.shell: "/usr/sbin/tsig-keygen -a {{ ddns_secret_algo }} {{ ddns_secret_name }} > /etc/named/{{ ddns_secret_name }}.key"
   args:
-    creates: /etc/named/dhcp-ddns.key
+    creates: "/etc/named/{{ ddns_secret_name }}.key"
   notify:
     - Reload BIND DNS
 
-- name: Set Permissions on DNS Zone Update Keys
+- name: Set Permissions on DNS Zone Update Key
   ansible.builtin.file:
-    path: /etc/named/dhcp-ddns.key
+    path: "/etc/named/{{ ddns_secret_name }}.key"
     owner: root
     group: named
     mode: '0640'
+
+- name: Read Back DNS Zone Update Key Secret
+  ansible.builtin.shell: "grep secret /etc/named/{{ ddns_secret_name }}.key | sed -e 's/^.*\"\\(.*\\)\";/\\1/'"
+  register: _ddns_secret
+  changed_when: False
+
+- name: Store DNS Zone Update Key Secret
+  ansible.builtin.set_fact:
+    ddns_secret: "{{ _ddns_secret.stdout }}"
 
 # Other roles may add records to the DNS zones, so we only need to install
 # if not already present, instead of overwriting when different
