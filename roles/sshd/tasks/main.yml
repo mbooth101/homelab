@@ -1,0 +1,33 @@
+- name: Install SSH Configuration
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/ssh/sshd_config.d/10-{{ item }}"
+    mode: '0600'
+  loop:
+    - permitrootlogin.conf
+    - authmethods.conf
+  notify: Reload SSHd
+
+- name: Open Firewall for SSH
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: true
+    immediate: true
+    state: enabled
+
+# Fingerprint records allow clients to do host key verification via DNS
+- name: Generate SSH Fingerprint DNS Records
+  ansible.builtin.command:
+    cmd: "ssh-keygen -r {{ host.fqdn }}"
+  changed_when: false
+  register: sshfp_records
+
+- name: Configure SSH Fingerprint DNS Records
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+  vars:
+    _regex: 'IN SSHFP (\d+ \d+ [0-9a-fA-F]+)'
+    record:
+      name: "{{ host.fqdn }}"
+      type: SSHFP
+      text: "{{ sshfp_records.stdout_lines | map('regex_search', _regex, '\\1') | flatten }}"

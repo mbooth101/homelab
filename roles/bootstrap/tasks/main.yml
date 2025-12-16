@@ -24,14 +24,3 @@
   ansible.builtin.include_tasks:
     file: configure-luks-clevis.yml
 
-# This must be the last thing we do because once disabled, we cannot
-# reconnect as root to perform any further tasks -- subsequent playbook
-# invocations will connect as the ansible-maint user created above --
-# root may still login on the console if physically present
-- name: Prevent Remote Root Logins
-  ansible.builtin.template:
-    src: permitrootlogin.sshd.conf
-    dest: "/etc/ssh/sshd_config.d/01-permitrootlogin.conf"
-    mode: '0600'
-  notify: Reload SSHd
-
