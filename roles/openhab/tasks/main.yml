@@ -36,8 +36,17 @@
     size: 4096
     group: openhab
     owner: openhab
+  register: openhab_ssh_host_key
   notify:
     - Restart OpenHAB
+
+- name: Remove Previous Local Known Host Key Entries
+  ansible.builtin.known_hosts:
+    name: "[{{ role_name }}.{{ domain }}]:{{ openhab_ssh_port }}"
+    state: absent
+  delegate_to: localhost
+  become: no
+  when: openhab_ssh_host_key.changed
 
 - name: Open Firewall for OpenHAB Console
   ansible.posix.firewalld:
@@ -80,5 +89,6 @@
     - persistence-inmemory
     - persistence-mapdb
     - persistence-rrd4j
-    - binding-astro
     - automation-jsscripting
+    - binding-astro
+    - ui-basic
