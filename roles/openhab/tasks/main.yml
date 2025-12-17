@@ -1,8 +1,3 @@
-- name: Import GPG Key for OpenHAB Repository
-  ansible.builtin.rpm_key:
-    key: https://openhab.jfrog.io/artifactory/api/gpg/key/public
-    state: present
-
 - name: Enable OpenHAB Repository
   ansible.builtin.copy:
     src: openhab.repo
@@ -21,37 +16,44 @@
     file: ../../http/tasks/configure-site.yml
   vars:
     site_proxy: true
+    http_port: "{{ openhab_http_port }}"
 
-- name: Configure OpenHAB Embedded SSH Server
-  ansible.builtin.lineinfile:
-    path: "/var/lib/openhab/etc/org.apache.karaf.shell.cfg"
-    regexp: "{{ item.re }}"
-    line: "{{ item.line }}"
-  loop:
-    - { re: "^sshPort", line: "sshPort = 2222" }
-    - { re: "^sshHost", line: "sshHost = ::1" }
-  notify:
-    - Restart OpenHAB
-
-- name: Configure OpenHAB Embedded SSH Keys
-  ansible.builtin.lineinfile:
-    path: "/var/lib/openhab/etc/keys.properties"
-    regexp: '(^\#karaf=)(.*)$'
-    line: "openhab={{ (lookup('file', '~/.ssh/id_openhab.pub') | split(' '))[1] }},_g_:admingroup"
-  notify:
-    - Restart OpenHAB
-
-- name: Ensure OpenHAB Service Overrides Directory
-  ansible.builtin.file:
-    state: directory
-    path: /etc/systemd/system/openhab.service.d
-    mode: '0755'
-
-- name: Install OpenHAB Service Overrides
+- name: Configure Public Key Authentication for OpenHAB Console
   ansible.builtin.template:
-    src: openhab.override.conf
-    dest: "/etc/systemd/system/openhab.service.d/override.conf"
+    src: "{{ item }}"
+    dest: "/var/lib/openhab/etc/{{ item }}"
     mode: '0644'
+  loop:
+    - keys.properties
+    - users.properties
+  notify:
+    - Restart OpenHAB
+
+- name: Generate SSH Host Key Pair for OpenHAB Console
+  community.crypto.openssh_keypair:
+    path: /etc/openhab/ssh_host_rsa_key
+    type: rsa
+    size: 4096
+    group: openhab
+    owner: openhab
+  notify:
+    - Restart OpenHAB
+
+- name: Open Firewall for OpenHAB Console
+  ansible.posix.firewalld:
+    port: "{{ openhab_ssh_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Install OpenHAB Configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - {src: openhab.env, dest: /etc/default/openhab }
+    - {src: runtime.cfg, dest: /etc/openhab/services/runtime.cfg }
   notify:
     - Restart OpenHAB
 
@@ -62,3 +64,21 @@
     masked: no
     state: started
 
+# OpenHAB can take a minute to come up and we need the console to be available
+# for the next steps
+- name: Wait On OpenHAB Start
+  ansible.builtin.wait_for:
+    host: "::1"
+    port: "{{ openhab_ssh_port }}"
+
+- name: Install OpenHAB Add-ons
+  local_action: ansible.builtin.command ssh -p {{ openhab_ssh_port }} -i id_openhab openhab@{{ role_name }}.{{ domain }} openhab:addons install {{ item }}
+  become: no
+  register: openhab_addon_installation
+  changed_when: openhab_addon_installation.stdout != "Add-on " + item + " is already installed."
+  loop:
+    - persistence-inmemory
+    - persistence-mapdb
+    - persistence-rrd4j
+    - binding-astro
+    - automation-jsscripting

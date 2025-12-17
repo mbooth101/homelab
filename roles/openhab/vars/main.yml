@@ -1,0 +1,3 @@
+---
+openhab_http_port: 9094
+openhab_ssh_port: 2294
