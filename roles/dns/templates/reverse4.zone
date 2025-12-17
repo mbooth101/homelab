@@ -1,5 +1,5 @@
 $ORIGIN {{ host.ipv4.cidr | ip_ptr }}.
-$TTL 14400      ; 4 hours
+$TTL 3600      ; 1 hour
 
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
 @	IN	SOA	{{ host.fqdn }}.  webmaster.{{ domain }}. ( 0 1h 30m 24h 5m )
