@@ -176,7 +176,7 @@ if [ -n "$PROVISION" ] ; then
 
 		# Reset keys for newly provisioned hosts
 		ssh-keygen -R $fqdn
-		ssh-keyscan -t "ecdsa,ed25519,rsa" -H $fqdn >> ~/.ssh/known_hosts
+		ssh-keyscan -q -t "ecdsa,ed25519,rsa" -H $fqdn >> ~/.ssh/known_hosts
 
 	done 7<<<"$(cat $DEPLOYMENT_ENV)"
 

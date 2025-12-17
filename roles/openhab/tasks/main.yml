@@ -92,3 +92,30 @@
     - automation-jsscripting
     - binding-astro
     - ui-basic
+
+# This file provides the overview UI configuration, the presence of which
+# causes OpenHAB to skip the creation of the initial user -- our users will
+# come from Keycloak instead
+# OpenHAB owns this file, it must only be installed if it doesn't already
+# exist
+- name: Install OpenHAB Overview UI Configuration
+  ansible.builtin.template:
+    src: uicomponents_ui_page.json
+    dest: /var/lib/openhab/jsondb/uicomponents_ui_page.json
+    mode: '0644'
+    group: openhab
+    owner: openhab
+    force: no
+  notify:
+    - Restart OpenHAB
+
+- name: Configure OpenHAB Runtime Settings
+  local_action: ansible.builtin.command ssh -p {{ openhab_ssh_port }} -i id_openhab openhab@{{ role_name }}.{{ domain }} {{ item }}
+  become: no
+  loop:
+    - "config:edit org.openhab.i18n"
+    - "config:property-set language en"
+    - "config:property-set location {{ openhab_location }}"
+    - "config:property-set region GB"
+    - "config:property-set timezone Europe/London"
+    - "config:update"
