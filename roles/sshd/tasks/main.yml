@@ -1,4 +1,4 @@
-- name: Install SSH Configuration
+- name: Install SSH Server Configuration
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "/etc/ssh/sshd_config.d/10-{{ item }}"
@@ -7,6 +7,14 @@
     - permitrootlogin.conf
     - authmethods.conf
   notify: Reload SSHd
+
+- name: Install SSH Client Configuration
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/ssh/ssh_config.d/10-{{ item }}"
+    mode: '0644'
+  loop:
+    - verifyhostkeys.conf
 
 - name: Open Firewall for SSH
   ansible.posix.firewalld:
