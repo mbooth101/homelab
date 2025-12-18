@@ -6,15 +6,14 @@
       tags: [ bootstrap ]
     - role: dns
     - role: dhcp
-    - role: cockpit
+    - role: sshd
+    - role: spotify
+    - role: admin
     - role: id
     - role: ci
     - role: photos
-    - role: spotify
+    - role: hab
 #    - role: sssd
-#    - role: openhab
-#      vars:
-#        http_port: 9092
 #    - role: home
   become: yes
 

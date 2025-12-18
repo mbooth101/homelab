@@ -9,30 +9,41 @@ digraph {
 	dhcp -> dns
 	dhcp -> postgres
 	postgres
-	cockpit
-	cockpit -> firewall
-	cockpit -> http
+	sshd
+	sshd -> firewall
+	sshd -> dns
+	spotify
+	spotify -> firewall
+	spotify -> avahi
+	avahi
+	avahi -> firewall
+	admin
+	admin -> firewall
+	admin -> http
 	http
 	http -> firewall
 	http -> dns
 	http -> tls
 	tls
-	cockpit -> containerisation
+	admin -> containerisation
 	containerisation
-	cockpit -> virtualisation
+	admin -> virtualisation
 	virtualisation
 	id
 	id -> http
 	id -> postgres
+	ci
+	ci -> http
+	ci -> id
+	ci -> containerisation
+	ci -> virtualisation
 	photos
 	photos -> http
 	photos -> postgres
 	photos -> id
 	photos -> valkey
 	valkey
-	spotify
-	spotify -> firewall
-	spotify -> avahi
-	avahi
-	avahi -> firewall
+	hab
+	hab -> http
+	hab -> id
 }
