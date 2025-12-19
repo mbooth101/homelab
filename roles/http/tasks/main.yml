@@ -1,5 +1,6 @@
 - name: Install Apache
   ansible.builtin.dnf:
+    install_weak_deps: false
     name:
       - httpd
       - mod_ssl
