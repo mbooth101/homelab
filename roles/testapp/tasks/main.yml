@@ -1,0 +1,20 @@
+- name: Configure Apache for Test App
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+  vars:
+    site_static: true
+
+- name: Configure Keycloak for Test App
+  ansible.builtin.include_tasks:
+    file: ../../id/tasks/configure-client.yml
+  vars:
+    client:
+      name: "Test App"
+      description: "OpenID Connect Test App"
+      secret: "{{ test_app_secret }}"
+
+- name: Install Site Files for Test App
+  ansible.builtin.copy:
+    src: site/
+    dest: "{{ www_root }}/html/{{ role_name }}/"
+

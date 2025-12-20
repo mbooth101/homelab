@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test App</title>
+	</head>
+	<body>
+		<div>
+			<p>This page is viewable by anyone.</p>
+			<p>Go to the <a href="/protected">protected page</a>.</p>
+			<p>Go to the <a href="/protected/admins_only">administration page</a>.</p>
+<!--#if expr="env('REMOTE_USER') != ''" -->
+			<p><a href="/logout">Log out</a>.</p>
+<!--#else -->
+			<p><a href="/login?target=/">Log in</a>.</p>
+<!--#endif -->
+			<pre>
+<!--#printenv -->
+			</pre>
+		</div>
+	</body>
+</html>
+
