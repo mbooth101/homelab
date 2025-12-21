@@ -108,14 +108,3 @@
     force: no
   notify:
     - Restart OpenHAB
-
-- name: Configure OpenHAB Runtime Settings
-  local_action: ansible.builtin.command ssh -p {{ openhab_ssh_port }} -i id_openhab openhab@{{ role_name }}.{{ domain }} {{ item }}
-  become: no
-  loop:
-    - "config:edit org.openhab.i18n"
-    - "config:property-set language en"
-    - "config:property-set location {{ openhab_location }}"
-    - "config:property-set region GB"
-    - "config:property-set timezone Europe/London"
-    - "config:update"
