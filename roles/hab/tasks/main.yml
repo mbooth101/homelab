@@ -91,6 +91,7 @@
     - persistence-rrd4j
     - automation-jsscripting
     - binding-astro
+    - binding-ipcamera
     - ui-basic
 
 # This file provides the overview UI configuration, the presence of which
