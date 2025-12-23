@@ -39,7 +39,7 @@
   vars:
     _root_url: "https://{{ role_name }}.{{ domain }}"
     __replace: '{{ _root_url ~ "\1" }}'
-    _redirect_uris: "{{ client.redirect_uris | map('regex_replace', '^(/.*)$', __replace) | list }}"
+    _redirect_uris: "{{ client.redirect_uris | default([ '/*' ]) | map('regex_replace', '^(/.*)$', __replace) | list }}"
   retries: 3
   delay: 2
 
