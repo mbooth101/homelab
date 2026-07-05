@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: rpmfusion
+  - role: http
+  - role: mysql

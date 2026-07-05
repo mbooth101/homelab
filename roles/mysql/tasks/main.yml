@@ -1,0 +1,12 @@
+- name: Install MySQL
+  ansible.builtin.dnf:
+    name:
+      - mariadb-server
+    state: present
+
+- name: Enable/Start MySQL
+  ansible.builtin.systemd_service:
+    name: mariadb.service
+    enabled: true
+    masked: no
+    state: started

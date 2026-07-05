@@ -1,0 +1,14 @@
+- name: Install Zoneminder
+  ansible.builtin.dnf:
+    name: zoneminder
+    state: present
+
+- name: Install Zoneminder Configuration
+  ansible.builtin.template:
+    src: 03-custom.conf
+    dest: "/etc/zm/conf.d/03-custom.conf"
+    owner: root
+    group: apache
+    mode: '0640'
+  notify:
+    - Restart Kea DHCP4
