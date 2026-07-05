@@ -2,6 +2,7 @@
   ansible.builtin.dnf:
     name:
       - mariadb-server
+      - python3-PyMySQL
     state: present
 
 - name: Enable/Start MySQL

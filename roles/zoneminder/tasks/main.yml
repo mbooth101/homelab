@@ -1,7 +1,13 @@
 - name: Install Zoneminder
   ansible.builtin.dnf:
-    name: zoneminder
+    name:
+      - zoneminder-common
+      - zoneminder-httpd
     state: present
+
+- name: Configure MySQL for Zoneminder
+  ansible.builtin.include_tasks:
+    file: ../../mysql/tasks/configure-db.yml
 
 - name: Install Zoneminder Configuration
   ansible.builtin.template:
@@ -11,4 +17,11 @@
     group: apache
     mode: '0640'
   notify:
-    - Restart Kea DHCP4
+    - Restart Zoneminder
+
+- name: Enable/Start Zoneminder
+  ansible.builtin.systemd_service:
+    name: zoneminder.service
+    enabled: true
+    masked: no
+    state: started

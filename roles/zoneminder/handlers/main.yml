@@ -1,0 +1,6 @@
+---
+- name: Restart Zoneminder
+  ansible.builtin.systemd_service:
+    name: zoneminder.service
+    daemon_reload: true
+    state: restarted

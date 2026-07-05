@@ -4,44 +4,27 @@
 #  - db_name
 #  - db_user
 #  - db_password
-# 
-# The following additional variables are available:
-#
-#  - db_extensions: list of postgres extensions to enable for the database
 
-- name: Create Database User
-  community.postgresql.postgresql_user:
-    name: "{{ db_user }}"
-    password: "{{ db_password }}"
-
-- name: Create New Database
-  community.postgresql.postgresql_db:
+- name: Create New MySQL Database
+  community.mysql.mysql_db:
     name: "{{ db_name }}"
-    owner: "{{ db_user }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    state: present
   register: db_creation
 
-- name: Grant Database Privileges to User
-  community.postgresql.postgresql_privs:
-    login_db: "{{ db_name }}"
-    type: database
-    privs: ALL
-    grant_option: false
-    roles: "{{ db_user }}"
+- name: Create MySQL Database User
+  community.mysql.mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    column_case_sensitive: false
+    login_unix_socket: /var/lib/mysql/mysql.sock
     state: present
 
-- name: Grant Public Schema Privileges to User
-  community.postgresql.postgresql_privs:
-    login_db: "{{ db_name }}"
-    type: schema
-    privs: ALL
-    objs: public
-    grant_option: false
-    roles: "{{ db_user }}"
-    state: present
-
-- name: Add Database Extensions
-  community.postgresql.postgresql_ext:
-    name: "{{ item }}"
-    login_db: "{{ db_name }}"
-    cascade: true
-  loop: "{{ db_extensions | default([]) }}"
+- name: Initialise MySQL Database
+  community.mysql.mysql_db:
+    name: all
+    target: "{{ db_import_script }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    state: import
+  when: db_creation.changed
