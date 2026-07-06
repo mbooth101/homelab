@@ -39,6 +39,13 @@
     line: 'date.timezone = Europe/London'
     state: present
 
+# TODO: File upstream bug about this
+- name: Configure SELinux Context for Web Cache Directory
+  ansible.builtin.file:
+    path: /var/cache/zoneminder
+    setype: httpd_cache_t
+    state: directory
+
 - name: Enable/Start PHP FPM
   ansible.builtin.systemd_service:
     name: php-fpm.service
