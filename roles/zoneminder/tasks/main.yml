@@ -3,6 +3,7 @@
     name:
       - zoneminder-common
       - zoneminder-httpd
+      - php-fpm
     state: present
 
 - name: Configure MySQL for Zoneminder
@@ -29,6 +30,14 @@
     enabled: true
     masked: no
     state: started
+
+- name: Configure PHP Timezone
+  ansible.builtin.lineinfile:
+    path: /etc/php.ini
+    regexp: '^date.timezone = '
+    insertafter: '^;date.timezone =$'
+    line: 'date.timezone = Europe/London'
+    state: present
 
 - name: Enable/Start PHP FPM
   ansible.builtin.systemd_service:
