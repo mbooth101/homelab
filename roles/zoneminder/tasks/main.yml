@@ -9,6 +9,10 @@
   ansible.builtin.include_tasks:
     file: ../../mysql/tasks/configure-db.yml
 
+- name: Configure Apache for Zoneminder
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
+
 - name: Install Zoneminder Configuration
   ansible.builtin.template:
     src: 03-custom.conf
@@ -22,6 +26,13 @@
 - name: Enable/Start Zoneminder
   ansible.builtin.systemd_service:
     name: zoneminder.service
+    enabled: true
+    masked: no
+    state: started
+
+- name: Enable/Start PHP FPM
+  ansible.builtin.systemd_service:
+    name: php-fpm.service
     enabled: true
     masked: no
     state: started
