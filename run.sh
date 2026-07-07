@@ -145,6 +145,9 @@ if [ -n "$PROVISION" ] ; then
 			sudo umount $usb_mnt || :
 			sudo dd if=/tmp/boot.iso of=$usb_dev bs=8M status=progress oflag=direct
 
+			# Can't be too quick to remount the drive
+			sleep 2
+
 			# Edit grub configuration
 			mkdir -p /tmp/anaconda && sudo mount ${usb_dev}2 /tmp/anaconda
 			sudo sed -i \
