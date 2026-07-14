@@ -12,7 +12,22 @@
     key_secret: "{{ ddns_secret }}"
     server: "{{ host.ipv6.address }}"
     port: "{{ bind9_port }}"
+    zone: "{{ domain }}."
     record: "{{ record.name | default(role_name + '.' + domain) }}."
     type: "{{ record.type | default('CNAME') }}"
     value: "{{ record.text }}"
     state: present
+  when: record.type != 'PTR'
+
+- name: "DNS - Add {{ record.type | default('CNAME') }} Record to the Zone"
+  community.general.nsupdate:
+    key_name: "{{ ddns_secret_name }}"
+    key_algorithm: "{{ ddns_secret_algo }}"
+    key_secret: "{{ ddns_secret }}"
+    server: "{{ host.ipv6.address }}"
+    port: "{{ bind9_port }}"
+    record: "{{ record.name | default(role_name + '.' + domain) }}."
+    type: "{{ record.type | default('CNAME') }}"
+    value: "{{ record.text }}"
+    state: present
+  when: record.type == 'PTR'

@@ -118,6 +118,25 @@
     immediate: true
     state: enabled
 
+- name: Configure DNS A Records for External Github Pages Site
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+  loop:
+    - name: "{{ domain }}"
+      type: A
+      text: "185.199.108.153"
+    - name: "{{ domain }}"
+      type: A
+      text: "185.199.109.153"
+    - name: "{{ domain }}"
+      type: A
+      text: "185.199.110.153"
+    - name: "{{ domain }}"
+      type: A
+      text: "185.199.111.153"
+  loop_control:
+    loop_var: record
+
 - name: Ensure Network Connection Overrides Directory
   ansible.builtin.file:
     state: directory
