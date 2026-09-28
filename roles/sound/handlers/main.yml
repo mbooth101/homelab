@@ -1,0 +1,9 @@
+---
+- name: Restart Sound Server
+  ansible.builtin.systemd_service:
+    name: pipewire-pulse.service
+    daemon_reload: true
+    state: restarted
+    scope: user
+  become: true
+  become_user: sound

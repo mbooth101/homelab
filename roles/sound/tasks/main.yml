@@ -1,0 +1,76 @@
+# Installs Pipewire and its session manager Wireplumber along with shim
+# modules for ALSA and PulseAudio applications
+- name: Install Sound Server
+  ansible.builtin.dnf:
+    name:
+      - wireplumber
+      - pipewire
+      - pipewire-alsa
+      - pipewire-pulseaudio
+      - pipewire-utils
+    state: present
+
+# A user account is required to provide a lingering user session as it's not
+# supported to run pipewire as a system-wide service
+- name: Add Sound Group
+  ansible.builtin.group:
+    name: sound
+    state: present
+    system: true
+- name: Add Sound User
+  ansible.builtin.user:
+    name: sound
+    comment: Sound Session
+    state: present
+    system: true
+    append: true
+    home: /var/lib/sound
+    create_home: true
+    group: sound
+    groups: audio
+    shell: "/usr/sbin/nologin"
+    password: '!'
+    password_lock: true
+- name: Set Lingering for Sound User
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger sound"
+    creates: "/var/lib/systemd/linger/sound"
+
+- name: Ensure PipeWire Pulse Configuration Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/var/lib/sound/.config/pipewire/pipewire-pulse.conf.d"
+    owner: sound
+    group: sound
+    mode: '0750'
+- name: Install PipeWire Pulse Network Configuration
+  ansible.builtin.template:
+    src: 50-network.conf
+    dest: "/var/lib/sound/.config/pipewire/pipewire-pulse.conf.d/50-network.conf"
+    owner: sound
+    group: sound
+    mode: '0640'
+  notify:
+    - Restart Sound Server
+
+- name: Enable/Start Sound Server
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    masked: no
+    state: started
+    scope: user
+  loop:
+    - pipewire
+    - pipewire-pulse
+    - pipewire-pulse.socket
+    - wireplumber
+  become: true
+  become_user: sound
+
+- name: Allow PipeWire Pulse Protocol from LAN Only
+  ansible.posix.firewalld:
+    rich_rule: 'rule family="ipv4" source address="{{ inventory_host4 | ansible.utils.ipsubnet }}" port port="4713" protocol="tcp" accept'
+    permanent: true
+    immediate: true
+    state: enabled
