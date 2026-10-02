@@ -20,6 +20,20 @@
   notify:
     - Restart Spotify
 
+- name: Ensure Spotify Service Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: "/etc/systemd/system/spotifyd.service.d"
+    mode: '0755'
+
+- name: Install Spotify Service Overrides
+  ansible.builtin.template:
+    src: "spotifyd.override.conf"
+    dest: "/etc/systemd/system/spotifyd.service.d/override.conf"
+    mode: '0644'
+  notify:
+    - Restart Spotify
+
 - name: Enable/Start Spotify
   ansible.builtin.systemd_service:
     name: spotifyd.service
