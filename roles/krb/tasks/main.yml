@@ -35,8 +35,8 @@
     - { src: kdc.conf, dest: /var/kerberos/krb5kdc/kdc.conf, mode: '0600' }
     - { src: kadm5.acl, dest: /var/kerberos/krb5kdc/kadm5.acl, mode: '0600' }
   notify:
-    - Reload KDC
-    - Reload KAdmin
+    - Restart KDC
+    - Restart KAdmin
 
 - name: Initialise Kerberos Principal Database
   ansible.builtin.command:
@@ -107,9 +107,8 @@
   ansible.posix.firewalld:
     service: "{{ item }}"
     permanent: true
+    immediate: true
     state: enabled
   loop:
     - kerberos
-    - kadmin
-  notify:
-    - Reload Firewall
+    - kpasswd
