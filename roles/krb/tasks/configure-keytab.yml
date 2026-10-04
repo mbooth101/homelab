@@ -9,13 +9,13 @@
 
 - name: "KRB - List Existing Principals For {{ keytab_path }}"
   ansible.builtin.command:
-    cmd: "kadmin.local -q listprincs"
+    cmd: "kadmin.local listprincs"
   register: _krb_principals
   changed_when: false
 
 - name: "KRB - Create Missing Principals For {{ keytab_path }}"
   ansible.builtin.command:
-    cmd: "kadmin.local -q 'addprinc -randkey {{ item }}'"
+    cmd: "kadmin.local addprinc -randkey {{ item }}"
   loop: "{{ keytab_principals }}"
   when: (item + '@' + krb_realm) not in _krb_principals.stdout_lines
 
@@ -28,7 +28,7 @@
 
 - name: "KRB - Add Missing Entries To {{ keytab_path }}"
   ansible.builtin.command:
-    cmd: "kadmin.local -q 'ktadd -k {{ keytab_path }} {{ item }}'"
+    cmd: "kadmin.local ktadd -k {{ keytab_path }} {{ item }}"
   loop: "{{ keytab_principals }}"
   when: (' ' + item + '@' + krb_realm) not in _krb_keytab.stdout
 
