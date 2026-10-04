@@ -5,25 +5,33 @@
       - krb5-workstation
     state: present
 
-- name: Configure DNS CNAME For Kerberos
-  ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-record.yml
-
-- name: Configure DNS SRV Records for Kerberos Services
+- name: Configure DNS Records for Kerberos Services
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml
   loop:
-    - { srv: '_kerberos-master._tcp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kerberos-master._udp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kerberos._tcp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kerberos._udp', text: "0 100 88 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kpasswd._tcp', text: "0 100 464 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kpasswd._udp', text: "0 100 464 {{ role_name }}.{{ domain }}" }
-    - { srv: '_kerberos', type: TXT, text: "\"{{ krb_realm }}\"" }
-  vars:
-    record_name: "{{ item.srv | default(role_name) }}"
-    record_type: "{{ item.type | default('SRV') }}"
-    text: "{{ item.text }}"
+    - name: "{{ role_name }}.{{ domain }}"
+      type: A
+      text: "{{ host.ipv4.address }}"
+    - name: "{{ role_name }}.{{ domain }}"
+      type: AAAA
+      text: "{{ host.ipv6.address }}"
+    - name: "_kerberos._udp.{{ domain }}"
+      type: SRV
+      text: "0 100 88 {{ role_name }}.{{ domain }}."
+    - name: "_kerberos._tcp.{{ domain }}"
+      type: SRV
+      text: "0 100 88 {{ role_name }}.{{ domain }}."
+    - name: "_kpasswd._udp.{{ domain }}"
+      type: SRV
+      text: "0 100 464 {{ role_name }}.{{ domain }}."
+    - name: "_kpasswd._tcp.{{ domain }}"
+      type: SRV
+      text: "0 100 464 {{ role_name }}.{{ domain }}."
+    - name: "_kerberos.{{ domain }}"
+      type: TXT
+      text: "{{ krb_realm }}"
+  loop_control:
+    loop_var: record
 
 - name: Install Kerberos Configuration
   ansible.builtin.template:
