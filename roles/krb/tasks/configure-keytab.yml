@@ -1,0 +1,40 @@
+# When including these tasks into a role, the following variables are
+# available:
+#
+# - keytab_principals: list of service principals to create and add to the
+#   keytab, e.g. [ "HTTP/{{ host.fqdn }}" ]
+# - keytab_path: set the path of the keytab file
+# - keytab_owner: set to override the default owner of "root"
+# - keytab_group: set to override the default group of "root"
+
+- name: "KRB - List Existing Principals For {{ keytab_path }}"
+  ansible.builtin.command:
+    cmd: "kadmin.local -q listprincs"
+  register: _krb_principals
+  changed_when: false
+
+- name: "KRB - Create Missing Principals For {{ keytab_path }}"
+  ansible.builtin.command:
+    cmd: "kadmin.local -q 'addprinc -randkey {{ item }}'"
+  loop: "{{ keytab_principals }}"
+  when: (item + '@' + krb_realm) not in _krb_principals.stdout_lines
+
+- name: "KRB - List Existing Entries In {{ keytab_path }}"
+  ansible.builtin.command:
+    cmd: "klist -k {{ keytab_path }}"
+  register: _krb_keytab
+  changed_when: false
+  failed_when: false
+
+- name: "KRB - Add Missing Entries To {{ keytab_path }}"
+  ansible.builtin.command:
+    cmd: "kadmin.local -q 'ktadd -k {{ keytab_path }} {{ item }}'"
+  loop: "{{ keytab_principals }}"
+  when: (' ' + item + '@' + krb_realm) not in _krb_keytab.stdout
+
+- name: "KRB - Set Ownership Of {{ keytab_path }}"
+  ansible.builtin.file:
+    path: "{{ keytab_path }}"
+    owner: "{{ keytab_owner | default('root') }}"
+    group: "{{ keytab_group | default('root') }}"
+    mode: '0600'

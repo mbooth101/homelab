@@ -42,56 +42,7 @@
   ansible.builtin.command:
     cmd: "/usr/sbin/kdb5_util create -r {{ krb_realm }} -s -P {{ krb_master_password }}"
     creates: /var/kerberos/krb5kdc/principal
-  register: init_principal
-
-- name: Create Kerberos Admin and Host Principals
-  ansible.builtin.command:
-    cmd: "kadmin.local -q '{{ item }}'"
-  loop:
-    - "add_principal -pw {{ krb_master_password }} root/admin"
-    - "add_principal -randkey host/{{ host.fqdn }}"
-    - "add_principal -randkey host/{{ host.name }}"
-    - "ktadd host/{{ host.fqdn }}"
-    - "ktadd host/{{ host.name }}"
-  when: init_principal.changed
-
-- name: Create Kerberos Keytab for LDAP
-  ansible.builtin.command:
-    cmd: "kadmin.local -q '{{ item }}'"
-    creates: /etc/dirsrv/ds.keytab
-  loop:
-    - "add_principal -randkey ldap/{{ host.fqdn }}"
-    - "add_principal -randkey ldap/{{ host.name }}"
-    - "ktadd -k /etc/dirsrv/ds.keytab ldap/{{ host.fqdn }}"
-    - "ktadd -k /etc/dirsrv/ds.keytab ldap/{{ host.name }}"
-  notify:
-    - Restart LDAP
-
-- name: Allow LDAP Keytab Read Access
-  ansible.builtin.file:
-    path: /etc/dirsrv/ds.keytab
-    owner: dirsrv
-    group: dirsrv
-    mode: '0600'
-
-- name: Create Kerberos Keytab for Apache
-  ansible.builtin.command:
-    cmd: "kadmin.local -q '{{ item }}'"
-    creates: /etc/httpd/http.keytab
-  loop:
-    - "add_principal -randkey HTTP/{{ host.fqdn }}"
-    - "add_principal -randkey HTTP/{{ host.name }}"
-    - "ktadd -k /etc/httpd/http.keytab HTTP/{{ host.fqdn }}"
-    - "ktadd -k /etc/httpd/http.keytab HTTP/{{ host.name }}"
-  notify:
-    - Reload Apache
-
-- name: Allow Apache Keytab Read Access
-  ansible.builtin.file:
-    path: /etc/httpd/http.keytab
-    owner: apache
-    group: apache
-    mode: '0600'
+  no_log: true
 
 - name: Enable/Start Kerberos
   ansible.builtin.systemd_service:
@@ -102,6 +53,13 @@
   loop:
     - krb5kdc
     - kadmin
+
+- name: Create Kerberos Host Keytab
+  ansible.builtin.include_tasks:
+    file: configure-keytab.yml
+  vars:
+    keytab_principals: [ "host/{{ host.fqdn }}" ]
+    keytab_path: /etc/krb5.keytab
 
 - name: Open Firewall for Kerberos
   ansible.posix.firewalld:
