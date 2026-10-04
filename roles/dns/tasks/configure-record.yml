@@ -5,7 +5,7 @@
 # - record.type: set the type of record, e.g. CNAME or SRV
 # - record.text: set the value of the record, either a string or list of strings
 
-- name: "DNS - Add {{ record.type | default('CNAME') }} Record to the Zone"
+- name: "DNS - Add {{ record.type | default('CNAME') }} Record for \"{{ record.name | default(role_name + '.' + domain) }}\""
   community.general.nsupdate:
     key_name: "{{ ddns_secret_name }}"
     key_algorithm: "{{ ddns_secret_algo }}"
