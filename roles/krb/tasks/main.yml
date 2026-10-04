@@ -9,11 +9,9 @@
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml
   loop:
-    - name: "{{ role_name }}.{{ domain }}"
-      type: A
+    - type: A
       text: "{{ host.ipv4.address }}"
-    - name: "{{ role_name }}.{{ domain }}"
-      type: AAAA
+    - type: AAAA
       text: "{{ host.ipv6.address }}"
     - name: "_kerberos._udp.{{ domain }}"
       type: SRV

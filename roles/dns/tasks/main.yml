@@ -118,6 +118,37 @@
     immediate: true
     state: enabled
 
+- name: Configure DNS Records for Host and Gateway
+  ansible.builtin.include_tasks:
+    file: ../../dns/tasks/configure-record.yml
+  loop:
+    - name: "{{ host.fqdn }}"
+      type: A
+      text: "{{ host.ipv4.address }}"
+    - name: "{{ host.ipv4.address | ip_ptr }}"
+      type: PTR
+      text: "{{ host.fqdn }}."
+    - name: "{{ host.fqdn }}"
+      type: AAAA
+      text: [ "{{ host.ipv6.address }}" ]
+    - name: "{{ host.ipv6.address | ip_ptr }}"
+      type: PTR
+      text: "{{ host.fqdn }}."
+    - name: "gateway.{{ domain }}"
+      type: A
+      text: [ "{{ host.ipv4.gateway }}" ]
+    - name: "{{ host.ipv4.gateway | ip_ptr }}"
+      type: PTR
+      text: "gateway.{{ domain }}."
+    - name: "gateway.{{ domain }}"
+      type: AAAA
+      text: [ "{{ host.ipv6.gateway }}" ]
+    - name: "{{ host.ipv6.gateway | ip_ptr }}"
+      type: PTR
+      text: "gateway.{{ domain }}."
+  loop_control:
+    loop_var: record
+
 - name: Configure DNS A Records for External Github Pages Site
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml

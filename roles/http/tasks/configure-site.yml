@@ -7,12 +7,20 @@
 # - http_port: set to the port number to which Apache should proxy requests
 
 # Adds DNS A/AAAA records so that the site is addressable and the name-based
-# vhosts function properly
+# vhosts function properly. No PTR records are added, the host's addresses must
+# only reverse-resolve to the host's own name
 - name: HTTP - Configure Site DNS Records
   ansible.builtin.include_tasks:
-    file: ../../dns/tasks/configure-a-records.yml
-  vars:
-    dns_record: "{{ site_name | default(role_name) }}.{{ domain }}"
+    file: ../../dns/tasks/configure-record.yml
+  loop:
+    - name: "{{ site_name | default(role_name) }}.{{ domain }}"
+      type: A
+      text: "{{ host.ipv4.address }}"
+    - name: "{{ site_name | default(role_name) }}.{{ domain }}"
+      type: AAAA
+      text: "{{ host.ipv6.address }}"
+  loop_control:
+    loop_var: record
 
 # Provisions a TLS certificate to ensure SSL parts function properly
 - name: HTTP - Configure Site TLS Certificate
