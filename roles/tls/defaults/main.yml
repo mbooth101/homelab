@@ -1,2 +1,2 @@
 ---
-self_signed_certs: "{{ staging_server }}"
+self_signed_certs: "{{ staging_server | default(false) }}"
