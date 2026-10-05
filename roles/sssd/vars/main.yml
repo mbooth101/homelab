@@ -1,0 +1,4 @@
+---
+# Regular users with IDs from here upwards authenticate with Kerberos instead
+# of local passwords
+sssd_uid_min: 10000

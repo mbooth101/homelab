@@ -1,0 +1,73 @@
+- name: Install SSSD
+  ansible.builtin.dnf:
+    name:
+      - sssd-proxy
+      - sssd-krb5
+      - sssd-kcm
+    state: present
+
+# New regular users are created in the range handled by SSSD, so a plain
+# "useradd" creates an account that authenticates with Kerberos
+- name: Set Default ID Range For New Users
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: "^{{ item }}\\s"
+    line: "{{ item }} {{ sssd_uid_min }}"
+  loop:
+    - UID_MIN
+    - GID_MIN
+
+- name: Install SSSD Configuration
+  ansible.builtin.template:
+    src: sssd.conf
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: sssd
+    mode: '0640'
+  notify:
+    - Restart SSSD
+
+- name: Enable/Start SSSD
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    masked: no
+    state: started
+  loop:
+    - sssd.service
+    - sssd-kcm.socket
+
+# The stock SSSD profile changes passwords in /etc/shadow for any user found in
+# /etc/passwd, so a custom profile is needed to send password changes for our
+# Kerberos users to SSSD instead
+- name: Create Custom Authentication Profile
+  ansible.builtin.command:
+    cmd: "authselect create-profile homelab --base-on sssd"
+    creates: /etc/authselect/custom/homelab
+
+# For Kerberos users, we skip the pam_unix and pam_localuser lines to fall
+# through to pam_sss. SSSD then delegates the actual password authentication
+# to Kerberos
+- name: Skip Local Password Changes For Kerberos Users
+  ansible.builtin.lineinfile:
+    path: "/etc/authselect/custom/homelab/{{ item }}"
+    insertbefore: '^password\s+sufficient\s+pam_unix\.so'
+    regexp: 'pam_succeed_if\.so uid >='
+    line: "password    [success=2 default=ignore]                   pam_succeed_if.so uid >= {{ sssd_uid_min }} quiet"
+  loop:
+    - system-auth
+    - password-auth
+  notify:
+    - Apply Authselect Changes
+
+- name: Determine Current Authentication Profile
+  ansible.builtin.command:
+    cmd: "authselect current --raw"
+  register: auth_profile
+  changed_when: false
+  failed_when: false
+
+- name: Switch System Authentication Profile
+  ansible.builtin.command:
+    cmd: "authselect select custom/homelab with-silent-lastlog"
+  when: auth_profile.stdout != "custom/homelab with-silent-lastlog"
