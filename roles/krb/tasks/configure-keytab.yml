@@ -28,7 +28,7 @@
 
 - name: "KRB - Add Missing Entries To {{ keytab_path }}"
   ansible.builtin.command:
-    cmd: "kadmin.local ktadd -k {{ keytab_path }} {{ item }}"
+    cmd: "kadmin.local ktadd -norandkey -k {{ keytab_path }} {{ item }}"
   loop: "{{ keytab_principals }}"
   when: (' ' + item + '@' + krb_realm) not in _krb_keytab.stdout
 
