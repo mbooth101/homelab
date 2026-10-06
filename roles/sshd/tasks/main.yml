@@ -1,11 +1,19 @@
+- name: Add SSH Users Group
+  ansible.builtin.group:
+    name: ssh-users
+    system: true
+    state: present
+
 - name: Install SSH Server Configuration
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "/etc/ssh/sshd_config.d/10-{{ item }}"
     mode: '0600'
+    validate: "/usr/sbin/sshd -t -f %s"
   loop:
     - permitrootlogin.conf
     - authmethods.conf
+    - allowgroups.conf
   notify: Reload SSHd
 
 - name: Install SSH Client Configuration
@@ -13,6 +21,7 @@
     src: "{{ item }}"
     dest: "/etc/ssh/ssh_config.d/10-{{ item }}"
     mode: '0644'
+    validate: "/usr/bin/ssh -G -F %s localhost"
   loop:
     - verifyhostkeys.conf
 
