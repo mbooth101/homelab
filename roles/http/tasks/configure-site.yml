@@ -29,6 +29,16 @@
   vars:
     cert_name: "{{ site_name | default(role_name) }}"
 
+# Adds a Kerberos service principal for the site to Apache's keytab
+- name: HTTP - Configure Site Kerberos Principal
+  ansible.builtin.include_tasks:
+    file: ../../krb/tasks/configure-keytab.yml
+  vars:
+    keytab_principals: [ "HTTP/{{ site_name | default(role_name) }}.{{ domain }}" ]
+    keytab_path: "{{ http_keytab }}"
+    keytab_owner: apache
+    keytab_group: apache
+
 # This file configures a vhost for the calling role, including all necessary TLS
 # moving parts
 - name: HTTP - Install Site Virtual Host

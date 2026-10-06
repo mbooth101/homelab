@@ -38,3 +38,4 @@
     owner: "{{ keytab_owner | default('root') }}"
     group: "{{ keytab_group | default('root') }}"
     mode: '0600'
+    setype: _default
