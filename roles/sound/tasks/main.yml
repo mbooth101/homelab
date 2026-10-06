@@ -68,9 +68,9 @@
   become: true
   become_user: sound
 
-- name: Allow PipeWire Pulse Protocol from LAN Only
+- name: Open Firewall for PipeWire Pulse Protocol
   ansible.posix.firewalld:
-    rich_rule: 'rule family="ipv4" source address="{{ inventory_host4 | ansible.utils.ipsubnet }}" port port="4713" protocol="tcp" accept'
+    service: pulseaudio
     permanent: true
     immediate: true
     state: enabled
