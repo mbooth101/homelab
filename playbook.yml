@@ -27,10 +27,10 @@
         address: "{{ inventory_host4 | ansible.utils.ipaddr('address') }}"
         subnet:  "{{ inventory_host4 | ansible.utils.ipsubnet }}"
         network: "{{ inventory_host4 | ansible.utils.ipaddr('network') }}"
-        gateway: "{{ inventory_host4 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
+        gateway: "{{ inventory_host4 | ansible.utils.nthhost(1) }}"
       ipv6:
         cidr:    "{{ inventory_host6 }}"
         address: "{{ inventory_host6 | ansible.utils.ipaddr('address') }}"
         subnet:  "{{ inventory_host6 | ansible.utils.ipsubnet }}"
         network: "{{ inventory_host6 | ansible.utils.ipaddr('network') }}"
-        gateway: "{{ inventory_host6 | ansible.utils.ipsubnet | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
+        gateway: "{{ inventory_host6 | ansible.utils.nthhost(1) }}"

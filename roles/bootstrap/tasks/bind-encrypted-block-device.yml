@@ -18,7 +18,7 @@
 # In staging, the virt host has this IP as an alias
 - name: Bind Encrypted Block Device to Dracut Unlocker
   ansible.builtin.command:
-    cmd: "clevis luks bind -y -d {{ luks_device.DEVNAME }} -k- tang '{\"url\":\"{{ inventory_host4 | ansible.utils.ipsubnet | ansible.utils.ipaddr('11') | ansible.utils.ipaddr('address') }}:7500\"}'"
+    cmd: "clevis luks bind -y -d {{ luks_device.DEVNAME }} -k- tang '{\"url\":\"{{ inventory_host4 | ansible.utils.nthhost(11) }}:7500\"}'"
     stdin: "{{ luks_password }}"
   when:
     - passphrase_validity.rc == 0
