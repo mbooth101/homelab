@@ -43,7 +43,7 @@ Subsequent runs will execute the main playbooks to install and configure all the
 
 Applications and services accessible over the public internet:
 
-* id - Keycloak instance for user management and SSO service for other apps
+* id - User identity provider and SSO service for other apps
 * photos - Immich for photo and video management
 * ci - Jenkins for on-prem continuous integration
 * sshd - SSH for restricted user shell accounts
@@ -51,8 +51,9 @@ Applications and services accessible over the public internet:
 Applications and services accessible over the local network only:
 
 * admin - Cockpit for system administration and monitoring
+* cams - Zoneminder for CCTV monitoring and recording
 * hab - OpenHAB for home automation
-* spotify - Spotifyd for local users of Spotify to play music through the big stereo
+* spotify - Spotify Connect implementation to play music through the big stereo
 
 ### Dependencies
 
