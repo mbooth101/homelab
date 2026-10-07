@@ -8,7 +8,7 @@
 - name: MySQL - Create New Database
   community.mysql.mysql_db:
     name: "{{ db_name }}"
-    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_unix_socket: "{{ mysql_socket }}"
     state: present
   register: db_creation
 
@@ -18,13 +18,13 @@
     password: "{{ db_password }}"
     priv: "{{ db_name }}.*:ALL"
     column_case_sensitive: false
-    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_unix_socket: "{{ mysql_socket }}"
     state: present
 
 - name: MySQL - Initialise Database
   community.mysql.mysql_db:
     name: all
     target: "{{ db_import_script }}"
-    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_unix_socket: "{{ mysql_socket }}"
     state: import
   when: db_creation.changed

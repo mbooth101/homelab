@@ -10,6 +10,12 @@
   ansible.builtin.include_tasks:
     file: ../../mysql/tasks/configure-db.yml
 
+- name: Disable Default Zoneminder Admin User
+  community.mysql.mysql_query:
+    login_unix_socket: "{{ mysql_socket }}"
+    login_db: "{{ db_name }}"
+    query: "UPDATE Users SET Enabled = 0 WHERE Username = 'admin' AND Enabled = 1"
+
 - name: Configure Apache for Zoneminder
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
