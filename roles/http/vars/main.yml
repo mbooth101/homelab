@@ -1,3 +1,4 @@
 ---
 www_root: /var/www
 http_keytab: /etc/httpd/conf/keytab
+http_session_key: /var/lib/httpd/gssapi_session.key

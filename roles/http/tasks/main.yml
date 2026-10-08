@@ -5,6 +5,8 @@
       - httpd
       - mod_ssl
       - mod_auth_openidc
+      - mod_auth_gssapi
+      - mod_session
     state: present
 
 - name: Create Apache Site Config Directories
