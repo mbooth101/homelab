@@ -19,6 +19,8 @@
 - name: Configure Apache for Zoneminder
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
+  vars:
+    site_auth: true
 
 - name: Install Zoneminder Configuration
   ansible.builtin.template:
