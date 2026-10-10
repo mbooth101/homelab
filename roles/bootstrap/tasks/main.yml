@@ -11,6 +11,14 @@
     name: qemu-guest-agent
   when: staging_server | default(false)
 
+- name: Enable/Start Guest Agent for Staging
+  ansible.builtin.systemd_service:
+    name: qemu-guest-agent.service
+    enabled: true
+    masked: no
+    state: started
+  when: staging_server | default(false)
+
 - name: Disable Plymouth Boot Theme
   ansible.builtin.command:
     cmd: "plymouth-set-default-theme details"

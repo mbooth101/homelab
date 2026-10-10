@@ -184,6 +184,17 @@ if [ -n "$PROVISION" ] ; then
 	done 7<<<"$(cat $DEPLOYMENT_ENV)"
 
 	echo "$DEPLOYMENT_ENV" >> .provisioned
+# Provisioning is not requested
+else
+	while read -u 7 h; do
+		fqdn=$(echo "$h" | cut -f1 -d' ')
+		host=$(echo "$fqdn" | cut -f1 -d.)
+
+		# If not provisioning a new staging VM, then just make sure the time is synchronised
+		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
+			sudo virsh domtime --now $host
+		fi
+	done 7<<<"$(cat $DEPLOYMENT_ENV)"
 fi
 
 # If password files not present, just ask
