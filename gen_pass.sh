@@ -8,7 +8,12 @@ if [ -n "$1" ] ; then
 	VAR_NAME="$1"
 fi
 
+PASS_LEN="16"
+if [ -n "$2" ] ; then
+	PASS_LEN="$2"
+fi
+
 if [ -z "$PASS" ] ; then
-       	PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
+	PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c $PASS_LEN)
 fi
 ansible-vault encrypt_string --vault-password-file vault_pass "$PASS" --name "$VAR_NAME"
