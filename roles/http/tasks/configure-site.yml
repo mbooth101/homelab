@@ -45,12 +45,11 @@
 - name: HTTP - Install Site Virtual Host
   ansible.builtin.template:
     src: ../../http/templates/apache.vhost.conf
-    dest: "/etc/httpd/conf.d/vhosts.d/{{ _pri_name }}.conf"
+    dest: "/etc/httpd/conf.d/vhosts.d/10-{{ _site }}.conf"
     setype: httpd_config_t
     mode: '0644'
   vars:
     _site: "{{ site_name | default(role_name) }}"
-    _pri_name: "{{ (_site == host.name) | ternary('00-' + _site, '10-' + _site) }}"
   notify:
     - Reload Apache
 
