@@ -16,6 +16,36 @@
     login_db: "{{ db_name }}"
     query: "UPDATE Users SET Enabled = 0 WHERE Username = 'admin' AND Enabled = 1"
 
+- name: Add Initial Zoneminder Admin User
+  community.mysql.mysql_query:
+    login_unix_socket: "{{ mysql_socket }}"
+    login_db: "{{ db_name }}"
+    query: >-
+      INSERT INTO Users (Username, Enabled, Stream, Events, Control, Monitors, `Groups`, Devices, Snapshots, System)
+      VALUES (%s, 1, 'View', 'Edit', 'Edit', 'Create', 'Edit', 'Edit', 'Edit', 'Edit')
+      ON DUPLICATE KEY UPDATE
+        Enabled = 1, Stream = 'View', Events = 'Edit', Control = 'Edit',
+        Monitors = 'Create', `Groups` = 'Edit', Devices = 'Edit',
+        Snapshots = 'Edit', System = 'Edit'
+    positional_args:
+      - "{{ zm_admin_user }}"
+
+- name: Configure Zoneminder Authentication
+  community.mysql.mysql_query:
+    login_unix_socket: "{{ mysql_socket }}"
+    login_db: "{{ db_name }}"
+    query: "UPDATE Config SET Value = %s WHERE Name = %s"
+    positional_args:
+      - "{{ item.value }}"
+      - "{{ item.name }}"
+  loop:
+    - { name: ZM_AUTH_TYPE, value: remote }
+    - { name: ZM_AUTH_RELAY, value: hashed }
+    - { name: ZM_OPT_USE_AUTH, value: "1" }
+    - { name: ZM_AUTH_HASH_SECRET, value: "{{ zm_auth_hash_secret }}" }
+  notify:
+    - Restart Zoneminder
+
 - name: Configure Apache for Zoneminder
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
