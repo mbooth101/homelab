@@ -5,4 +5,4 @@ Name=bridge0
 Kind=bridge
 
 [Bridge]
-STP=yes
+STP=no
