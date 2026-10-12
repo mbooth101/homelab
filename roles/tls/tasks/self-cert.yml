@@ -11,15 +11,15 @@
   changed_when: False
   become: no
 
-# Only perform the copy if files don't already exist
 - name: TLS - Install Self-Signed Certificates
   ansible.builtin.copy:
     src: "../../tls/files/{{ _cert_name }}.{{ domain }}/{{ item }}"
     dest: "/etc/letsencrypt/live/{{ _cert_name }}.{{ domain }}/{{ item }}"
     mode: '0640'
-    force: False
   loop:
     - fullchain.pem
     - cert.pem
     - chain.pem
     - privkey.pem
+  notify:
+    - Reload Apache

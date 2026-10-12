@@ -87,6 +87,15 @@ apply
 
 Use the web interface to forward ports 80, 443, and 22 to `192.168.1.10` for Apache and SSHd.
 
+### Workstation
+
+To allow browsers to trust the staging environment TLS certificates, add the self-signed certificate authority to the system's trust store and then restart your browser:
+
+```
+$ sudo cp roles/tls/files/CA.pem /etc/pki/ca-trust/source/anchors/
+$ sudo update-ca-trust
+```
+
 ## First Run
 
 ```
