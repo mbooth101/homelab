@@ -1,0 +1,12 @@
+## {{ ansible_managed }}
+
+[Match]
+Name={{ wan_port }}
+
+[Link]
+ActivationPolicy=down
+RequiredForOnline=no
+
+[Network]
+LinkLocalAddressing=no
+IPv6AcceptRA=no

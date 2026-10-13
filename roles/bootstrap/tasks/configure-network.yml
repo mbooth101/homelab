@@ -98,9 +98,19 @@
 
 - name: Install Bonded Port Configuration
   ansible.builtin.template:
-    src: "bond0-port.network"
+    src: "port-bond.network"
     dest: "/etc/systemd/network/30-{{ item }}.network"
     mode: '0644'
   loop: "{{ ether_interfaces[1:] }}"
   when: item.startswith('en')
+  notify: Restart Network
+
+- name: Install WAN Port Configuration
+  ansible.builtin.template:
+    src: "port-wan.network"
+    dest: "/etc/systemd/network/40-{{ wan_port }}.network"
+    mode: '0644'
+  vars:
+    wan_port: "{{ ether_interfaces[0] }}"
+  when: wan_port.startswith('en')
   notify: Restart Network
