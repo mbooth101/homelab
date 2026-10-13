@@ -1,0 +1,4 @@
+---
+# Never ban the LAN, so a mistyped password at home can't lock anyone out. Not
+# on staging, where every client is on the LAN and bans couldn't be tested
+fail2ban_ignore_lan: "{{ not (staging_server | default(false)) }}"

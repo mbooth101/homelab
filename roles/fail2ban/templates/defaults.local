@@ -1,0 +1,15 @@
+## {{ ansible_managed }}
+
+# Defaults for all jails.
+#
+# Ban an address for bantime after maxretry failures within findtime. Repeat
+# offenders get increasingly long bans, up to bantime.maxtime
+
+[DEFAULT]
+bantime = 1h
+bantime.increment = true
+bantime.maxtime = 2w
+findtime = 10m
+maxretry = 5
+ignoreip = 127.0.0.1/8 ::1{% if fail2ban_ignore_lan %} {{ host.ipv4.subnet }} {{ host.ipv6.subnet }}{% endif %}
+

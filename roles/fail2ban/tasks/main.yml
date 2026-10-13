@@ -1,0 +1,23 @@
+- name: Install Fail2ban
+  ansible.builtin.dnf:
+    name:
+      - fail2ban-server
+      - fail2ban-firewalld
+      - fail2ban-systemd
+      - fail2ban-selinux
+    state: present
+
+- name: Install Fail2ban Default Jail Configuration
+  ansible.builtin.template:
+    src: defaults.local
+    dest: /etc/fail2ban/jail.d/10-defaults.local
+    mode: '0644'
+  notify:
+    - Reload Fail2ban
+
+- name: Enable/Start Fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban.service
+    enabled: true
+    masked: no
+    state: started
