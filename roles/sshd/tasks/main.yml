@@ -16,6 +16,14 @@
     - allowgroups.conf
   notify: Reload SSHd
 
+- name: Install SSH Fail2ban Jail
+  ansible.builtin.template:
+    src: fail2ban-sshd.local
+    dest: /etc/fail2ban/jail.d/20-sshd.local
+    mode: '0644'
+  notify:
+    - Reload Fail2ban
+
 - name: Install SSH Client Configuration
   ansible.builtin.template:
     src: "{{ item }}"
