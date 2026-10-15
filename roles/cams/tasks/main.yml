@@ -28,7 +28,7 @@
         Monitors = 'Create', `Groups` = 'Edit', Devices = 'Edit',
         Snapshots = 'Edit', System = 'Edit'
     positional_args:
-      - "{{ zm_admin_user }}"
+      - "{{ admin_user }}"
 
 - name: Configure Zoneminder Authentication
   community.mysql.mysql_query:

@@ -18,6 +18,7 @@
   become: yes
 
   vars:
+    admin_user: mbooth
     domain: "{{ '.'.join(inventory_hostname.split('.')[1:]) }}"
     host:
       name: "{{ inventory_hostname_short }}"
