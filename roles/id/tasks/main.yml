@@ -4,7 +4,6 @@
       - ipsilon
       - ipsilon-openidc
       - ipsilon-authgssapi
-      - ipsilon-authpam
       - python3-mod_wsgi
     state: present
 
@@ -20,6 +19,6 @@
       --admin-user {{ admin_user }}
       --openidc yes
       --gssapi yes --gssapi-httpd-keytab {{ http_keytab }}
-      --pam yes
       --info-nss yes
     creates: /var/lib/ipsilon/root
+
