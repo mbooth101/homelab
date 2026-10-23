@@ -86,7 +86,7 @@
   ansible.builtin.template:
     src: immich.env
     dest: "/etc/sysconfig/immich"
-    mode: '0644'
+    mode: '0600'
   notify:
     - Restart Immich
 
