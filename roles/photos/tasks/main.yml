@@ -107,7 +107,12 @@
 - name: Insert Initial Configuration Into Immich Database
   community.postgresql.postgresql_query:
     login_db: "{{ db_name }}"
-    query: "INSERT INTO system_metadata (key,value) VALUES ('{{ item.key }}','{{ item.value | to_json }}') ON CONFLICT (key) DO NOTHING"
+    query: "INSERT INTO system_metadata (key, value) VALUES (%s, %s::jsonb) ON CONFLICT (key) DO NOTHING"
+    positional_args:
+      - "{{ item.key }}"
+      - "{{ item.value | to_json }}"
+  loop_control:
+    label: "{{ item.key }}"
   loop:
     - key: "system-config"
       value:
@@ -117,11 +122,13 @@
           enabled: true
           clientId: immich
           clientSecret: "{{ immich_secret }}"
-          issuerUrl: "https://id.{{ domain }}/realms/{{ domain }}/.well-known/openid-configuration"
+          issuerUrl: "https://id.{{ domain }}/openidc/.well-known/openid-configuration"
           autoLaunch: true
           roleClaim: immich_role
         passwordLogin:
           enabled: false
         newVersionCheck:
           enabled: false
+        server:
+          externalDomain: "https://{{ role_name }}.{{ domain }}"
 
