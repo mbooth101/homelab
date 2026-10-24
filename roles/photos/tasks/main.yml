@@ -22,8 +22,8 @@
 
 # This extension must be loaded at PostgreSQL start up time
 - name: Configure VectorChord Extension for PostgreSQL
-  community.postgresql.postgresql_set:
-    name: shared_preload_libraries
+  community.postgresql.postgresql_alter_system:
+    param: shared_preload_libraries
     value: vchord,vector
   when: preload_lib_config.changed
   register: preload_lib
