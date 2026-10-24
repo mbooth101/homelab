@@ -6,6 +6,7 @@
 
 - name: Install Postgresql Extensions For Immich
   ansible.builtin.dnf:
+    install_weak_deps: false
     name:
       - VectorChord
     state: present
@@ -37,17 +38,13 @@
 
 # Install latest version always because we are building this RPM
 # ourselves
-# Excluding texlive-base prevents the installation of about 500 optional
-# texlive and perl dependencies that we're not interested in that would
-# otherwise be pulled in my python3-matplotlib
 - name: Install Immich
   ansible.builtin.dnf:
+    install_weak_deps: false
     name:
       - immich
       - python3-immich_ml
       - python3-immich_ml+cpu
-    exclude:
-      - texlive-base
     state: latest
 
 - name: Configure PostgreSQL for Immich
