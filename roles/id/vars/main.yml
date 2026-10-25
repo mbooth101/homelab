@@ -1,0 +1,2 @@
+---
+id_issuer_url: "https://id.{{ domain }}/openidc/.well-known/openid-configuration"

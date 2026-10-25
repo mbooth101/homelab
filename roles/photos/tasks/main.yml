@@ -116,7 +116,7 @@
           enabled: true
           clientId: "{{ client_id }}"
           clientSecret: "{{ client_secret }}"
-          issuerUrl: "https://id.{{ domain }}/openidc/.well-known/openid-configuration"
+          issuerUrl: "{{ id_issuer_url }}"
           autoLaunch: true
           roleClaim: immich_role
           mobileOverrideEnabled: true
