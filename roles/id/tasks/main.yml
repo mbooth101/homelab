@@ -7,6 +7,20 @@
       - python3-mod_wsgi
     state: present
 
+- name: Find Ipsilon Package Directory
+  ansible.builtin.command:
+    cmd: "python3 -c 'import ipsilon, os; print(os.path.dirname(ipsilon.__file__))'"
+  register: ipsilon_dir
+  changed_when: false
+
+- name: Install Custom Ipsilon Info Plugin
+  ansible.builtin.copy:
+    src: infonssmail.py
+    dest: "{{ ipsilon_dir.stdout }}/info/infonssmail.py"
+    mode: '0644'
+  notify:
+    - Reload Apache
+
 - name: Configure Apache for Ipsilon
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
@@ -19,6 +33,6 @@
       --admin-user {{ admin_user }}
       --openidc yes
       --gssapi yes --gssapi-httpd-keytab {{ http_keytab }}
-      --info-nss yes
+      --info-nssmail yes --info-nssmail-domain {{ domain }}
     creates: /var/lib/ipsilon/root
 
