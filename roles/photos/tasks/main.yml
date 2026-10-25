@@ -62,22 +62,16 @@
     site_proxy: true
     http_port: "{{ immich_http_port }}"
 
-- name: Configure Keycloak for Immich
+- name: Configure Immich as OpenID Connect Client
   ansible.builtin.include_tasks:
     file: ../../id/tasks/configure-client.yml
   vars:
-    client:
-      name: "Immich"
-      description: "Photo and Video Management"
-      secret: "{{ immich_secret }}"
-      redirect_uris: [ "app.immich:///oauth-callback", "/auth/login", "/user-settings" ]
-    user_groups:
-      - name: immich_users
-        attrs:
-          immich_role: user
-      - name: immich_admins
-        attrs:
-          immich_role: admin
+    client_name: immich
+    client_description: "Photo and Video Management"
+    client_redirect_uris:
+      - "https://{{ role_name }}.{{ domain }}/auth/login"
+      - "https://{{ role_name }}.{{ domain }}/user-settings"
+      - "https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect"
 
 - name: Install Immich Configuration
   ansible.builtin.template:
@@ -120,11 +114,13 @@
           enabled: false
         oauth:
           enabled: true
-          clientId: immich
-          clientSecret: "{{ immich_secret }}"
+          clientId: "{{ client_id }}"
+          clientSecret: "{{ client_secret }}"
           issuerUrl: "https://id.{{ domain }}/openidc/.well-known/openid-configuration"
           autoLaunch: true
           roleClaim: immich_role
+          mobileOverrideEnabled: true
+          mobileRedirectUri: https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect
         passwordLogin:
           enabled: false
         newVersionCheck:
