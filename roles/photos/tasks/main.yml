@@ -73,7 +73,44 @@
       - "https://{{ role_name }}.{{ domain }}/user-settings"
       - "https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect"
 
+- name: Ensure Immich Configuration Directory
+  ansible.builtin.file:
+    path: /etc/immich
+    state: directory
+    owner: root
+    group: immich
+    mode: '0750'
+
 - name: Install Immich Configuration
+  ansible.builtin.copy:
+    content: "{{ immich_config | to_nice_json }}"
+    dest: /etc/immich/config.json
+    owner: root
+    group: immich
+    mode: '0640'
+  vars:
+    immich_config:
+      map:
+        enabled: false
+      oauth:
+        enabled: true
+        clientId: "{{ client_id }}"
+        clientSecret: "{{ client_secret }}"
+        issuerUrl: "{{ id_issuer_url }}"
+        autoLaunch: true
+        roleClaim: immich_role
+        mobileOverrideEnabled: true
+        mobileRedirectUri: https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect
+      passwordLogin:
+        enabled: false
+      newVersionCheck:
+        enabled: false
+      server:
+        externalDomain: "https://{{ role_name }}.{{ domain }}"
+  notify:
+    - Restart Immich
+
+- name: Install Immich Environment File
   ansible.builtin.template:
     src: immich.env
     dest: "/etc/sysconfig/immich"
@@ -90,41 +127,3 @@
   loop:
     - immich-machine-learning
     - immich
-
-# Immich can take a minute to come up and it needs to have initialised the
-# database for the next steps
-- name: Wait On Immich Start
-  ansible.builtin.wait_for:
-    host: "::1"
-    port: "{{ immich_http_port }}"
-
-- name: Insert Initial Configuration Into Immich Database
-  community.postgresql.postgresql_query:
-    login_db: "{{ db_name }}"
-    query: "INSERT INTO system_metadata (key, value) VALUES (%s, %s::jsonb) ON CONFLICT (key) DO NOTHING"
-    positional_args:
-      - "{{ item.key }}"
-      - "{{ item.value | to_json }}"
-  loop_control:
-    label: "{{ item.key }}"
-  loop:
-    - key: "system-config"
-      value:
-        map:
-          enabled: false
-        oauth:
-          enabled: true
-          clientId: "{{ client_id }}"
-          clientSecret: "{{ client_secret }}"
-          issuerUrl: "{{ id_issuer_url }}"
-          autoLaunch: true
-          roleClaim: immich_role
-          mobileOverrideEnabled: true
-          mobileRedirectUri: https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect
-        passwordLogin:
-          enabled: false
-        newVersionCheck:
-          enabled: false
-        server:
-          externalDomain: "https://{{ role_name }}.{{ domain }}"
-
