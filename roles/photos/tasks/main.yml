@@ -55,6 +55,12 @@
     - vchord
     - earthdistance
 
+- name: Add Immich Admins Group
+  ansible.builtin.group:
+    name: immich-admins
+    system: true
+    state: present
+
 - name: Configure Apache for Immich
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
@@ -98,6 +104,7 @@
         clientSecret: "{{ client_secret }}"
         issuerUrl: "{{ id_issuer_url }}"
         autoLaunch: true
+        scope: openid email profile roles
         roleClaim: immich_role
         mobileOverrideEnabled: true
         mobileRedirectUri: https://{{ role_name }}.{{ domain }}/api/oauth/mobile-redirect
