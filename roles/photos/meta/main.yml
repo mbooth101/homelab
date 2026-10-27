@@ -1,5 +1,6 @@
 ---
 dependencies:
+  - role: rpmfusion
   - role: http
   - role: postgres
   - role: id

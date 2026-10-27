@@ -42,6 +42,7 @@
   ansible.builtin.dnf:
     install_weak_deps: false
     name:
+      - ffmpeg
       - immich
       - python3-immich_ml
       - python3-immich_ml+cpu

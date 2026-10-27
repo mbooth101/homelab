@@ -1,6 +1,7 @@
 - name: Install Zoneminder
   ansible.builtin.dnf:
     name:
+      - ffmpeg
       - zoneminder-common
       - zoneminder-httpd
       - php-fpm
