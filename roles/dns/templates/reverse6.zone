@@ -4,9 +4,3 @@ $TTL 3600      ; 1 hour
 ;Start of Authority Parameters: Serial, Refresh, Retry, Expire, Min TTL
 @	IN	SOA	{{ host.fqdn }}.  webmaster.{{ domain }}. ( 0 1h 30m 24h 5m )
 	IN	NS	{{ host.fqdn }}.
-
-; This host
-a.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0		IN	PTR	{{ host.fqdn }}.
-
-; Gateway router
-1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0		IN	PTR	gateway.{{ domain }}.

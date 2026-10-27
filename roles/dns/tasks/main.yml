@@ -30,20 +30,6 @@
     - udp
   when: bind9_port != 53
 
-- name: Install Main DNS Configuration
-  ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    owner: root
-    group: named
-    setype: named_conf_t
-    mode: '0640'
-  loop:
-    - { src: named.conf, dest: /etc/named.conf }
-    - { src: named.domains.conf, dest: /etc/named/domains.conf }
-  notify:
-    - Reload BIND DNS
-
 - name: Generate DNS Zone Update Key
   ansible.builtin.shell: "/usr/sbin/tsig-keygen -a {{ ddns_secret_algo }} {{ ddns_secret_name }} > /etc/named/{{ ddns_secret_name }}.key"
   args:
@@ -66,6 +52,21 @@
 - name: Store DNS Zone Update Key Secret
   ansible.builtin.set_fact:
     ddns_secret: "{{ _ddns_secret.stdout }}"
+
+- name: Install Main DNS Configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: named
+    setype: named_conf_t
+    mode: '0640'
+    validate: "/usr/sbin/named-checkconf %s"
+  loop:
+    - { src: named.domains.conf, dest: /etc/named/domains.conf }
+    - { src: named.conf, dest: /etc/named.conf }
+  notify:
+    - Reload BIND DNS
 
 # Other roles may add records to the DNS zones, so we only need to install
 # if not already present, instead of overwriting when different
