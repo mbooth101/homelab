@@ -19,8 +19,9 @@
     src: kea-dhcp4.conf
     dest: "/etc/kea/kea-dhcp4.conf"
     owner: root
-    group: root
-    mode: '0644'
+    group: kea
+    mode: '0640'
+    validate: "/usr/sbin/kea-dhcp4 -t %s"
   notify:
     - Restart Kea DHCP4
 
@@ -29,8 +30,9 @@
     src: kea-dhcp6.conf
     dest: "/etc/kea/kea-dhcp6.conf"
     owner: root
-    group: root
-    mode: '0644'
+    group: kea
+    mode: '0640'
+    validate: "/usr/sbin/kea-dhcp6 -t %s"
   notify:
     - Restart Kea DHCP6
 
@@ -39,8 +41,9 @@
     src: kea-dhcp-ddns.conf
     dest: "/etc/kea/kea-dhcp-ddns.conf"
     owner: root
-    group: root
-    mode: '0644'
+    group: kea
+    mode: '0640'
+    validate: "/usr/sbin/kea-dhcp-ddns -t %s"
   notify:
     - Restart Kea DHCP DDNS
 
