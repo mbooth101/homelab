@@ -13,11 +13,14 @@
   register: ipsilon_dir
   changed_when: false
 
-- name: Install Custom Ipsilon Info Plugin
+- name: Install Custom Ipsilon Info Plugin and OpenID Connect Extension
   ansible.builtin.copy:
-    src: infonssmail.py
-    dest: "{{ ipsilon_dir.stdout }}/info/infonssmail.py"
+    src: "{{ item.src }}"
+    dest: "{{ ipsilon_dir.stdout }}/{{ item.dest }}"
     mode: '0644'
+  loop:
+    - { src: infonssmail.py, dest: info/infonssmail.py }
+    - { src: roles.py, dest: providers/openidc/plugins/roles.py }
   notify:
     - Reload Apache
 
@@ -31,8 +34,7 @@
       /usr/bin/ipsilon-server-install --yes --root-instance
       --hostname {{ role_name }}.{{ domain }}
       --admin-user {{ admin_user }}
-      --openidc yes
+      --openidc yes --openidc-extensions roles
       --gssapi yes --gssapi-httpd-keytab {{ http_keytab }}
       --info-nssmail yes --info-nssmail-domain {{ domain }}
     creates: /var/lib/ipsilon/root
-

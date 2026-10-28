@@ -2,11 +2,16 @@
 # but appends an email address to the user info reply based on the user name
 # and a configured domain name.
 #
+# It also adds an "<app>_role" attribute for each "<app>-admins" or
+# "<app>-users" group the user is in. It will contain either "admin" or "user"
+# but "admin" takes precedence if the user is in both groups for a given app.
+# These are released to apps by a corresponding OpenID Connect extension that
+# implements a roles scope.
+#
 # Ipsilon uses only the first enabled info plugin that returns data, so this
 # replaces "nss" rather than adding to it. Enable it at install time with:
 #
-#   ipsilon-server-install --info-nss=no \
-#       --info-nssmail yes --info-nssmail-domain <domain>
+#   ipsilon-server-install --info-nssmail yes --info-nssmail-domain <domain>
 
 from ipsilon.info import infonss
 from ipsilon.info.common import InfoProviderInstaller
@@ -29,9 +34,19 @@ an email address made from the user name and a configured domain."""
 
     def get_user_attrs(self, user):
         reply = super().get_user_attrs(user)
+        if not reply:
+            return reply
+
         domain = self.get_config_value('email domain')
-        if reply and domain:
+        if domain:
             reply['email'] = '%s@%s' % (user, domain)
+
+        for group in reply.get('_groups', []):
+            if group.endswith('-admins'):
+                reply[group[:-len('-admins')] + '_role'] = 'admin'
+            elif group.endswith('-users'):
+                reply.setdefault(group[:-len('-users')] + '_role', 'user')
+
         return reply
 
 
