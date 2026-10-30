@@ -28,6 +28,15 @@
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
 
+- name: Configure Kerberos Keytab for Ipsilon
+  ansible.builtin.include_tasks:
+    file: ../../krb/tasks/configure-keytab.yml
+  vars:
+    keytab_principals: [ "HTTP/{{ role_name }}.{{ domain }}" ]
+    keytab_path: "{{ http_keytab }}"
+    keytab_owner: apache
+    keytab_group: apache
+
 - name: Create Ipsilon Instance
   ansible.builtin.command:
     cmd: >-

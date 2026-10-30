@@ -5,6 +5,7 @@
 # - site_static: set to true to configure static site hosting
 # - site_proxy: set to true to configure basic proxying to another port
 # - site_auth: set to true to configure Kerberos auth for the site
+#   (the calling role must also depend on the krb role)
 # - http_port: set to the port number to which Apache should proxy requests
 
 # Adds DNS A/AAAA records so that the site is addressable and the name-based
@@ -39,6 +40,7 @@
     keytab_path: "{{ http_keytab }}"
     keytab_owner: apache
     keytab_group: apache
+  when: site_auth | default(false)
 
 # This file configures a vhost for the calling role, including all necessary TLS
 # moving parts

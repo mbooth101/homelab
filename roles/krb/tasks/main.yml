@@ -1,18 +1,16 @@
-- name: Install Kerberos
+- name: Install Kerberos and KDC Proxy Application
   ansible.builtin.dnf:
     name:
       - krb5-server
       - krb5-workstation
+      - python3-kdcproxy
+      - python3-mod_wsgi
     state: present
 
 - name: Configure DNS Records for Kerberos Services
   ansible.builtin.include_tasks:
     file: ../../dns/tasks/configure-record.yml
   loop:
-    - type: A
-      text: "{{ host.ipv4.address }}"
-    - type: AAAA
-      text: "{{ host.ipv6.address }}"
     - name: "_kerberos._udp.{{ domain }}"
       type: SRV
       text: "0 100 88 {{ role_name }}.{{ domain }}."
@@ -67,6 +65,9 @@
     keytab_principals: [ "host/{{ host.fqdn }}" ]
     keytab_path: /etc/krb5.keytab
 
+# For clients on the local network, it's enough to just open the firewall and
+# it will just work
+
 - name: Open Firewall for Kerberos
   ansible.posix.firewalld:
     service: "{{ item }}"
@@ -76,3 +77,42 @@
   loop:
     - kerberos
     - kpasswd
+
+# For external clients, who might be one restricted wifi networks with only
+# the HTTPS port 443 open, then they can use the KDC proxy service
+
+- name: Create KDC Proxy System User
+  ansible.builtin.user:
+    name: kdcproxy
+    comment: Kerberos KDC Proxy
+    state: present
+    system: true
+    create_home: false
+    home: /
+    shell: /usr/sbin/nologin
+
+- name: Ensure KDC Proxy Application Directory
+  ansible.builtin.file:
+    state: directory
+    path: /usr/local/share/kdcproxy
+    mode: '0755'
+
+- name: Install KDC Proxy Application Entry Point
+  ansible.builtin.copy:
+    src: kdcproxy.wsgi
+    dest: /usr/local/share/kdcproxy/kdcproxy.wsgi
+    mode: '0644'
+  notify:
+    - Reload Apache
+
+- name: Install KDC Proxy Configuration
+  ansible.builtin.template:
+    src: kdcproxy.conf
+    dest: /etc/kdcproxy.conf
+    mode: '0644'
+  notify:
+    - Reload Apache
+
+- name: Configure Apache for KDC Proxy
+  ansible.builtin.include_tasks:
+    file: ../../http/tasks/configure-site.yml
