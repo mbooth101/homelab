@@ -87,6 +87,30 @@ apply
 
 Use the web interface to forward ports 80, 443, and 22 to `192.168.1.10` for Apache and SSHd.
 
+### Kerberos Authentication
+
+To enable Kerberos authentication from outside the LAN, especially from locations with restricted WiFi networks (such as hotels or cafés that don't allow traffic on non-HTTP ports) a proxy is used to route KDC traffic over the HTTPS port. To make this mechanism discoverable to Kerberos clients, the following records need to be added to the public-facing DNS:
+
+```
+_kerberos.matbooth.co.uk.  URI  10 1  "krb5srv:m:kkdcp:https://krb.matbooth.co.uk/KdcProxy"
+_kpasswd.matbooth.co.uk.   URI  10 1  "krb5srv:m:kkdcp:https://krb.matbooth.co.uk/KdcProxy"
+```
+
+If the public-facing DNS provider doesn't support URI records, then extra configuration is required on the workstation to enable Kerberos authentication:
+
+```
+$ sudo tee /etc/krb5.conf.d/matbooth_co_uk <<'EOF'
+[realms]
+ MATBOOTH.CO.UK = {
+   kdc = https://krb.matbooth.co.uk/KdcProxy
+   kpasswd_server = https://krb.matbooth.co.uk/KdcProxy
+ }
+[domain_realm]
+ .matbooth.co.uk = MATBOOTH.CO.UK
+ matbooth.co.uk = MATBOOTH.CO.UK
+EOF
+```
+
 ### Workstation
 
 To allow browsers to trust the staging environment TLS certificates, add the self-signed certificate authority to the system's trust store and then restart your browser:
