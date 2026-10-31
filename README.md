@@ -92,6 +92,23 @@ set uci.firewall.pinholerule.@pinholeruleC3A6.dest_mac ""
 apply
 ```
 
+There is no pre-configured pinhole for port 22, so add one for SSHd:
+
+```
+add uci.firewall.pinholerule.
+set uci.firewall.pinholerule.@pinholerule[2].name SSH6 Server
+set uci.firewall.pinholerule.@pinholerule[2].family ipv6
+set uci.firewall.pinholerule.@pinholerule[2].src wan
+set uci.firewall.pinholerule.@pinholerule[2].dest lan
+set uci.firewall.pinholerule.@pinholerule[2].dest_ip 2001:8b0:a722::a
+set uci.firewall.pinholerule.@pinholerule[2].dest_port 22
+set uci.firewall.pinholerule.@pinholerule[2].target ACCEPT
+set uci.firewall.pinholerule.@pinholerule[2].enabled 1
+add uci.firewall.pinholerule.@pinholerule[2].proto.
+set uci.firewall.pinholerule.@pinholerule[2].proto.@1.value tcp
+apply
+```
+
 Don't masquerade traffic forwarded into the LAN, so servers see real client addresses instead of the router's address. This makes server logs more useful, allows us to restrict incoming connections for some services to LAN-local address only, and allows fail2ban to be used on incoming connections from outside the LAN:
 
 ```
