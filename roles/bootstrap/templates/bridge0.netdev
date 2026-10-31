@@ -3,6 +3,7 @@
 [NetDev]
 Name=bridge0
 Kind=bridge
+MACAddress={{ host.mac }}
 
 [Bridge]
 STP=no

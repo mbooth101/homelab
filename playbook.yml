@@ -23,6 +23,7 @@
     host:
       name: "{{ inventory_hostname_short }}"
       fqdn: "{{ inventory_hostname_short }}.{{ domain }}"
+      mac:  "{{ inventory_mac }}"
       ipv4:
         cidr:    "{{ inventory_host4 }}"
         address: "{{ inventory_host4 | ansible.utils.ipaddr('address') }}"

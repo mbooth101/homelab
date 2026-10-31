@@ -78,14 +78,26 @@ set uci.dhcp.dnsmasq.@dnsmasq.rebind_domain.@1.value matbooth.co.uk
 apply
 ```
 
-Don't masquerade traffic forwarded into the LAN, so servers see real client addresses instead of the router's address. This makes server logs more useful and allows fail2ban to be used:
+### Router Firewall Rules
+
+Use the web interface to forward ports 80, 443, and 22 to `192.168.1.10` for Apache and SSHd.
+
+Port forwarding configures IPv4 NAT firewall rules, but there seems to be no UI for IPv6 "pinhole" firewall rules. The router has pre-configured pinholes for ports 80 and 443, they just need to be given either the IPv6 address, or MAC address, of the server to be routable:
+
+```
+set uci.firewall.pinholerule.@pinholerule4E3A.dest_ip 2001:8b0:a722::a
+set uci.firewall.pinholerule.@pinholerule4E3A.dest_mac ""
+set uci.firewall.pinholerule.@pinholeruleC3A6.dest_ip 2001:8b0:a722::a
+set uci.firewall.pinholerule.@pinholeruleC3A6.dest_mac ""
+apply
+```
+
+Don't masquerade traffic forwarded into the LAN, so servers see real client addresses instead of the router's address. This makes server logs more useful, allows us to restrict incoming connections for some services to LAN-local address only, and allows fail2ban to be used on incoming connections from outside the LAN:
 
 ```
 set uci.firewall.zone.@lan.masq 0
 apply
 ```
-
-Use the web interface to forward ports 80, 443, and 22 to `192.168.1.10` for Apache and SSHd.
 
 ### Kerberos Authentication
 
