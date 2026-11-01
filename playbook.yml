@@ -4,16 +4,15 @@
   roles:
     - role: bootstrap
       tags: [ bootstrap ]
-    - role: dns
     - role: dhcp
     - role: sshd
-    - role: spotify
-    - role: admin
     - role: id
-    - role: ci
+    - role: admin
+    - role: cams
+    - role: spotify
     - role: photos
-    - role: hab
-#    - role: sssd
+#    - role: ci
+#    - role: hab
 #    - role: home
   become: yes
 

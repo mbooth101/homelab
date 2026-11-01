@@ -1,49 +1,72 @@
 // Role Dependency Graph
 digraph {
 	bootstrap
-	dns
-	dns -> firewall
-	firewall
 	dhcp
 	dhcp -> firewall
+	firewall
 	dhcp -> dns
+	dns
+	dns -> firewall
 	dhcp -> postgres
 	postgres
 	sshd
 	sshd -> firewall
 	sshd -> dns
-	spotify
-	spotify -> firewall
-	spotify -> avahi
-	avahi
-	avahi -> firewall
-	admin
-	admin -> firewall
-	admin -> http
+	sshd -> fail2ban
+	fail2ban
+	fail2ban -> firewall
+	id
+	id -> http
 	http
 	http -> firewall
 	http -> dns
 	http -> tls
 	tls
+	id -> krb
+	krb
+	krb -> firewall
+	krb -> dns
+	krb -> http
+	id -> sssd
+	sssd
+	sssd -> krb
+	admin
+	admin -> firewall
+	admin -> http
+	admin -> krb
 	admin -> containerisation
 	containerisation
 	admin -> virtualisation
 	virtualisation
-	id
-	id -> http
-	id -> postgres
-	ci
-	ci -> http
-	ci -> id
-	ci -> containerisation
-	ci -> virtualisation
+	cams
+	cams -> rpmfusion
+	rpmfusion
+	cams -> http
+	cams -> krb
+	cams -> mysql
+	mysql
+	spotify
+	spotify -> firewall
+	spotify -> avahi
+	avahi
+	avahi -> firewall
+	spotify -> sound
+	sound
+	sound -> firewall
+	sound -> avahi
 	photos
+	photos -> rpmfusion
 	photos -> http
 	photos -> postgres
 	photos -> id
 	photos -> valkey
 	valkey
+	ci
+	ci -> http
+	ci -> id
+	ci -> containerisation
+	ci -> virtualisation
 	hab
 	hab -> http
-	hab -> id
+	hab -> krb
 }
