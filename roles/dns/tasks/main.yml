@@ -166,4 +166,4 @@
     dest: "/etc/systemd/network/10-bridge0.network.d/10-net-nameservers.conf"
     mode: '0644'
   notify:
-    - Restart Network
+    - Reload Network

@@ -1,0 +1,6 @@
+---
+- name: Reload Network
+  ansible.builtin.systemd_service:
+    name: systemd-networkd.service
+    daemon_reload: true
+    state: reloaded

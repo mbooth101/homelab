@@ -19,6 +19,23 @@
     masked: no
     daemon_reload: true
 
+# Configures early boot networking used for talking to the Tang key server
+
+- name: Ensure Dracut Config Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/dracut.conf.d
+    mode: '0755'
+
+- name: Install Dracut Early Boot Network Configuration
+  ansible.builtin.template:
+    src: dracut.conf
+    dest: /etc/dracut.conf.d/10-early-boot-net.conf
+    mode: '0444'
+  notify: Regenerate Initramfs
+
+# Enroll encrypted block devices to be decrypted by Clevis
+
 - name: Query Encrypted Block Device Details
   ansible.builtin.command:
     cmd: "/usr/sbin/blkid -t TYPE=crypto_LUKS -o export"

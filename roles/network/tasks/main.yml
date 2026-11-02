@@ -42,25 +42,14 @@
     name: "{{ host.fqdn }}"
     use: systemd
 
-# This should find all physical interfaces no matter how they are
-# named and return them in a predictable order
+# This should find all physical interfaces no matter how they are named and
+# return them in a predictable order. Only "en*" devices are considered so that
+# virtual ethernet devices (e.g. vnet* for VMs, veth* for containers) are never
+# mistaken for physical ports. The first is the WAN port, the rest are bonded.
+# Also used by the bootstrap role for the early boot network configuration.
 - name: Create List of Wired Interfaces
   ansible.builtin.set_fact:
-    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') }}"
-
-# Configures early boot networking used for talking to LUKS key server to
-# unlock encrypted system partitions
-- name: Ensure Dracut Config Directory
-  ansible.builtin.file:
-    state: directory
-    path: /etc/dracut.conf.d
-    mode: '0755'
-- name: Install Dracut Configuration
-  ansible.builtin.template:
-    src: dracut.conf
-    dest: /etc/dracut.conf.d/10-early-boot-net.conf
-    mode: '0444'
-  notify: Regenerate Initramfs
+    ether_interfaces: "{{ ansible_interfaces | sort | map('extract', ansible_facts) | selectattr('type', 'eq', 'ether') | map(attribute='device') | select('match', '^en') | list }}"
 
 # We use systemd-networkd instead of NetworkManager to make handover from the
 # early boot environment easier
@@ -84,7 +73,7 @@
   loop:
     - "bridge0.network"
     - "bridge0.netdev"
-  notify: Restart Network
+  notify: Reload Network
 
 - name: Install Bond Device Configuration
   ansible.builtin.template:
@@ -94,7 +83,7 @@
   loop:
     - "bond0.network"
     - "bond0.netdev"
-  notify: Restart Network
+  notify: Reload Network
 
 - name: Install Bonded Port Configuration
   ansible.builtin.template:
@@ -102,8 +91,7 @@
     dest: "/etc/systemd/network/30-{{ item }}.network"
     mode: '0644'
   loop: "{{ ether_interfaces[1:] }}"
-  when: item.startswith('en')
-  notify: Restart Network
+  notify: Reload Network
 
 - name: Install WAN Port Configuration
   ansible.builtin.template:
@@ -112,5 +100,4 @@
     mode: '0644'
   vars:
     wan_port: "{{ ether_interfaces[0] }}"
-  when: wan_port.startswith('en')
-  notify: Restart Network
+  notify: Reload Network

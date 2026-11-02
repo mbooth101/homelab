@@ -37,10 +37,6 @@
   ansible.builtin.include_tasks:
     file: configure-ansible-maint.yml
 
-- name: Configure Network Connections
-  ansible.builtin.include_tasks:
-    file: configure-network.yml
-
 - name: Configure Automatic LUKS Volume Decryption
   ansible.builtin.include_tasks:
     file: configure-luks-clevis.yml
