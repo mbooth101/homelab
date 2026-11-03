@@ -63,7 +63,7 @@ if [ -n "$PROVISION" ] ; then
 		ip=$(echo "$h" | sed -e 's/.*inventory_host4=\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*$/\1/')
 		gw=$(echo "$ip" | cut -f1,2,3 -d.).1
 		rootpw=$(<connection_pass)
-		release=43
+		release=44
 		url="https://fedora.mirrorservice.org/fedora/linux/releases/${release}/Everything/x86_64/os/"
 
 		# If provisioning staging, then kill and recreate the VM

@@ -1,7 +1,7 @@
 - name: Install MySQL
   ansible.builtin.dnf:
     name:
-      - mariadb-server
+      - mariadb10.11-server
       - python3-PyMySQL
     state: present
 
