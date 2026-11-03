@@ -53,12 +53,15 @@
 
 # We use systemd-networkd instead of NetworkManager to make handover from the
 # early boot environment easier
-- name: Disable NetworkManager
+- name: Disable NetworkManager and ModemManager
   ansible.builtin.systemd_service:
-    name: NetworkManager.service
+    name: "{{ item }}.service"
     enabled: false
     masked: true
     state: stopped
+  loop:
+    - NetworkManager
+    - ModemManager
 - name: Enable Systemd Network
   ansible.builtin.systemd_service:
     name: systemd-networkd.service
