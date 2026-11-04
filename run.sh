@@ -64,7 +64,14 @@ if [ -n "$PROVISION" ] ; then
 		gw=$(echo "$ip" | cut -f1,2,3 -d.).1
 		rootpw=$(<connection_pass)
 		release=44
-		url="https://fedora.mirrorservice.org/fedora/linux/releases/${release}/Everything/x86_64/os/"
+		arch=$(uname -m)
+		url="https://fedora.mirrorservice.org/fedora/linux/releases/${release}/Everything/${arch}/os/"
+
+		# Default serial device name depends on architecture
+		case "$arch" in
+			x86_64) console=ttyS0 ;;
+			aarch64) console=ttyAMA0 ;;
+		esac
 
 		# If provisioning staging, then kill and recreate the VM
 		if [ "$DEPLOYMENT_ENV" == "staging" ] ; then
@@ -109,9 +116,17 @@ if [ -n "$PROVISION" ] ; then
 				--network network=homelab,mac=52:54:00:00:00:0c,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=2 \
 				--network network=homelab,mac=52:54:00:00:00:0d,address.type=pci,address.domain=0,address.bus=4,address.slot=0,address.function=3 \
 				--os-variant fedora-unknown \
+				--graphics none \
+				--console pty,target.type=serial \
 				--location ${url} \
 				--initrd-inject /tmp/ks.cfg \
-				--extra-args "inst.ks=file:/ks.cfg"
+				--extra-args "inst.ks=file:/ks.cfg console=${console},115200"
+
+			# Follow the installation on the serial console, the console exits when the VM
+			# shuts down at the end of the installation (Ctrl+] to detach early)
+			if [ -t 0 ] ; then
+				virsh --connect qemu:///system console $host || :
+			fi
 
 			# Wait until VM shuts down following OS installation then restart it
 			while [ "$(virsh --connect qemu:///system domstate $host)" != "shut off" ] ; do
