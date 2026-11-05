@@ -15,3 +15,7 @@
 ; fall back to var_t, but needs to be httpd_cache_t in order for ZoneMinder
 ; to write to it
 (filecon "/var/cache/zoneminder(/.*)?" any (system_u object_r httpd_cache_t ((s0) (s0))))
+
+; ZoneMinder maps event snapshots to generate thumbnails, allow httpd to
+; mmap() files labelled zoneminder_var_lib_t
+(allow httpd_t zoneminder_var_lib_t (file (map)))
