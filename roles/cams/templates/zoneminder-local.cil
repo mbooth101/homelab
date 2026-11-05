@@ -1,0 +1,17 @@
+; {{ ansible_managed }}
+
+; Local SELinux policy additions for ZoneMinder
+
+; ZoneMinder runs "uptime" only to parse the load average, but uptime also
+; reads logind's sessions to count logged-in users. ZoneMinder ignores that
+; count, so silence the denials rather than allowing the access. When it can't
+; read the sessions, uptime falls back to counting users from /run/utmp
+; (initrc_var_run_t), so silence that too
+(dontaudit zoneminder_t systemd_logind_sessions_t (dir (read)))
+(dontaudit zoneminder_t systemd_logind_sessions_t (file (read open getattr)))
+(dontaudit zoneminder_t initrc_var_run_t (file (read open getattr lock)))
+
+; selinux-policy doesn't label ZoneMinder's web cache directory, so it would
+; fall back to var_t, but needs to be httpd_cache_t in order for ZoneMinder
+; to write to it
+(filecon "/var/cache/zoneminder(/.*)?" any (system_u object_r httpd_cache_t ((s0) (s0))))

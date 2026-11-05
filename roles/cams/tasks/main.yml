@@ -63,12 +63,35 @@
   notify:
     - Restart Zoneminder
 
-# TODO: File upstream bug about this
-- name: Configure SELinux Context for Web Cache Directory
-  community.general.sefcontext:
-    target: "/var/cache/zoneminder(/.*)?"
-    setype: httpd_cache_t
-    state: present
+- name: Ensure Local SELinux Policy Directory
+  ansible.builtin.file:
+    path: /usr/local/share/selinux
+    state: directory
+    mode: '0755'
+
+- name: Install Zoneminder Local SELinux Policy
+  ansible.builtin.template:
+    src: zoneminder-local.cil
+    dest: /usr/local/share/selinux/zoneminder-local.cil
+    mode: '0644'
+  register: zm_policy
+
+- name: List Loaded SELinux Modules
+  ansible.builtin.command:
+    cmd: semodule -l
+  register: selinux_modules
+  changed_when: false
+
+- name: Load Local SELinux Policy for Zoneminder
+  ansible.builtin.command:
+    cmd: semodule -i /usr/local/share/selinux/zoneminder-local.cil
+  when: zm_policy.changed or 'zoneminder-local' not in selinux_modules.stdout_lines
+
+- name: Restore SELinux Context of Web Cache Directory
+  ansible.builtin.command:
+    cmd: restorecon -Rv /var/cache/zoneminder
+  register: zm_restorecon
+  changed_when: zm_restorecon.stdout != ''
 
 - name: Enable/Start Zoneminder
   ansible.builtin.systemd_service:
