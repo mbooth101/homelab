@@ -19,3 +19,12 @@
 ; ZoneMinder maps event snapshots to generate thumbnails, allow httpd to
 ; mmap() files labelled zoneminder_var_lib_t
 (allow httpd_t zoneminder_var_lib_t (file (map)))
+
+; Live view and event playback using the nph-zms CGI process
+
+; Allow ZoneMinder scripts to talk to Apache over a unix socket
+(allow zoneminder_script_t httpd_t (unix_dgram_socket (sendto)))
+; Allow ZoneMinder scripts to find and write its own per-monitor and per-event
+; logs in ZoneMinder log labelled directories
+(allow zoneminder_script_t zoneminder_log_t (dir (search write add_name)))
+(allow zoneminder_script_t zoneminder_log_t (file (create open append getattr)))
