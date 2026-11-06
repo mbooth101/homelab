@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+/var/log/zoneminder/*.log {
+    missingok
+    notifempty
+    copytruncate
+    delaycompress
+    compress
+    daily
+    rotate 7
+}

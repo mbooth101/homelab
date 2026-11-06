@@ -63,6 +63,14 @@
   notify:
     - Restart Zoneminder
 
+- name: Install Zoneminder Log Rotation Configuration
+  ansible.builtin.template:
+    src: zoneminder.logrotate
+    dest: /etc/logrotate.d/zoneminder
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Ensure Local SELinux Policy Directory
   ansible.builtin.file:
     path: /usr/local/share/selinux
