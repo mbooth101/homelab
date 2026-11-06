@@ -2,6 +2,9 @@
 
 ; Local SELinux policy additions for ZoneMinder
 
+; Allow ZoneMinder zmc processes to connects to the cameras over RTSP
+(allow zoneminder_t rtsp_port_t (tcp_socket (name_connect)))
+
 ; ZoneMinder runs "uptime" only to parse the load average, but uptime also
 ; reads logind's sessions to count logged-in users. ZoneMinder ignores that
 ; count, so silence the denials rather than allowing the access. When it can't
