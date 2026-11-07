@@ -11,6 +11,14 @@
   args:
     creates: /etc/letsencrypt/.registered
 
+- name: Install Certbot Reload Hooks
+  ansible.builtin.copy:
+    src: reload-httpd.sh
+    dest: /etc/letsencrypt/renewal-hooks/deploy/reload-httpd.sh
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Enable/Start Certbot TLS Certificate Renewal Timer
   ansible.builtin.systemd_service:
     name: certbot-renew.timer
