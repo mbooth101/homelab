@@ -1,12 +1,16 @@
 // Role Dependency Graph
 digraph {
 	bootstrap
+	bootstrap -> network
+	network
 	dhcp
 	dhcp -> firewall
 	firewall
+	dhcp -> network
 	dhcp -> dns
 	dns
 	dns -> firewall
+	dns -> network
 	dhcp -> postgres
 	postgres
 	sshd
@@ -50,6 +54,7 @@ digraph {
 	spotify -> avahi
 	avahi
 	avahi -> firewall
+	avahi -> network
 	spotify -> sound
 	sound
 	sound -> firewall
@@ -66,7 +71,4 @@ digraph {
 	ci -> id
 	ci -> containerisation
 	ci -> virtualisation
-	hab
-	hab -> http
-	hab -> krb
 }
