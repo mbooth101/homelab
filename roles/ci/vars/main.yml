@@ -7,3 +7,42 @@ jenkins_secret: !vault |
           30656130343938633237303136363736366134336663336631623038646136393130326530393037
           3632343361313563660a303661353466383663313535373931396630646165663965383732636237
           37653635333565386335636132333862656364376437366137323662303062343530
+jenkins_plugin_manager_version: 2.16.0
+jenkins_plugin_manager_checksum: sha256:b3e9704f8259ec3d0479703039e2ad5a0a15abb97808ad70d5a59ba2fdd73197
+jenkins_plugins:
+  # Admin / Security
+  - dark-theme
+  - dashboard-view
+  - cloudbees-folder
+  - configuration-as-code
+  - antisamy-markup-formatter
+  - oic-auth
+  - matrix-auth
+  - role-strategy
+  # Build tools
+  - ant
+  - gradle
+  - maven-plugin
+  # Source control
+  - git
+  - git-parameter
+  - github
+  - gitlab-plugin
+  # Pipelines
+  - workflow-aggregator
+  # Build features
+  - build-name-setter
+  - build-timeout
+  - embeddable-build-status
+  - ssh-agent
+  - throttle-concurrents
+  - timestamper
+  - ws-cleanup
+  # Distributed builds
+  - docker-plugin
+  - libvirt-slave
+  - ssh-slaves
+  # Notifications
+  - email-ext
+  - emailext-template
+  - mailer

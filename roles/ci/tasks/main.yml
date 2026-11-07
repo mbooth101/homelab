@@ -18,6 +18,45 @@
       - jenkins
     state: present
 
+- name: Install Jenkins Plugin Manager
+  ansible.builtin.get_url:
+    url: "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/{{ jenkins_plugin_manager_version }}/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar"
+    dest: "/usr/share/jenkins/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar"
+    checksum: "{{ jenkins_plugin_manager_checksum }}"
+    mode: '0644'
+
+- name: Check Installed Jenkins Plugins
+  ansible.builtin.copy:
+    content: "{{ jenkins_plugins | to_nice_yaml }}"
+    dest: "/var/lib/jenkins/installed-plugins.yaml"
+    mode: '0644'
+  check_mode: true
+  register: jenkins_plugin_check
+
+- name: Install Jenkins Plugins
+  ansible.builtin.command:
+    argv: "{{ _cmd + jenkins_plugins }}"
+  vars:
+    _cmd:
+      - java
+      - -jar
+      - "/usr/share/jenkins/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar"
+      - --war
+      - /usr/share/java/jenkins.war
+      - --plugin-download-directory
+      - /var/lib/jenkins/plugins
+      - --plugins
+  become_user: jenkins
+  when: jenkins_plugin_check is changed
+
+- name: Record Installed Jenkins Plugins
+  ansible.builtin.copy:
+    content: "{{ jenkins_plugins | to_nice_yaml }}"
+    dest: "/var/lib/jenkins/installed-plugins.yaml"
+    mode: '0644'
+  notify:
+    - Restart Jenkins
+
 - name: Configure Apache for Jenkins
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml
@@ -56,57 +95,6 @@
     enabled: true
     masked: no
     state: started
-
-# Jenkins can take a minute to come up and it needs to be online for the next steps
-- name: Wait On Jenkins Start
-  ansible.builtin.wait_for:
-    host: "::1"
-    port: "{{ jenkins_http_port }}"
-
-- name: Install Jenkins Plugins
-  community.general.jenkins_plugin:
-    name: "{{ item }}"
-    url: "http://[::1]:{{ jenkins_http_port }}"
-    state: present
-  loop:
-    # Admin / Security
-    - dark-theme
-    - dashboard-view
-    - cloudbees-folder
-    - configuration-as-code
-    - antisamy-markup-formatter
-    - oic-auth
-    - matrix-auth
-    - role-strategy
-    # Build tools
-    - ant
-    - gradle
-    - maven-plugin
-    # Source control
-    - git
-    - git-parameter
-    - github
-    - gitlab-plugin
-    # Pipelines
-    - workflow-aggregator
-    # Build features
-    - build-name-setter
-    - build-timeout
-    - embeddable-build-status
-    - ssh-agent
-    - throttle-concurrents
-    - timestamper
-    - ws-cleanup
-    # Distributed builds
-    - docker-plugin
-    - libvirt-slave
-    - ssh-slaves
-    # Notifications
-    - email-ext
-    - emailext-template
-    - mailer
-  notify:
-    - Restart Jenkins
 
 - name: Install Jenkins Configuration
   ansible.builtin.template:
