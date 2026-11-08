@@ -1,5 +1,6 @@
 # An extended nss info plug-in for Ipsilon. Like the built-in nss plug-in,
-# but appends an email address to the user info reply based on the user name
+# but appends preferred_username, name (from the full name, if set) and an
+# email address to the user info reply, based on the user name
 # and a configured domain name.
 #
 # It also adds an "<app>_role" attribute for each "<app>-admins" or
@@ -36,6 +37,10 @@ an email address made from the user name and a configured domain."""
         reply = super().get_user_attrs(user)
         if not reply:
             return reply
+
+        reply['preferred_username'] = user
+        if reply.get('fullname'):
+            reply['name'] = reply['fullname']
 
         domain = self.get_config_value('email domain')
         if domain:

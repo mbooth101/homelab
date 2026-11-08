@@ -69,7 +69,7 @@ jenkins:
       clientSecret: "{{ client_secret }}"
       disableSslVerification: false
       emailFieldName: "email"
-      fullNameFieldName: "display_name"
+      fullNameFieldName: "name"
       groupIdStrategy: "caseSensitive"
       groupsFieldName: "groups"
       postLogoutRedirectUrl: "https://{{ role_name }}.{{ domain }}/OicLogout"
