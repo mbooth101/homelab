@@ -2,7 +2,30 @@
   ansible.builtin.dnf:
     name:
       - podman
+      - podman-docker
     state: present
+
+- name: Add Podman Group
+  ansible.builtin.group:
+    name: podman
+    system: true
+    state: present
+
+- name: Ensure Podman Socket Overrides Directory
+  ansible.builtin.file:
+    state: directory
+    path: /etc/systemd/system/podman.socket.d
+    mode: '0755'
+
+- name: Allow Podman Group To Use Podman Socket
+  ansible.builtin.copy:
+    content: |
+      [Socket]
+      SocketGroup=podman
+    dest: /etc/systemd/system/podman.socket.d/group.conf
+    mode: '0644'
+  notify:
+    - Restart Podman Socket
 
 - name: Enable/Start Podman
   ansible.builtin.systemd_service:

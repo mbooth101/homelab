@@ -57,6 +57,16 @@
   notify:
     - Restart Jenkins
 
+- name: Allow Jenkins To Manage Virtual Machines And Containers
+  ansible.builtin.user:
+    name: jenkins
+    groups:
+      - libvirt
+      - podman
+    append: true
+  notify:
+    - Restart Jenkins
+
 - name: Ensure Jenkins Service Overrides Directory
   ansible.builtin.file:
     state: directory

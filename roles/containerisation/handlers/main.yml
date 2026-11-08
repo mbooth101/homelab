@@ -1,0 +1,6 @@
+---
+- name: Restart Podman Socket
+  ansible.builtin.systemd_service:
+    name: podman.socket
+    daemon_reload: true
+    state: restarted
