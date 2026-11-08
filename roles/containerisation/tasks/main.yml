@@ -35,3 +35,20 @@
     enabled: true
     masked: no
     state: started
+
+- name: Install Podman Image Prune Service And Timer
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - podman-image-prune.service
+    - podman-image-prune.timer
+
+- name: Enable/Start Podman Image Prune Timer
+  ansible.builtin.systemd_service:
+    name: podman-image-prune.timer
+    daemon_reload: true
+    enabled: true
+    masked: no
+    state: started

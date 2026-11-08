@@ -1,0 +1,7 @@
+[Unit]
+Description=Remove dangling Podman images
+Documentation=man:podman-image-prune(1)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman image prune --force
