@@ -7,11 +7,12 @@
     - role: dhcp
     - role: sshd
     - role: id
+      tags: [ id ]
     - role: admin
     - role: cams
     - role: spotify
     - role: photos
-#    - role: ci
+    - role: ci
 #    - role: hab
 #    - role: home
   become: yes
