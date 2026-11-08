@@ -56,12 +56,6 @@
     - vchord
     - earthdistance
 
-- name: Add Immich Admins Group
-  ansible.builtin.group:
-    name: immich-admins
-    system: true
-    state: present
-
 - name: Configure Apache for Immich
   ansible.builtin.include_tasks:
     file: ../../http/tasks/configure-site.yml

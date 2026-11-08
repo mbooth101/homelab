@@ -50,3 +50,28 @@
   ansible.builtin.set_fact:
     client_id: "{{ (_client_reg.content | b64decode | from_json).client_id }}"
     client_secret: "{{ (_client_reg.content | b64decode | from_json).client_secret }}"
+
+# Ensure user groups exist and the designated initial admin user is added to
+# admin groups, as some services require an admin user, or require the first
+# login to be an admin user
+- name: ID - Create OpenID Connect Client User Groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+    system: true
+    state: present
+  loop:
+    - "{{ client_name }}-admins"
+    - "{{ client_name }}-users"
+
+- name: ID - Check For Admin User
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ admin_user }}"
+    fail_key: false
+
+- name: ID - Add Admin User To Client's Admins User Group
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    groups: "{{ client_name }}-admins"
+    append: true
+  when: ansible_facts.getent_passwd[admin_user] is not none
