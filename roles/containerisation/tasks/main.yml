@@ -22,6 +22,8 @@
     content: |
       [Socket]
       SocketGroup=podman
+      ExecStartPost=/usr/bin/chown root:podman /run/podman
+      ExecStartPost=/usr/bin/chmod 0750 /run/podman
     dest: /etc/systemd/system/podman.socket.d/group.conf
     mode: '0644'
   notify:
