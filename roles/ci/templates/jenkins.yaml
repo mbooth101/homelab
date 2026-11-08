@@ -58,6 +58,21 @@ jenkins:
       hypervisorTransport: "unix"
       hypervisorType: "QEMU"
       maxOnlineSlaves: 2
+  - docker:
+      name: "podman"
+      dockerApi:
+        dockerHost:
+          uri: "unix:///run/podman/podman.sock"
+      templates:
+      - labelString: "default-container"
+        dockerTemplateBase:
+          image: "docker.io/jenkins/agent:latest-rhel-ubi9-jdk25"
+        remoteFs: "/home/jenkins/agent"
+        connector:
+          attach:
+            user: "jenkins"
+        instanceCapStr: "2"
+        pullStrategy: PULL_ALWAYS
   disabledAdministrativeMonitors:
   - "hudson.util.DoubleLaunchChecker"
   numExecutors: 0
@@ -76,12 +91,18 @@ jenkins:
           wellKnownOpenIDConfigurationUrl: "{{ id_issuer_url }}"
       userIdStrategy: "caseSensitive"
       userNameField: "preferred_username"
-  # Agents connect over SSH or libvirt, so no inbound TCP agent port
   slaveAgentPort: -1
 appearance:
   themeManager:
     theme: "darkSystem"
 unclassified:
+  buildDiscarders:
+    configuredBuildDiscarders:
+    - "jobBuildDiscarder"
+    - simpleBuildDiscarder:
+        discarder:
+          logRotator:
+            numToKeepStr: "30"
   email-ext:
     defaultContentType: "text/plain"
     mailAccount:

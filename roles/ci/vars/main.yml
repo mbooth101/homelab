@@ -11,16 +11,11 @@ jenkins_plugins:
   - antisamy-markup-formatter
   - oic-auth
   - matrix-auth
-  - role-strategy
-  # Build tools
-  - ant
-  - gradle
-  - maven-plugin
   # Source control
   - git
   - git-parameter
-  - github
-  - gitlab-plugin
+  - github-branch-source
+  - gitlab-branch-source
   # Pipelines
   - workflow-aggregator
   # Build features
@@ -37,5 +32,4 @@ jenkins_plugins:
   - ssh-slaves
   # Notifications
   - email-ext
-  - emailext-template
   - mailer
