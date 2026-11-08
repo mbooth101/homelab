@@ -3,12 +3,10 @@
 jenkins:
   authorizationStrategy:
     globalMatrix:
+      # Groups come from the jenkins_role claim: "admin" for members of the
+      # jenkins-admins POSIX group, else "user" for members of jenkins-users.
+      # Anonymous users have no access, so they are sent to the login page
       entries:
-      - user:
-          name: "anonymous"
-          permissions:
-          - "Job/Read"
-          - "Overall/Read"
       - group:
           name: "authenticated"
           permissions:
@@ -16,11 +14,11 @@ jenkins:
           - "Overall/Read"
           - "View/Read"
       - group:
-          name: "jenkins_admins"
+          name: "admin"
           permissions:
           - "Overall/Administer"
       - group:
-          name: "jenkins_users"
+          name: "user"
           permissions:
           - "Agent/Build"
           - "Agent/Configure"
@@ -71,14 +69,15 @@ jenkins:
       emailFieldName: "email"
       fullNameFieldName: "name"
       groupIdStrategy: "caseSensitive"
-      groupsFieldName: "groups"
-      postLogoutRedirectUrl: "https://{{ role_name }}.{{ domain }}/OicLogout"
+      groupsFieldName: "jenkins_role"
       serverConfiguration:
         wellKnown:
-          scopesOverride: "openid profile email"
+          scopesOverride: "openid profile email roles"
           wellKnownOpenIDConfigurationUrl: "{{ id_issuer_url }}"
       userIdStrategy: "caseSensitive"
       userNameField: "preferred_username"
+  # Agents connect over SSH or libvirt, so no inbound TCP agent port
+  slaveAgentPort: -1
 appearance:
   themeManager:
     theme: "darkSystem"
